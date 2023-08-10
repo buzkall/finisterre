@@ -2,9 +2,9 @@
 
 namespace Buzkall\Finisterre;
 
+use Buzkall\Finisterre\Commands\FinisterreCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Buzkall\Finisterre\Commands\FinisterreCommand;
 
 class FinisterreServiceProvider extends PackageServiceProvider
 {

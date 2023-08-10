@@ -2,9 +2,9 @@
 
 namespace Buzkall\Finisterre\Tests;
 
+use Buzkall\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Buzkall\Finisterre\FinisterreServiceProvider;
 
 class TestCase extends Orchestra
 {
