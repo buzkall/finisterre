@@ -2,6 +2,4 @@
 
 namespace Buzkall\Finisterre;
 
-class Finisterre
-{
-}
+class Finisterre {}

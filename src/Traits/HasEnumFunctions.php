@@ -22,7 +22,7 @@ trait HasEnumFunctions
     public static function options(): array
     {
         return collect(static::cases())
-            ->mapWithKeys(fn($item) => [$item->value => __($item->name)])
+            ->mapWithKeys(fn ($item) => [$item->value => __($item->name)])
             ->toArray();
     }
 }
