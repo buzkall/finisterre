@@ -10,13 +10,6 @@ You can install the package via composer:
 composer require buzkall/finisterre
 ```
 
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="finisterre-migrations"
-php artisan migrate
-```
-
 You can publish the config file with:
 
 ```bash
@@ -27,8 +20,18 @@ This is the contents of the published config file:
 
 ```php
 return [
+    'table_name' => 'finisterre_tasks'
 ];
 ```
+
+You can change the name of the table in the config file
+You can publish and run the migrations with:
+
+```bash
+php artisan vendor:publish --tag="finisterre-migrations"
+php artisan migrate
+```
+
 
 Optionally, you can publish the views using
 

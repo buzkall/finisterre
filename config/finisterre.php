@@ -1,6 +1,5 @@
 <?php
 
-// config for Buzkall/Finisterre
 return [
-
+    'table_name' => 'finisterre_tasks',
 ];
