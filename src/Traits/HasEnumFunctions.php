@@ -11,18 +11,18 @@ trait HasEnumFunctions
 
     public function getLabel(): ?string
     {
-        return __($this->name);
+        return __('finisterre::finisterre.' . $this->name);
     }
 
     public function getPluralLabel(): ?string
     {
-        return __(str($this->name)->plural()->value());
+        return __('finisterre::finisterre.' . str($this->name)->plural()->value());
     }
 
     public static function options(): array
     {
         return collect(static::cases())
-            ->mapWithKeys(fn ($item) => [$item->value => __($item->name)])
+            ->mapWithKeys(fn($item) => [$item->value => __($item->name)])
             ->toArray();
     }
 }
