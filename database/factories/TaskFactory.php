@@ -15,11 +15,11 @@ class TaskFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => fake()->sentence,
-            'description' => fake()->paragraph,
-            'state' => fake()->randomElement(TaskStateEnum::values()),
-            'priority' => fake()->randomElement(TaskPriorityEnum::values()),
-            'due_at' => fake()->dateTimeThisMonth(),
+            'title'        => fake()->sentence,
+            'description'  => fake()->paragraph,
+            'state'        => fake()->randomElement(TaskStateEnum::values()),
+            'priority'     => fake()->randomElement(TaskPriorityEnum::values()),
+            'due_at'       => fake()->dateTimeThisMonth(),
             'completed_at' => fake()->dateTimeThisMonth(),
             //'created_by_user_id'  => User::inRandomOrder()->first() ?: User::factory(),
             //'assigned_to_user_id' => User::inRandomOrder()->first() ?: User::factory(),

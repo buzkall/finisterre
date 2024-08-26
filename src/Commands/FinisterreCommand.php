@@ -7,7 +7,6 @@ use Illuminate\Console\Command;
 class FinisterreCommand extends Command
 {
     public $signature = 'finisterre';
-
     public $description = 'My command';
 
     public function handle(): int

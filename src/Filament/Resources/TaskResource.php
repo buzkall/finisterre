@@ -2,9 +2,9 @@
 
 namespace Buzkall\Finisterre\Filament\Resources;
 
-use Buzkall\Finisterre\Filament\Resources\TaskResource\Pages;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStateEnum;
+use Buzkall\Finisterre\Filament\Resources\TaskResource\Pages;
 use Buzkall\Finisterre\Models\Task;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
