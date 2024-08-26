@@ -7,3 +7,9 @@ All notable changes to `finisterre` will be documented in this file.
 ### What's Changed
 
 First version of the package
+
+## 0.2.0 - 2024-08-26
+
+### What's Changed
+
+Filament resource and translations
