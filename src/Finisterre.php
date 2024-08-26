@@ -1,6 +1,7 @@
 <?php
 
 namespace Buzkall\Finisterre;
+
 use Buzkall\Finisterre\Filament\Resources\TaskResource;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -39,5 +40,3 @@ class Finisterre implements Plugin
         return $plugin;
     }
 }
-
-
