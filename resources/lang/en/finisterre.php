@@ -5,7 +5,7 @@ return [
     'tasks'               => 'Tasks',
     'title'               => 'Title',
     'description'         => 'Description',
-    'state'               => 'State',
+    'status'              => 'State',
     'priority'            => 'Priority',
     'due_at'              => 'Due at',
     'completed_at'        => 'Completed at',
@@ -22,4 +22,7 @@ return [
     'OnHold'              => 'On hold',
     'Doing'               => 'Doing',
     'Done'                => 'Done',
+    'save'                => 'Save',
+    'cancel'              => 'Cancel',
+    'create_task'         => 'Create task',
 ];

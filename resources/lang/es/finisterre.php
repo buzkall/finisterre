@@ -5,7 +5,7 @@ return [
     'tasks'               => 'Tareas',
     'title'               => 'Título',
     'description'         => 'Descripción',
-    'state'               => 'Estado',
+    'status'              => 'Estado',
     'priority'            => 'Prioridad',
     'due_at'              => 'Vence el',
     'completed_at'        => 'Finalizado el',
@@ -22,4 +22,6 @@ return [
     'OnHold'              => 'En espera',
     'Doing'               => 'En proceso',
     'Done'                => 'Hecha',
+    'save'                => 'Guardar',
+    'cancel'              => 'Cancelar',
 ];
