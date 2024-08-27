@@ -24,4 +24,5 @@ return [
     'Done'                => 'Hecha',
     'save'                => 'Guardar',
     'cancel'              => 'Cancelar',
+    'create_task'         => 'Crear tarea',
 ];

@@ -5,6 +5,7 @@ namespace Buzkall\Finisterre\Filament\Pages;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\RichEditor;
@@ -29,7 +30,7 @@ class TasksKanbanBoard extends KanbanBoard
 
     public static function getNavigationLabel(): string
     {
-        return __('finisterre::finisterre.tasks') . 2;
+        return __('finisterre::finisterre.tasks');
     }
 
     protected function getEditModalSaveButtonLabel(): string
@@ -40,6 +41,19 @@ class TasksKanbanBoard extends KanbanBoard
     protected function getEditModalCancelButtonLabel(): string
     {
         return __('finisterre::finisterre.cancel');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make()
+                ->model(FinisterreTask::class)
+                ->label(__('finisterre::finisterre.create_task'))
+                ->createAnother(false)
+                ->form(
+                    $this->getEditModalFormSchema(null)
+                )
+        ];
     }
 
     protected function getEditModalFormSchema(?int $recordId): array
@@ -60,6 +74,7 @@ class TasksKanbanBoard extends KanbanBoard
                     ->label(__('finisterre::finisterre.status'))
                     ->hiddenOn('create')
                     ->options(TaskStatusEnum::class)
+                    ->default(TaskStatusEnum::Open)
                     ->required(),
 
                 Select::make('priority')

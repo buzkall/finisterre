@@ -16,5 +16,5 @@ return [
      * Define if the timestamps should be ignored when sorting.
      * When true, updated_at will not be updated when using setNewOrder
      */
-    'ignore_timestamps' => false,
+    'ignore_timestamps' => true,
 ];

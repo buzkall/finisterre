@@ -7,10 +7,12 @@ use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
-class FinisterreTask extends Model
+class FinisterreTask extends Model implements Sortable
 {
-    use HasFactory;
+    use HasFactory, SortableTrait;
 
     public $fillable = ['title', 'description', 'status', 'priority', 'due_at', 'completed_at', 'created_by_user_id', 'assigned_to_user_id'];
     protected $casts = [

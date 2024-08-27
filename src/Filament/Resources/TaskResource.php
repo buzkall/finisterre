@@ -24,7 +24,7 @@ class TaskResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('finisterre::finisterre.task');
+        return __('finisterre::finisterre.task') . '2';
     }
 
     public static function form(Form $form): Form
