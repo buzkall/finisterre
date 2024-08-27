@@ -16,6 +16,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             //->hasViews()
             ->hasTranslations()
-            ->hasMigration('create_finisterre_tables'); //->hasCommand(FinisterreCommand::class);
+            //->hasCommand(FinisterreCommand::class)
+            ->hasMigration('create_finisterre_tables');
     }
 }

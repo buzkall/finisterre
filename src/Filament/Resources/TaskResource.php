@@ -3,9 +3,9 @@
 namespace Buzkall\Finisterre\Filament\Resources;
 
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStateEnum;
+use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Filament\Resources\TaskResource\Pages;
-use Buzkall\Finisterre\Models\Task;
+use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -19,7 +19,7 @@ use Filament\Tables\Table;
 
 class TaskResource extends Resource
 {
-    protected static ?string $model = Task::class;
+    protected static ?string $model = FinisterreTask::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getModelLabel(): string
@@ -41,10 +41,10 @@ class TaskResource extends Resource
                     ->label(__('finisterre::finisterre.description'))
                     ->columnSpanFull(),
 
-                Select::make('state')
-                    ->label(__('finisterre::finisterre.state'))
+                Select::make('status')
+                    ->label(__('finisterre::finisterre.status'))
                     ->hiddenOn('create')
-                    ->options(TaskStateEnum::class)
+                    ->options(TaskStatusEnum::class)
                     ->required(),
 
                 Select::make('priority')
@@ -83,8 +83,8 @@ class TaskResource extends Resource
                     ->label(__('finisterre::finisterre.title'))
                     ->searchable(),
 
-                TextColumn::make('state')
-                    ->label(__('finisterre::finisterre.state'))
+                TextColumn::make('status')
+                    ->label(__('finisterre::finisterre.status'))
                     ->searchable(),
 
                 TextColumn::make('priority')
@@ -115,9 +115,9 @@ class TaskResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                SelectFilter::make('state')
-                    ->label(__('finisterre::finisterre.state'))
-                    ->options(TaskStateEnum::class),
+                SelectFilter::make('status')
+                    ->label(__('finisterre::finisterre.status'))
+                    ->options(TaskStatusEnum::class),
 
                 SelectFilter::make('priority')
                     ->label(__('finisterre::finisterre.priority'))

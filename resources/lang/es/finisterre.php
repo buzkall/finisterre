@@ -2,6 +2,7 @@
 
 return [
     'task'                => 'Tarea',
+    'tasks'               => 'Tareas',
     'title'               => 'Título',
     'description'         => 'Descripción',
     'state'               => 'Estado',

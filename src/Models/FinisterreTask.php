@@ -2,18 +2,19 @@
 
 namespace Buzkall\Finisterre\Models;
 
-//use App\Models\User;
-use Buzkall\Finisterre\Database\Factories\TaskFactory;
+use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStateEnum;
+use Buzkall\Finisterre\Enums\TaskStatusEnum;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Task extends Model
+class FinisterreTask extends Model
 {
-    public $fillable = ['title', 'description', 'state', 'priority', 'due_at', 'completed_at', 'created_by_user_id', 'assigned_to_user_id'];
+    use HasFactory;
+
+    public $fillable = ['title', 'description', 'status', 'priority', 'due_at', 'completed_at', 'created_by_user_id', 'assigned_to_user_id'];
     protected $casts = [
-        'state'        => TaskStateEnum::class,
+        'status'       => TaskStatusEnum::class,
         'priority'     => TaskPriorityEnum::class,
         'due_at'       => 'datetime',
         'completed_at' => 'datetime',
@@ -22,25 +23,25 @@ class Task extends Model
     protected static function booted(): void
     {
         static::creating(function($task) {
-            $task->state = $task->state ?? TaskStateEnum::Open;
+            $task->status = $task->status ?? TaskStatusEnum::Open;
             $task->created_by_user_id = $task->created_by_user_id ?? auth()->id();
         });
 
         static::updating(function($task) {
-            if ($task->isDirty('state') && $task->state == TaskStateEnum::Done) {
+            if ($task->isDirty('status') && $task->status == TaskStatusEnum::Done) {
                 $task->completed_at = now();
             }
         });
     }
 
-    protected static function newFactory()
-    {
-        return new TaskFactory;
-    }
-
     public function getTable()
     {
         return config('finisterre.table_name');
+    }
+
+    protected static function newFactory(): FinisterreTaskFactory
+    {
+        return FinisterreTaskFactory::new();
     }
 
     /*

@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre;
 
+use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\Filament\Resources\TaskResource;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -19,7 +20,7 @@ class Finisterre implements Plugin
             ->resources([
                 TaskResource::class,
             ])
-            ->pages([]);
+            ->pages([TasksKanbanBoard::class]);
     }
 
     public function boot(Panel $panel): void

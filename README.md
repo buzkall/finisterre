@@ -32,7 +32,6 @@ php artisan vendor:publish --tag="finisterre-migrations"
 php artisan migrate
 ```
 
-
 Optionally, you can publish the views using
 
 ```bash
@@ -41,9 +40,21 @@ php artisan vendor:publish --tag="finisterre-views"
 
 ## Usage
 
+Add the plugin to your panel provider
+
 ```php
-$finisterre = new Buzkall\Finisterre();
-echo $finisterre->echoPhrase('Hello, Buzkall!');
+
+use Buzkall\Finisterre\Finisterre;
+
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            Finisterre::make(),
+        ])
+    ])
+}
+
 ```
 
 ## Testing

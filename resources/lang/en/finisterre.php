@@ -2,6 +2,7 @@
 
 return [
     'task'                => 'Task',
+    'tasks'               => 'Tasks',
     'title'               => 'Title',
     'description'         => 'Description',
     'state'               => 'State',

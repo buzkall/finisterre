@@ -2,22 +2,21 @@
 
 namespace Buzkall\Finisterre\Database\Factories;
 
-//use App\Models\User;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStateEnum;
-use Illuminate\Console\View\Components\Task;
+use Buzkall\Finisterre\Enums\TaskStatusEnum;
+use Buzkall\Finisterre\Models\FinisterreTask;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class TaskFactory extends Factory
+class FinisterreTaskFactory extends Factory
 {
-    protected $model = Task::class;
+    protected $model = FinisterreTask::class;
 
     public function definition(): array
     {
         return [
             'title'        => fake()->sentence,
             'description'  => fake()->paragraph,
-            'state'        => fake()->randomElement(TaskStateEnum::values()),
+            'status'       => fake()->randomElement(TaskStatusEnum::values()),
             'priority'     => fake()->randomElement(TaskPriorityEnum::values()),
             'due_at'       => fake()->dateTimeThisMonth(),
             'completed_at' => fake()->dateTimeThisMonth(),
