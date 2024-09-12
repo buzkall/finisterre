@@ -10,6 +10,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Contracts\Support\Htmlable;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
@@ -22,6 +23,8 @@ class TasksKanbanBoard extends KanbanBoard
     protected string $editModalTitle = '';
     protected string $editModalSaveButtonLabel = 'Save';
     protected string $editModalCancelButtonLabel = 'Cancel';
+    protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
+    protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
 
     public function getTitle(): string|Htmlable
     {
@@ -89,6 +92,20 @@ class TasksKanbanBoard extends KanbanBoard
                     ->label(__('finisterre::finisterre.completed_at'))
                     ->hiddenOn('create')
                     ->disabled(),
+
+                SpatieMediaLibraryFileUpload::make('attachments')
+                    ->label(__('finisterre::finisterre.attachments'))
+                    ->multiple()
+                    // ->disk('private') TODO
+                    ->collection('tasks'),
+
+                /*TextInput::make('created_by_user_id')
+                    ->label(__('finisterre::finisterre.created_by_user_id'))
+                    ->numeric(),
+
+                TextInput::make('assigned_to_user_id')
+                    ->label(__('finisterre::finisterre.assigned_to_user_id'))
+                    ->numeric(),*/
             ])->columns()
         ];
     }

@@ -12,9 +12,10 @@ enum TaskStatusEnum: string implements HasLabel
     use IsKanbanStatus;
 
     case Open = 'open';
-    case OnHold = 'on_hold';
     case Doing = 'doing';
+    case OnHold = 'on_hold';
     case Done = 'done';
+    case Rejected = 'rejected';
 
     public function getTitle(): string
     {

@@ -12,4 +12,13 @@ enum TaskPriorityEnum: string implements HasLabel
     case Low = 'low';
     case Medium = 'medium';
     case High = 'high';
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::Low    => 'bg-gray-200',
+            self::Medium => 'bg-blue-300',
+            self::High   => 'bg-red-300',
+        };
+    }
 }

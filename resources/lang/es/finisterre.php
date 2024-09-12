@@ -22,6 +22,7 @@ return [
     'OnHold'              => 'En espera',
     'Doing'               => 'En proceso',
     'Done'                => 'Hecha',
+    'Rejected'            => 'Rechazada',
     'save'                => 'Guardar',
     'cancel'              => 'Cancelar',
     'create_task'         => 'Crear tarea',

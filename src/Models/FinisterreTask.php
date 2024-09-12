@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class FinisterreTask extends Model implements Sortable
+class FinisterreTask extends Model implements HasMedia, Sortable
 {
-    use HasFactory, SortableTrait;
+    use HasFactory, InteractsWithMedia, SortableTrait;
 
     public $fillable = ['title', 'description', 'status', 'priority', 'due_at', 'completed_at', 'created_by_user_id', 'assigned_to_user_id'];
     protected $casts = [

@@ -22,6 +22,7 @@ return [
     'OnHold'              => 'On hold',
     'Doing'               => 'Doing',
     'Done'                => 'Done',
+    'Rejected'            => 'Rejected',
     'save'                => 'Save',
     'cancel'              => 'Cancel',
     'create_task'         => 'Create task',
