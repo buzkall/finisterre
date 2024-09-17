@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 0.4.1 - 2024-09-17
+
+Fix error loading package
+
 ## 0.3.0 - 2024-09-12
 
 Add Kanban page
