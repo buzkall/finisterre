@@ -20,8 +20,16 @@ This is the contents of the published config file:
 
 ```php
 return [
-    'table_name' => 'finisterre_tasks'
+    'active'              => env('FINISTERRE_ACTIVE', false),
+    'table_name'          => 'finisterre_tasks',
+    'comments_table_name' => 'finisterre_task_comments',
 ];
+```
+
+By default, the package will not be active, this can be changed adding the following to your .env file
+
+```bash
+FINISTERRE_ACTIVE=true
 ```
 
 You can change the name of the table in the config file

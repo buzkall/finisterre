@@ -26,6 +26,11 @@ class TasksKanbanBoard extends KanbanBoard
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
     protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return config('finisterre.active') ?? false;
+    }
+
     public function getTitle(): string|Htmlable
     {
         return __('finisterre::finisterre.tasks');

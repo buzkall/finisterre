@@ -10,6 +10,27 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class FinisterreServiceProvider extends PackageServiceProvider
 {
+    public function register(): void
+    {
+        // Manually load the configuration file, because the package hasn't been registered yet
+        $this->mergeConfigFrom(__DIR__ . '/../config/finisterre.php', 'finisterre');
+
+        if (! config('finisterre.active')) {
+            return;
+        }
+
+        parent::register();
+    }
+
+    public function boot(): void
+    {
+        if (! config('finisterre.active')) {
+            return;
+        }
+
+        parent::boot();
+    }
+
     public function configurePackage(Package $package): void
     {
         // More info: https://github.com/spatie/laravel-package-tools
