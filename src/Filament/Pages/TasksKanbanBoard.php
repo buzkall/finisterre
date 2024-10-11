@@ -60,6 +60,7 @@ class TasksKanbanBoard extends KanbanBoard
         return [
             CreateAction::make()
                 ->model(FinisterreTask::class)
+                ->label(__('finisterre::finisterre.create_task'))
                 ->modalHeading(__('finisterre::finisterre.create_task'))
                 ->form($this->getEditModalFormSchema(null))
                 ->modalSubmitAction(fn($action) => $action->keyBindings(['mod+s'])) // save with mod+s
