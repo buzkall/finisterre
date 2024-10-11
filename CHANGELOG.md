@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 0.5.1 - 2024-10-11
+
+Missing label
+
 ## 0.5.0 - 2024-10-11
 
 Add task comments inside the modal
