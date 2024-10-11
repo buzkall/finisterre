@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 0.5.0 - 2024-10-11
+
+Add task comments inside the modal
+
 ## 0.4.1 - 2024-09-17
 
 Fix error loading package
