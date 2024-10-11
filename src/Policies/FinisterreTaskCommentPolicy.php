@@ -19,7 +19,7 @@ class FinisterreTaskCommentPolicy
 
     public function create(Authenticatable $user): bool
     {
-        return false;
+        return true;
     }
 
     public function update(Authenticatable $user, FinisterreTaskComment $finisterreTaskComment): bool
