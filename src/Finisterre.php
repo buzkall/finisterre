@@ -16,8 +16,7 @@ class Finisterre implements Plugin
     public function register(Panel $panel): void
     {
         $panel
-            ->resources([
-            ])
+            ->resources([])
             ->pages([TasksKanbanBoard::class]);
     }
 

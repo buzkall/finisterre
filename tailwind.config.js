@@ -4,7 +4,7 @@ export default {
         './resources/**/*.blade.php',
     ],
     safelist: [
-        'bg-red-300', 'bg-blue-300', 'bg-gray-200'
+        'bg-red-300', 'bg-green-300', 'bg-blue-300', 'bg-gray-200'
     ],
     theme: {
         extend: {},

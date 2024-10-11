@@ -12,6 +12,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\View;
 use Illuminate\Contracts\Support\Htmlable;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
 
@@ -21,12 +22,15 @@ class TasksKanbanBoard extends KanbanBoard
     protected static string $statusEnum = TaskStatusEnum::class;
     protected string $editModalWidth = '3xl';
     protected string $editModalTitle = '';
-    protected string $editModalSaveButtonLabel = 'Save';
-    protected string $editModalCancelButtonLabel = 'Cancel';
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
     protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
 
     public static function shouldRegisterNavigation(): bool
+    {
+        return config('finisterre.active') ?? false;
+    }
+
+    public static function canAccess(): bool
     {
         return config('finisterre.active') ?? false;
     }
@@ -56,11 +60,11 @@ class TasksKanbanBoard extends KanbanBoard
         return [
             CreateAction::make()
                 ->model(FinisterreTask::class)
-                ->label(__('finisterre::finisterre.create_task'))
+                ->modalHeading(__('finisterre::finisterre.create_task'))
+                ->form($this->getEditModalFormSchema(null))
+                ->modalSubmitAction(fn($action) => $action->keyBindings(['mod+s'])) // save with mod+s
                 ->createAnother(false)
-                ->form(
-                    $this->getEditModalFormSchema(null)
-                )
+                ->keyBindings(['mod+b']) // open create new with mod+b
         ];
     }
 
@@ -88,6 +92,7 @@ class TasksKanbanBoard extends KanbanBoard
                 Select::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
                     ->options(TaskPriorityEnum::class)
+                    ->default(TaskPriorityEnum::Low)
                     ->required(),
 
                 DatePicker::make('due_at')
@@ -104,13 +109,18 @@ class TasksKanbanBoard extends KanbanBoard
                     // ->disk('private') TODO
                     ->collection('tasks'),
 
-                /*TextInput::make('created_by_user_id')
-                    ->label(__('finisterre::finisterre.created_by_user_id'))
+                /*TextInput::make('user_id')
+                    ->label(__('finisterre::finisterre.user_id'))
                     ->numeric(),
 
-                TextInput::make('assigned_to_user_id')
-                    ->label(__('finisterre::finisterre.assigned_to_user_id'))
+                TextInput::make('assignee_id')
+                    ->label(__('finisterre::finisterre.assignee_id'))
                     ->numeric(),*/
+
+                View::make('finisterre::test')
+                    ->hiddenOn('create')
+                    ->columnSpanFull()
+
             ])->columns()
         ];
     }

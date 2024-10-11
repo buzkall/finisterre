@@ -8,23 +8,38 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create(config('finisterre.table_name'), function (Blueprint $table) {
+        Schema::create(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->text('description')->nullable();
+            $table->longText('description')->nullable();
             $table->string('status');
             $table->string('priority');
             $table->dateTime('due_at')->nullable();
             $table->dateTime('completed_at')->nullable();
             $table->unsignedInteger('order_column')->nullable();
-            $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('assigned_to_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('creator_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->nullOnDelete();
+            $table->foreignId('assignee_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->nullOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('task_id')->nullable()->constrained(config('finisterre.table_name'))->cascadeOnDelete();
+            $table->longText('comment');
+            $table->foreignId('creator_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->nullOnDelete();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists(config('finisterre.table_name'));
+        Schema::dropIfExists(config('finisterre.comments.table_name', 'finisterre_task_comments'));
+        Schema::dropIfExists(config('finisterre.table_name', 'finisterre_tasks'));
     }
 };
