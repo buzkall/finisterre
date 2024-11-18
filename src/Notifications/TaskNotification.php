@@ -35,8 +35,6 @@ class TaskNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        ray($this->task);
-
         return (new MailMessage)
             ->subject(__('Task :title', ['title' => $this->task->title]))
             ->line(new HtmlString($this->task->description))

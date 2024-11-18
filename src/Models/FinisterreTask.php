@@ -48,7 +48,7 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         });
 
         static::saved(function($task) {
-            defer(fn() => App\Models\User::find(1)->notify(new TaskNotification($task)));
+            defer(fn() => (config('finisterre.authenticatable'))::find(1)->notify(new TaskNotification($task)));
         });
     }
 
