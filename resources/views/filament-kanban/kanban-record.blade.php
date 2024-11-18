@@ -30,4 +30,12 @@
             @endif
         </div>
     </div>
+
+    <div class="flex">
+        @foreach($record->tags as $tag)
+            <div class="p-1 border rounded-lg text-xs text-center bg-primary-500 text-white w-auto">
+                #{{ $tag->name }}
+            </div>
+        @endforeach
+    </div>
 </div>

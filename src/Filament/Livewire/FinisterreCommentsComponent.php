@@ -35,6 +35,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
             $editor = Forms\Components\MarkdownEditor::make('comment');
         } else {
             $editor = Forms\Components\RichEditor::make('comment')
+                ->fileAttachmentsVisibility('private')
                 ->extraInputAttributes(['style' => 'min-height: 6rem']);
         }
 
@@ -98,6 +99,6 @@ class FinisterreCommentsComponent extends Component implements HasForms
 
     public function render(): View
     {
-        return view('finisterre::comments');
+        return view('finisterre::comments.comments');
     }
 }

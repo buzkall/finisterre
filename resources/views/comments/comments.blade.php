@@ -3,12 +3,14 @@
         <div class="space-y-4">
             {{ $this->form }}
 
-            <x-filament::button
-                    wire:click="create"
-                    color="primary"
-            >
-                {{ __('finisterre::finisterre.comments.add') }}
-            </x-filament::button>
+            <div class="w-full flex justify-end">
+                <x-filament::button
+                        wire:click="create"
+                        color="primary"
+                >
+                    {{ __('finisterre::finisterre.comments.add') }}
+                </x-filament::button>
+            </div>
         </div>
     @endif
 

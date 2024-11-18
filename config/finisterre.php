@@ -3,12 +3,15 @@
 return [
     'active'     => env('FINISTERRE_ACTIVE', false),
     'table_name' => 'finisterre_tasks',
+    'slug'       => 'tasks',
 
     'model_policy' => Buzkall\Finisterre\Policies\FinisterreTaskPolicy::class,
 
     'authenticatable'            => \App\Models\User::class,
     'authenticatable_table_name' => 'users',
     'user_name_attribute'        => 'name',
+
+    'hidden_statuses' => [],
 
     'comments' => [
         'table_name'          => 'finisterre_task_comments',
@@ -39,6 +42,7 @@ return [
             'strike',
             'underline',
             'undo',
+            'attachFiles',
         ],
     ]
 ];

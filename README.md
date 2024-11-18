@@ -40,6 +40,13 @@ php artisan vendor:publish --tag="finisterre-migrations"
 php artisan migrate
 ```
 
+If you don't already have the spatie tags package, publish the migrations
+
+```bash
+php artisan vendor:publish --provider="Spatie\Tags\TagsServiceProvider" --tag="tags-migrations"
+php artisan migrate
+```
+
 Optionally, you can publish the views using
 
 ```bash

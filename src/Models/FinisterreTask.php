@@ -13,10 +13,11 @@ use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Tags\HasTags;
 
 class FinisterreTask extends Model implements HasMedia, Sortable
 {
-    use HasFactory, InteractsWithMedia, SortableTrait;
+    use HasFactory, HasTags, InteractsWithMedia, SortableTrait;
 
     public $fillable = ['title', 'description', 'status', 'priority', 'due_at', 'completed_at',
         'creator_id', 'assignee_id'];
@@ -26,6 +27,7 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         'due_at'       => 'datetime',
         'completed_at' => 'datetime',
     ];
+    protected $with = ['tags'];
 
     protected static function booted(): void
     {
@@ -35,8 +37,12 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         });
 
         static::updating(function($task) {
-            if ($task->isDirty('status') && $task->status == TaskStatusEnum::Done) {
-                $task->completed_at = now();
+            if ($task->isDirty('status')) {
+                if ($task->status == TaskStatusEnum::Done) {
+                    $task->completed_at = now();
+                } elseif (! is_null($task->completed_at)) {
+                    $task->completed_at = null;
+                }
             }
         });
     }
