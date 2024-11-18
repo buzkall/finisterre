@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.2.0 - 2024-11-18
+
+First approach to notifications
+
 ## 1.1.0 - 2024-11-18
 
 **Full Changelog**: https://github.com/buzkall/finisterre/compare/1.0.0...1.1.0
