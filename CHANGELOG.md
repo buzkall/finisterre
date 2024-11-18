@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.2.1 - 2024-11-18
+
+Fix mail sending
+
 ## 1.2.0 - 2024-11-18
 
 First approach to notifications
