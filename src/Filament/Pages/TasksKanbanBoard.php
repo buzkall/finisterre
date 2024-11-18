@@ -18,7 +18,6 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\View;
-use Filament\Pages\Dashboard\Concerns\HasFilters;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
@@ -29,7 +28,8 @@ use Spatie\Tags\Tag;
 
 class TasksKanbanBoard extends KanbanBoard
 {
-    //use HasFilters;
+    #[Url]
+    public ?array $filters = null;
 
     protected static string $model = FinisterreTask::class;
     protected static string $statusEnum = TaskStatusEnum::class;
@@ -38,9 +38,6 @@ class TasksKanbanBoard extends KanbanBoard
     protected static string $view = 'finisterre::filament-kanban.kanban-board';
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
     protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
-
-    #[Url]
-    public ?array $filters = null;
 
     public static function getSlug(): string
     {
@@ -93,15 +90,19 @@ class TasksKanbanBoard extends KanbanBoard
                 ->slideOver(false)
                 ->label(__('filament-panels::pages/dashboard.actions.filter.label'))
                 ->icon('heroicon-m-funnel')
-                ->badge(fn() => $this->filters ? count($this->filters) : null)
+                ->badge(function() {
+                    return $this->filters ? count($this->filters) : null;
+                })
                 ->badgeColor('warning')
                 ->form(
                     [
                         Select::make('filter_tags')
+                            ->label(__('finisterre::finisterre.tags'))
                             ->multiple()
                             ->options(Tag::withType('tasks')->get()->pluck('name', 'name')),
 
-                        //TextInput::make('test')
+                       /* TextInput::make('filter_text')
+                            ->label(__('finisterre::finisterre.text'))*/
                     ]
                 )
                 ->action(fn($data) => $this->filters = $data),
@@ -187,6 +188,7 @@ class TasksKanbanBoard extends KanbanBoard
 
                 Placeholder::make('dates')
                     ->hiddenLabel()
+                    ->hiddenOn('create')
                     ->hintIcon('heroicon-o-clock')
                     ->hint(fn($record) => new HtmlString(
                         __('finisterre::finisterre.created_at') . ': ' .
@@ -202,7 +204,8 @@ class TasksKanbanBoard extends KanbanBoard
                         ->label(self::getEditModalSaveButtonLabel())
                         ->submit('save')
                 ])->columnSpanFull()
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->hiddenOn('create'),
 
                 View::make('finisterre::comments.view')
                     ->hiddenOn('create')

@@ -5,6 +5,7 @@ namespace Buzkall\Finisterre\Models;
 use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
+use Buzkall\Finisterre\Notifications\TaskNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,6 +45,10 @@ class FinisterreTask extends Model implements HasMedia, Sortable
                     $task->completed_at = null;
                 }
             }
+        });
+
+        static::saved(function($task) {
+            defer(fn() => App\Models\User::find(1)->notify(new TaskNotification($task)));
         });
     }
 
