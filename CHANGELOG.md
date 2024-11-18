@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.0.0 - 2024-11-18
+
+Out of beta
+Tags, search and more config
+
 ## 0.5.3 - 2024-10-11
 
 npm build
