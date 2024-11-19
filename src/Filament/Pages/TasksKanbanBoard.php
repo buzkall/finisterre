@@ -88,6 +88,7 @@ class TasksKanbanBoard extends KanbanBoard
 
             Action::make('filters')
                 ->slideOver(false)
+                ->keyBindings(['mod+shift+f']) // open filters with mod+shift+f
                 ->label(__('filament-panels::pages/dashboard.actions.filter.label'))
                 ->icon('heroicon-m-funnel')
                 ->badge(function() {
@@ -171,16 +172,24 @@ class TasksKanbanBoard extends KanbanBoard
                 SpatieMediaLibraryFileUpload::make('attachments')
                     ->label(__('finisterre::finisterre.attachments'))
                     ->multiple()
-                    // ->disk('private') TODO
-                    ->collection('tasks'),
-
-                /*TextInput::make('user_id')
-                    ->label(__('finisterre::finisterre.user_id'))
-                    ->numeric(),*/
+                    ->disk(config('finisterre.attachments_disk') ?? 'public')
+                    ->collection('tasks')
+                    ->openable()
+                    ->downloadable(),
 
                 Select::make('assignee_id')
                     ->label(__('finisterre::finisterre.assignee_id'))
-                    ->relationship('assignee', 'name'), // TODO: configure filter
+                    ->required()
+                    ->relationship(
+                        'assignee',
+                        config('finisterre.authenticatable_attribute'),
+                        fn($query) => $query
+                            ->when(
+                                config('finisterre.authenticatable_filter_column'),
+                                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+                            )
+                    )
+                    ->default(config('finisterre.fallback_notifiable_id')),
 
                 SpatieTagsInput::make('tags')
                     ->label(__('finisterre::finisterre.tags'))
@@ -203,6 +212,7 @@ class TasksKanbanBoard extends KanbanBoard
                     FormAction::make('submit')
                         ->label(self::getEditModalSaveButtonLabel())
                         ->submit('save')
+                        ->keyBindings(['mod+s'])
                 ])->columnSpanFull()
                     ->alignEnd()
                     ->hiddenOn('create'),

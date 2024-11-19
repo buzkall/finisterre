@@ -12,50 +12,31 @@ class TaskNotification extends Notification
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(public FinisterreTask $task)
-    {
-        //
-    }
+    public function __construct(public FinisterreTask $task) {}
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Task :title', ['title' => $this->task->title]))
+            ->subject(__(
+                '[:priority] Task :title',
+                ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
+            ))
+            ->greeting(__('Changes in task :title', ['title' => $this->task->title]))
             ->line(new HtmlString($this->task->description))
+            ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
+                $mail->line(__('Tags') . ': ' . new HtmlString($this->task->tags->map(fn($tag) => $tag->name)->implode('<br>')));
+            })
             ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
-                $mail->line('Comments:');
+                $mail->line(__('Comments') . ':');
                 $mail->line(new HtmlString($this->task->comments->map(fn($comment) => $comment->comment)->implode('<br>')));
             })
             //->action(__('View task'), url(config('finisterre.slug') . '/' . $this->task->id))
             ->action(__('View task'), url(config('finisterre.slug')))
-            ->line('Thank you for using our application!');
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            //
-        ];
+            ->salutation(' ');
     }
 }

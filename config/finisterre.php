@@ -9,9 +9,17 @@ return [
 
     'authenticatable'            => \App\Models\User::class,
     'authenticatable_table_name' => 'users',
-    'user_name_attribute'        => 'name',
+    'authenticatable_attribute'  => 'name',
+
+    // fill in case of filtering the assigned user
+    'authenticatable_filter_column' => '', // role
+    'authenticatable_filter_value'  => '', // admin
+    'fallback_notifiable_id'        => 1,
 
     'hidden_statuses' => [],
+
+    // To set the attachments as private, add a new disk in config/filesystems.php
+    'attachments_disk' => 'public',
 
     'comments' => [
         'table_name'          => 'finisterre_task_comments',
