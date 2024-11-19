@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.3.0 - 2024-11-19
+
+Private attachments
+Improve mail notifications
+
 ## 1.2.1 - 2024-11-18
 
 Fix mail sending
