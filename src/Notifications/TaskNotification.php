@@ -23,20 +23,22 @@ class TaskNotification extends Notification
     {
         return (new MailMessage)
             ->subject(__(
-                '[:priority] Task :title',
+                'finisterre::finisterre.notification.subject',
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
             ))
-            ->greeting(__('Changes in task :title', ['title' => $this->task->title]))
+            ->greeting(__('finisterre::finisterre.notification.greeting', ['title' => $this->task->title]))
             ->line(new HtmlString($this->task->description))
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
-                $mail->line(__('Tags') . ': ' . new HtmlString($this->task->tags->map(fn($tag) => $tag->name)->implode('<br>')));
+                $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
             })
             ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
-                $mail->line(__('Comments') . ':');
-                $mail->line(new HtmlString($this->task->comments->map(fn($comment) => $comment->comment)->implode('<br>')));
+                $mail->line(__('finisterre::finisterre.comments.title') . ':');
+                $mail->line(new HtmlString($this->task->comments->sortByDesc('created_at')
+                    ->map(fn($comment) => $comment->comment . ' ' . $comment->created_at->format('d-m-y H:i:s'))
+                    ->implode('<br><hr/>')));
             })
-            //->action(__('View task'), url(config('finisterre.slug') . '/' . $this->task->id))
-            ->action(__('View task'), url(config('finisterre.slug')))
+            //->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
+            ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug')))
             ->salutation(' ');
     }
 }

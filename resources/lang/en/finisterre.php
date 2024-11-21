@@ -37,9 +37,21 @@ return [
         'add'           => 'Add comment',
         'empty'         => 'No comments',
         'delete'        => 'Delete comment',
+        'notify'        => 'Notify to',
+        'notify_hint'   => 'The selected users will receive an email notification.',
         'notifications' => [
             'created' => 'Comment created',
             'deleted' => 'Comment deleted',
         ],
-    ]
+    ],
+    'notification' => [
+        'subject'  => '[:priority] task :title',
+        'greeting' => 'Changes in task :title',
+        'cta'      => 'View task',
+    ],
+    'comment_notification' => [
+        'subject'  => 'New comment in task :title',
+        'greeting' => 'New comment in task :title',
+        'cta'      => 'View task',
+    ],
 ];

@@ -2,7 +2,9 @@
 
 namespace Buzkall\Finisterre\Filament\Livewire;
 
+use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
+use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -46,7 +48,21 @@ class FinisterreCommentsComponent extends Component implements HasForms
             ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));
 
         return $form
-            ->schema([$editor])
+            ->schema([
+                $editor,
+
+                Forms\Components\Select::make('notify')
+                    ->multiple()
+                    ->label(__('finisterre::finisterre.comments.notify'))
+                    ->hint(__('finisterre::finisterre.comments.notify_hint'))
+                    ->options(
+                        fn() => config('finisterre.authenticatable')::query()
+                            ->when(
+                                config('finisterre.authenticatable_filter_column'),
+                                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+                            )->pluck('name', 'id')
+                    )
+                ])
             ->statePath('data');
     }
 
@@ -70,7 +86,15 @@ class FinisterreCommentsComponent extends Component implements HasForms
             ->success()
             ->send();
 
+        if ($data['notify']) {
+            config('finisterre.authenticatable')::findMany($data['notify'])
+                ->each
+                ->notify(new TaskCommentNotification($this->record));
+        }
+
         $this->form->fill();
+
+        $this->dispatch('commentCreated')->to(TasksKanbanBoard::class);
     }
 
     public function delete(int $id): void

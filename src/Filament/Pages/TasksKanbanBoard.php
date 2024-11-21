@@ -23,7 +23,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Url;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
-use Override;
 use Spatie\Tags\Tag;
 
 class TasksKanbanBoard extends KanbanBoard
@@ -38,6 +37,7 @@ class TasksKanbanBoard extends KanbanBoard
     protected static string $view = 'finisterre::filament-kanban.kanban-board';
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
     protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
+    protected $listeners = ['commentCreated' => '$refresh'];
 
     public static function getSlug(): string
     {
@@ -114,12 +114,11 @@ class TasksKanbanBoard extends KanbanBoard
     protected function records(): Collection
     {
         return $this->getEloquentQuery()
+            ->with(['comments', 'media'])
             ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered())
             ->when(
                 $this->filters['filter_tags'] ?? null,
                 function($query, $tags) {
-                    ray($tags);
-
                     foreach ($tags as $tag) {
                         $query->orWhereHas(
                             'tags',
@@ -213,6 +212,7 @@ class TasksKanbanBoard extends KanbanBoard
                         ->label(self::getEditModalSaveButtonLabel())
                         ->submit('save')
                         ->keyBindings(['mod+s'])
+
                 ])->columnSpanFull()
                     ->alignEnd()
                     ->hiddenOn('create'),

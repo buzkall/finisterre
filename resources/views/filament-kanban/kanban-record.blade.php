@@ -31,11 +31,29 @@
         </div>
     </div>
 
-    <div class="flex">
-        @foreach($record->tags as $tag)
-            <div class="p-1 border rounded-lg text-xs text-center bg-primary-500 text-white w-auto">
-                #{{ $tag->name }}
+    <div class="flex justify-between items-center py-1 text-xs text-gray-500 dark:text-gray-400">
+        <div class="flex gap-2 items-center">
+            <div class="flex">
+                {{ $record->media->count() }}
+                <x-filament::icon icon="heroicon-o-paper-clip" class="h-4 w-4"/>
             </div>
-        @endforeach
+
+            <div class="flex">
+                {{ $record->comments->count() }}
+                <x-filament::icon icon="heroicon-o-chat-bubble-oval-left" class="h-4 w-4"/>
+            </div>
+
+            <div>
+                @foreach($record->tags as $tag)
+                    <div class="p-1 border rounded-lg text-center bg-primary-500 text-white w-auto">
+                        #{{ $tag->name }}
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div>
+            {{ $record->updated_at->format('d/m/y H:i:s') }}
+        </div>
     </div>
 </div>
