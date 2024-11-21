@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.5.0 - 2024-11-21
+
+Improve task notifications
+
 ## 1.4.0 - 2024-11-21
 
 Add icons to tasks
