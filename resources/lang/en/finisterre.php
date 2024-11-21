@@ -45,9 +45,11 @@ return [
         ],
     ],
     'notification' => [
-        'subject'  => '[:priority] task :title',
-        'greeting' => 'Changes in task :title',
-        'cta'      => 'View task',
+        'subject'          => '[:priority] task :title',
+        'greeting_new'     => 'New task :title',
+        'greeting_changes' => 'Changes in task :title',
+        'cta'              => 'View task',
+        'changes'          => 'Changes',
     ],
     'comment_notification' => [
         'subject'  => 'New comment in task :title',

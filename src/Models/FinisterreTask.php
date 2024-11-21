@@ -50,11 +50,12 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         static::saved(function($task) {
             defer(function() use ($task) {
                 if ($task->assignee) {
-                    return $task->assignee->notify(new TaskNotification($task));
+                    return $task->assignee->notify(new TaskNotification($task, $task->getChanges()));
                 }
 
+                // fallback to the default notifiable
                 return (config('finisterre.authenticatable'))::find(config('finisterre.fallback_notifiable_id'))
-                    ->notify(new TaskNotification($task));
+                    ->notify(new TaskNotification($task, $task->getChanges()));
             });
         });
     }

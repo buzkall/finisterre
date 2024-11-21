@@ -12,7 +12,7 @@ class TaskNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public FinisterreTask $task) {}
+    public function __construct(public FinisterreTask $task, public array $taskChanges = []) {}
 
     public function via(object $notifiable): array
     {
@@ -26,8 +26,22 @@ class TaskNotification extends Notification
                 'finisterre::finisterre.notification.subject',
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
             ))
-            ->greeting(__('finisterre::finisterre.notification.greeting', ['title' => $this->task->title]))
-            ->line(new HtmlString($this->task->description))
+            ->greeting(
+                empty($this->taskChanges) ?
+                    __('finisterre::finisterre.notification.greeting_new', ['title' => $this->task->title]) :
+                    __('finisterre::finisterre.notification.greeting_changes', ['title' => $this->task->title])
+            )
+            ->when(
+                empty($this->taskChanges),
+                fn(MailMessage $mail) => $mail->line(new HtmlString($this->task->description)),
+                function(MailMessage $mail) {
+                    $mail->line(__('finisterre::finisterre.notification.changes'));
+                    $mail->line(new HtmlString('<ul>' . collect($this->taskChanges)
+                        ->reject(fn($change, $key) => $key == 'updated_at')
+                        ->map(fn($value, $key) => '<li>' . __($key) . ': ' . $value . '</li>')
+                        ->implode('') . '</ul>'));
+                },
+            )
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
                 $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
             })

@@ -14,7 +14,6 @@ class FinisterreTaskComment extends Model implements HasMedia
     use HasFactory, InteractsWithMedia;
 
     public $fillable = ['task_id', 'comment', 'creator_id'];
-    protected $touches = ['task'];
 
     protected static function booted(): void
     {

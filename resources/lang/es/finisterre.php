@@ -45,9 +45,11 @@ return [
         ],
     ],
     'notification' => [
-        'subject'  => '[:priority] tarea :title',
-        'greeting' => 'Cambios en la tarea :title',
-        'cta'      => 'Ver tarea',
+        'subject'          => '[:priority] tarea :title',
+        'greeting_new'     => 'Nueva tarea :title',
+        'greeting_changes' => 'Cambios en la tarea :title',
+        'cta'              => 'Ver tarea',
+        'changes'          => 'Cambios',
     ],
     'comment_notification' => [
         'subject'  => 'Nuevo comentario en la tarea :title',
