@@ -31,6 +31,7 @@ class TaskNotification extends Notification
                     __('finisterre::finisterre.notification.greeting_new', ['title' => $this->task->title]) :
                     __('finisterre::finisterre.notification.greeting_changes', ['title' => $this->task->title])
             )
+            ->line(new HtmlString('<style>img {height: auto !important}</style>'))
             ->when(
                 empty($this->taskChanges),
                 fn(MailMessage $mail) => $mail->line(new HtmlString($this->task->description)),

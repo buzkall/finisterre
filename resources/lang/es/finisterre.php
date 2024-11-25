@@ -22,7 +22,7 @@ return [
     'High'          => 'Alta',
     'Urgent'        => 'Urgente',
     'Open'          => 'Abierta',
-    'OnHold'        => 'En espera',
+    'OnHold'        => 'En revisión',
     'Doing'         => 'En proceso',
     'Done'          => 'Hecha',
     'Rejected'      => 'Rechazada',

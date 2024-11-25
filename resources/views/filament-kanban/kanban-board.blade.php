@@ -10,8 +10,7 @@
     </div>
 
     @unless($disableEditModal)
-        {{--<x-filament-kanban::edit-record-modal/>--}}
-
+        {{-- Here was calling to the edit-record-modal component, but I've customized it here --}}
         <x-filament-panels::form wire:submit.prevent="editModalFormSubmitted">
             <x-filament::modal id="kanban--edit-record-modal" :slideOver="$this->getEditModalSlideOver()"
                                :width="$this->getEditModalWidth()">
