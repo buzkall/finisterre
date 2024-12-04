@@ -17,8 +17,8 @@ class FinisterreTaskComment extends Model implements HasMedia
 
     protected static function booted(): void
     {
-        static::creating(function($task) {
-            $task->creator_id = $task->creator_id ?? auth()->id();
+        static::creating(function($taskComment) {
+            $taskComment->creator_id = $taskComment->creator_id ?? auth()->id();
         });
     }
 
