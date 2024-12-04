@@ -39,7 +39,7 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 
         static::updating(function($task) {
             if ($task->isDirty('status')) {
-                if ($task->status == TaskStatusEnum::Done) {
+                if ($task->status === TaskStatusEnum::Done) {
                     $task->completed_at = now();
                 } elseif (! is_null($task->completed_at)) {
                     $task->completed_at = null;
@@ -49,13 +49,9 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 
         static::saved(function($task) {
             defer(function() use ($task) {
-                if ($task->assignee) {
-                    return $task->assignee->notify(new TaskNotification($task, $task->getChanges()));
+                if ($task->assignee && $task->assignee->id !== auth()->id()) { // don't notify myself
+                    $task->assignee->notify(new TaskNotification($task, $task->getChanges()));
                 }
-
-                // fallback to the default notifiable
-                return (config('finisterre.authenticatable'))::find(config('finisterre.fallback_notifiable_id'))
-                    ->notify(new TaskNotification($task, $task->getChanges()));
             });
         });
     }

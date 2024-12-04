@@ -90,6 +90,8 @@ class FinisterreCommentsComponent extends Component implements HasForms
             config('finisterre.authenticatable')::findMany($data['notify'])
                 ->each
                 ->notify(new TaskCommentNotification($this->record));
+        } else {
+            $this->record->assignee->notify(new TaskCommentNotification($this->record));
         }
 
         $this->form->fill();

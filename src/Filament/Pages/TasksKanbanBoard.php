@@ -32,7 +32,7 @@ class TasksKanbanBoard extends KanbanBoard
 
     protected static string $model = FinisterreTask::class;
     protected static string $statusEnum = TaskStatusEnum::class;
-    protected string $editModalWidth = '3xl';
+    protected string $editModalWidth = '4xl';
     protected string $editModalTitle = '';
     protected static string $view = 'finisterre::filament-kanban.kanban-board';
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
@@ -88,19 +88,23 @@ class TasksKanbanBoard extends KanbanBoard
 
             Action::make('filters')
                 ->slideOver(false)
+                ->modalWidth('2xl')
                 ->keyBindings(['mod+shift+f']) // open filters with mod+shift+f
                 ->label(__('filament-panels::pages/dashboard.actions.filter.label'))
                 ->icon('heroicon-m-funnel')
-                ->badge(function() {
-                    return $this->filters ? count($this->filters) : null;
-                })
+                ->badge(fn() => $this->filters ? count($this->filters) : null)
                 ->badgeColor('warning')
                 ->form(
                     [
                         Select::make('filter_tags')
                             ->label(__('finisterre::finisterre.tags'))
                             ->multiple()
-                            ->options(Tag::withType('tasks')->get()->pluck('name', 'name')),
+                            ->options(Tag::withType('tasks')->pluck('name', 'id'))
+                            ->formatStateUsing(function() {
+                                $state = $this->filters['filter_tags'] ?? null;
+
+                                return $state ? Tag::findMany($state)->pluck('name')->toArray() : null;
+                            }),
 
                        /* TextInput::make('filter_text')
                             ->label(__('finisterre::finisterre.text'))*/
@@ -110,7 +114,6 @@ class TasksKanbanBoard extends KanbanBoard
         ];
     }
 
-    #[Override]
     protected function records(): Collection
     {
         return $this->getEloquentQuery()
@@ -118,13 +121,8 @@ class TasksKanbanBoard extends KanbanBoard
             ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered())
             ->when(
                 $this->filters['filter_tags'] ?? null,
-                function($query, $tags) {
-                    foreach ($tags as $tag) {
-                        $query->orWhereHas(
-                            'tags',
-                            fn($query) => $query->whereJsonContains('name->' . app()->getLocale(), $tag)
-                        );
-                    }
+                function($query, $tagIds) {
+                    $query->withAnyTags(Tag::findMany($tagIds));
 
                     return $query;
                 }
@@ -142,9 +140,19 @@ class TasksKanbanBoard extends KanbanBoard
                 ->columnSpanFull(),
 
             RichEditor::make('description')
+                ->visibleOn('create')
                 ->label(__('finisterre::finisterre.description'))
                 ->fileAttachmentsVisibility('private')
                 ->columnSpanFull(),
+
+            Placeholder::make('description')
+                ->label(__('finisterre::finisterre.description'))
+                ->hiddenOn('create')
+                // hacky fix to hide the attachment captions
+                ->content(fn($record) => new HtmlString(
+                    $record?->description .
+                    ' <style>.attachment__caption { display: none; }</style>'
+                )),
 
             Group::make([
                 Select::make('status')
@@ -218,6 +226,7 @@ class TasksKanbanBoard extends KanbanBoard
                     ->hiddenOn('create'),
 
                 View::make('finisterre::comments.view')
+                    ->lazy()
                     ->hiddenOn('create')
                     ->columnSpanFull()
             ])->columns()
