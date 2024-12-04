@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.6.1 - 2024-12-04
+
+Allow edit description
+
 ## 1.6.0 - 2024-12-04
 
 Improve notifications and edit taks
