@@ -27,7 +27,7 @@ class TaskCommentNotification extends Notification
                 ['title' => $this->task->title]
             ))
             ->greeting(__('finisterre::finisterre.comment_notification.greeting', ['title' => $this->task->title]))
-
+            ->line(new HtmlString('<style>img {height: auto !important}</style>'))
             ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
                 $latestComment = $this->task->comments->last();
                 $mail->line(new HtmlString($latestComment->comment));
