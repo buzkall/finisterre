@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.6.3 - 2024-12-09
+
+Fix error losing focus on comments
+
 ## 1.6.2 - 2024-12-04
 
 Fix css height for images in the comments mailDiFix css height for images in the comments mail
