@@ -18,6 +18,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\SpatieTagsInput;
+use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\View;
 use Illuminate\Contracts\Support\Htmlable;
@@ -101,7 +102,7 @@ class TasksKanbanBoard extends KanbanBoard
                         Select::make('filter_tags')
                             ->label(__('finisterre::finisterre.tags'))
                             ->multiple()
-                            ->options(Tag::withType('tasks')->pluck('name', 'id'))
+                            ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
                             ->formatStateUsing(function() {
                                 $state = $this->filters['filter_tags'] ?? null;
 
@@ -119,7 +120,7 @@ class TasksKanbanBoard extends KanbanBoard
     protected function records(): Collection
     {
         return $this->getEloquentQuery()
-            ->with(['comments', 'media'])
+            ->withCount(['comments', 'media'])
             ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered())
             ->when(
                 $this->filters['filter_tags'] ?? null,
@@ -134,36 +135,6 @@ class TasksKanbanBoard extends KanbanBoard
 
     protected function getEditModalFormSchema(?int $recordId): array
     {
-        if ($recordId) {
-            $descriptionFields = [
-                Placeholder::make('description_placeholder')
-                    ->label(__('finisterre::finisterre.description'))
-                    // hacky fix to hide the attachment captions
-                    ->content(fn($record) => new HtmlString(
-                        $record?->description .
-                        ' <style>.attachment__caption { display: none; }</style>'
-                    )),
-
-                Section::make('edit_description')
-                    ->heading(__('finisterre::finisterre.edit_description'))
-                    ->schema([
-                        RichEditor::make('description')
-                            ->hiddenLabel()
-                            ->fileAttachmentsVisibility('private')
-                            ->columnSpanFull()
-                    ])
-                    ->collapsed()
-                    ->columnSpanFull(),
-            ];
-        } else {
-            $descriptionFields = [
-                RichEditor::make('description')
-                    ->label(__('finisterre::finisterre.description'))
-                    ->fileAttachmentsVisibility('private')
-                    ->columnSpanFull()
-            ];
-        }
-
         return [
             TextInput::make('title')
                 ->label(__('finisterre::finisterre.title'))
@@ -171,7 +142,29 @@ class TasksKanbanBoard extends KanbanBoard
                 ->maxLength(255)
                 ->columnSpanFull(),
 
-            ...$descriptionFields,
+            Tabs::make('Tabs')
+                ->tabs([
+                    Tabs\Tab::make('view')
+                        ->label(__('finisterre::finisterre.description'))
+                        ->schema([
+                            Placeholder::make('description_placeholder')
+                                ->hiddenLabel()
+                                // hacky fix to hide the attachment captions
+                                ->content(fn($record) => new HtmlString(
+                                    $record?->description .
+                                    ' <style>.attachment__caption { display: none; }</style>'
+                                )),
+                        ])->hiddenOn('create'),
+
+                    Tabs\Tab::make('edit')
+                        ->label(__('finisterre::finisterre.edit_description'))
+                        ->schema([
+                            RichEditor::make('description')
+                                ->hiddenLabel()
+                                ->fileAttachmentsVisibility('private')
+                                ->columnSpanFull()
+                        ]),
+                ]),
 
             Group::make([
                 Select::make('status')
@@ -245,7 +238,6 @@ class TasksKanbanBoard extends KanbanBoard
                     ->hiddenOn('create'),
 
                 View::make('finisterre::comments.view')
-                    ->lazy()
                     ->hiddenOn('create')
                     ->columnSpanFull()
             ])->columns()

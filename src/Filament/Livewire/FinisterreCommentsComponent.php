@@ -43,6 +43,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
 
         $editor
             ->hiddenLabel()
+            ->autofocus() // this solves the problem of losing focus when clicking on the editor
             ->required()
             ->placeholder(__('finisterre::finisterre.comments.placeholder'))
             ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));

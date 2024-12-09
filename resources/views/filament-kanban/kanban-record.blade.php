@@ -34,12 +34,12 @@
     <div class="flex justify-between items-center py-1 text-xs text-gray-500 dark:text-gray-400">
         <div class="flex gap-2 items-center">
             <div class="flex">
-                {{ $record->media->count() }}
+                {{ $record->media_count }}
                 <x-filament::icon icon="heroicon-o-paper-clip" class="h-4 w-4"/>
             </div>
 
             <div class="flex">
-                {{ $record->comments->count() }}
+                {{ $record->comments_count }}
                 <x-filament::icon icon="heroicon-o-chat-bubble-oval-left" class="h-4 w-4"/>
             </div>
 
