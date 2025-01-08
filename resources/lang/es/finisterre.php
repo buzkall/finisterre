@@ -24,6 +24,7 @@ return [
     'Urgent'           => 'Urgente',
     'Open'             => 'Abierta',
     'OnHold'           => 'En revisión',
+    'ToDeploy'         => 'Pendiente de subir',
     'Doing'            => 'En proceso',
     'Done'             => 'Hecha',
     'Rejected'         => 'Rechazada',

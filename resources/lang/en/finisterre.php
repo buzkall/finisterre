@@ -24,6 +24,7 @@ return [
     'Urgent'           => 'Urgent',
     'Open'             => 'Open',
     'OnHold'           => 'On hold',
+    'ToDeploy'         => 'To deploy',
     'Doing'            => 'Doing',
     'Done'             => 'Done',
     'Rejected'         => 'Rejected',
