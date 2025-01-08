@@ -52,7 +52,7 @@ class TaskNotification extends Notification
                     ->map(fn($comment) => $comment->comment . ' ' . $comment->created_at->format('d-m-y H:i:s'))
                     ->implode('<br><hr/>')));
             })
-            //->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
+            // ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
             ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug')))
             ->salutation(' ');
     }

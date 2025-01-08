@@ -35,7 +35,7 @@ class TaskCommentNotification extends Notification
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
                 $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
             })
-            //->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
+            // ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
             ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug')))
             ->salutation(' ');
     }
