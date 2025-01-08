@@ -6,7 +6,6 @@ use Buzkall\Finisterre\Traits\HasEnumFunctions;
 use Filament\Support\Contracts\HasLabel;
 use Illuminate\Support\Collection;
 use Mokhosh\FilamentKanban\Concerns\IsKanbanStatus;
-use Override;
 
 enum TaskStatusEnum: string implements HasLabel
 {
@@ -16,6 +15,7 @@ enum TaskStatusEnum: string implements HasLabel
     case Open = 'open';
     case Doing = 'doing';
     case OnHold = 'on_hold';
+    case ToDeploy = 'to_deploy';
     case Done = 'done';
     case Rejected = 'rejected';
     case Backlog = 'backlog';
