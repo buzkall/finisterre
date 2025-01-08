@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.6.4 - 2025-01-08
+
+Add new status
+
 ## 1.6.3 - 2024-12-09
 
 Fix error losing focus on comments
