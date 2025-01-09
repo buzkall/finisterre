@@ -2,7 +2,6 @@
 
 namespace Buzkall\Finisterre;
 
-use Buzkall\Finisterre\Commands\FinisterreCommand;
 use Buzkall\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
@@ -20,15 +19,12 @@ class FinisterreServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         // More info: https://github.com/spatie/laravel-package-tools
-
-        // TODO: add hasInstallCommand?
         $package
             ->name('finisterre')
             ->hasConfigFile()
             ->hasViews()
             ->hasAssets()
             ->hasTranslations()
-            // ->hasCommand(FinisterreCommand::class)
             ->hasMigration('create_finisterre_tables');
     }
 
