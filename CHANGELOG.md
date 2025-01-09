@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.6.7 - 2025-01-09
+
+Add instructions to override the policy
+
 ## 1.6.6 - 2025-01-08
 
 Missing translations
