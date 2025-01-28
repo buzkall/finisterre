@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.6.8 - 2025-01-28
+
+Fix problem with dark mode
+
 ## 1.6.7 - 2025-01-09
 
 Add instructions to override the policy
