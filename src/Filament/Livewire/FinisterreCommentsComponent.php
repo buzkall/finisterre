@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -58,6 +59,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
                     ->hint(__('finisterre::finisterre.comments.notify_hint'))
                     ->options(
                         fn() => config('finisterre.authenticatable')::query()
+                            ->where('id', '!=', auth()->id())
                             ->when(
                                 config('finisterre.authenticatable_filter_column'),
                                 fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))

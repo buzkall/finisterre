@@ -35,18 +35,14 @@ class FinisterreServiceProvider extends PackageServiceProvider
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
 
-        FilamentAsset::register(
-            $this->getAssets(),
-            package: 'buzkall/finisterre'
-        );
-    }
-
-    protected function getAssets(): array
-    {
         // this will get copied to the project's public folder when
         // running php artisan filament:assets
-        return [
-            Css::make('finisterre-styles', __DIR__ . '/../resources/dist/finisterre.css'),
-        ];
+        FilamentAsset::register(
+            [Css::make('finisterre-styles', __DIR__ . '/../resources/dist/finisterre.css')],
+            package: 'buzkall/finisterre'
+        );
+
+        // remember to run php artisan filament:assets after changing assets in the site
+        // also run npm run purge to clean filament styles
     }
 }
