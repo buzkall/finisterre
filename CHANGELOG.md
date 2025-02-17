@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.7.1 - 2025-02-17
+
+Add guard for route
+
 ## 1.7.0 - 2025-02-17
 
 Add SMS Notification
