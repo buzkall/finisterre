@@ -37,8 +37,21 @@ return [
 
     'hidden_statuses' => [],
 
-    // To set the attachments as private, add a new disk in config/filesystems.php
-    'attachments_disk' => 'public',
+    // To set the attachments as private:
+    // 1. Change the 'attachments_disk' to 'finisterre',
+    // 2. Add a disk in filesystem named 'finisterre' with url /storage/finisterre and visibility public
+    // 'finisterre' => [
+    //            'driver'     => 'local',
+    //            'root'       => storage_path('app/finisterre-files'),
+    //            'url'        => env('APP_URL') . '/storage/finisterre-files',
+    //            'visibility' => 'public',
+    //            'throw'      => false,
+    //        ],
+    // 3. Add the route trait to the bootstrap app.php file in withRouting
+    // then: function() {
+    //         (new class{ use AttachmentsRoute;})->attachmentsRoute();
+    //       }
+    'attachments_disk' => 'finisterre',
 
     'comments' => [
         'table_name'          => 'finisterre_task_comments',
