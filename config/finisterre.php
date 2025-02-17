@@ -17,7 +17,7 @@ return [
     'fallback_notifiable_id'        => 1,
 
     'hidden_statuses' => [],
-    
+
     // To set the attachments as private:
     // 1. Change the 'attachments_disk' to 'finisterre',
     // 2. Add a disk in filesystem named 'finisterre' with url /storage/finisterre and visibility public

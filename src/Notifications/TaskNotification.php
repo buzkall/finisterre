@@ -63,7 +63,7 @@ class TaskNotification extends Notification
         if (config('finisterre.sms_notification.enabled') === false) {
             return;
         }
-        
+
         if (! in_array($this->task->priority, config('finisterre.sms_notification.notify_priorities'))) {
             return;
         }
@@ -78,10 +78,10 @@ class TaskNotification extends Notification
 
         $call = Http::get(config('finisterre.sms_notification.url'), [
             'auth_key' => config('finisterre.sms_notification.auth_key'),
-            'id' =>   $this->task->id .  '_' . now()->timestamp,
-            'from' => config('finisterre.sms_notification.sender'),
-            'to' => config('finisterre.sms_notification.notify_to'),
-            'text' => __(
+            'id'       => $this->task->id . '_' . now()->timestamp,
+            'from'     => config('finisterre.sms_notification.sender'),
+            'to'       => config('finisterre.sms_notification.notify_to'),
+            'text'     => __(
                 'finisterre::finisterre.notification.subject',
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
             )]);
