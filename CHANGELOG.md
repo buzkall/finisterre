@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.7.0 - 2025-02-17
+
+Add SMS Notification
+Change Attachment handling
+
 ## 1.6.8 - 2025-01-28
 
 Fix problem with dark mode
