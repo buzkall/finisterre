@@ -65,5 +65,14 @@ return [
             'undo',
             'attachFiles',
         ],
+    ],
+
+    'sms_notification' => [
+        'enabled'           => env('FINISTERRE_SMS_ENABLED', false),
+        'url'               => 'https://api.smsarena.es/http/sms.php',
+        'auth_key'          => env('FINISTERRE_SMS_AUTH_KEY'),
+        'sender'            => env('FINISTERRE_SMS_SENDER'),
+        'notify_to'         => env('FINISTERRE_SMS_NOTIFY_TO'),
+        'notify_priorities' => [Buzkall\Finisterre\Enums\TaskPriorityEnum::Urgent],
     ]
 ];

@@ -6,6 +6,7 @@ use Buzkall\Finisterre\Models\FinisterreTask;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\HtmlString;
 
 class TaskNotification extends Notification
@@ -16,7 +17,7 @@ class TaskNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', SMSChannel::class];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -55,5 +56,36 @@ class TaskNotification extends Notification
             // ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
             ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug')))
             ->salutation(' ');
+    }
+
+    public function toSms(object $notifiable): void
+    {
+        if (config('finisterre.sms_notification.enabled') === false) {
+            return;
+        }
+        
+        if (! in_array($this->task->priority, config('finisterre.sms_notification.notify_priorities'))) {
+            return;
+        }
+
+        // only notify on creation
+        if (! $this->task->wasRecentlyCreated) {
+            return;
+        }
+
+        // Make a GET call to:
+        // https://api.smsarena.es/http/sms.php?auth_key=XXXX&id=11964&from=XXXX&to=XXXX&text=XXXX
+
+        $call = Http::get(config('finisterre.sms_notification.url'), [
+            'auth_key' => config('finisterre.sms_notification.auth_key'),
+            'id' =>   $this->task->id .  '_' . now()->timestamp,
+            'from' => config('finisterre.sms_notification.sender'),
+            'to' => config('finisterre.sms_notification.notify_to'),
+            'text' => __(
+                'finisterre::finisterre.notification.subject',
+                ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
+            )]);
+
+        info($call->body());
     }
 }
