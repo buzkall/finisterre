@@ -10,6 +10,7 @@ return [
     'authenticatable'            => \App\Models\User::class,
     'authenticatable_table_name' => 'users',
     'authenticatable_attribute'  => 'name',
+    'guard'                      => 'web', // filament
 
     // fill in case of filtering the assigned user
     'authenticatable_filter_column' => '', // role
