@@ -28,9 +28,9 @@ return [
     //            'visibility' => 'public',
     //            'throw'      => false,
     //        ],
-    // 3. Add the route trait to the bootstrap app.php file in withRouting
+    // 3. Add the route controller to the bootstrap app.php file in withRouting
     // then: function() {
-    //         (new class{ use AttachmentsRoute;})->attachmentsRoute();
+    //          (new Buzkall\Finisterre\Controllers\FilamentRouteController)();
     //       }
     'attachments_disk' => 'public', // finisterre
 
