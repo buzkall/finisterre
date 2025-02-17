@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.7.3 - 2025-02-17
+
+Fix guard call
+
 ## 1.7.2 - 2025-02-17
 
 Fix previous
