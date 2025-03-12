@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.8.0 - 2025-03-12
+
+Laravel 12 support and align with kanban new version
+
 ## 1.7.3 - 2025-02-17
 
 Fix guard call
