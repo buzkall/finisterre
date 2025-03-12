@@ -132,7 +132,7 @@ class TasksKanbanBoard extends KanbanBoard
             ->get();
     }
 
-    protected function getEditModalFormSchema(?int $recordId): array
+    protected function getEditModalFormSchema(string|int|null $recordId): array
     {
         return [
             TextInput::make('title')
