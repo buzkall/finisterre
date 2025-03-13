@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Notifications;
 
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -76,16 +77,30 @@ class TaskNotification extends Notification
         // Make a GET call to:
         // https://api.smsarena.es/http/sms.php?auth_key=XXXX&id=11964&from=XXXX&to=XXXX&text=XXXX
 
-        $call = Http::get(config('finisterre.sms_notification.url'), [
-            'auth_key' => config('finisterre.sms_notification.auth_key'),
-            'id'       => $this->task->id . '_' . now()->timestamp,
-            'from'     => config('finisterre.sms_notification.sender'),
-            'to'       => config('finisterre.sms_notification.notify_to'),
-            'text'     => __(
-                'finisterre::finisterre.notification.subject',
-                ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
-            )]);
+        $maxRetries = 3;
+        $retryDelay = 1; // seconds
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $call = Http::timeout(10)->get(config('finisterre.sms_notification.url'), [
+                    'auth_key' => config('finisterre.sms_notification.auth_key'),
+                    'id'       => $this->task->id . '_' . now()->timestamp,
+                    'from'     => config('finisterre.sms_notification.sender'),
+                    'to'       => config('finisterre.sms_notification.notify_to'),
+                    'text'     => __(
+                        'finisterre::finisterre.notification.subject',
+                        ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
+                    )]);
 
-        info($call->body());
+            } catch (Exception $e) {
+                if (str_contains($e->getMessage(), 'Could not resolve host') &&
+                    $attempt < $maxRetries) {
+                    sleep($retryDelay);
+
+                    continue;
+                }
+
+                throw $e;
+            }
+        }
     }
 }

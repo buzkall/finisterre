@@ -8,6 +8,6 @@ class SMSChannel
 {
     public function send(object $notifiable, Notification $notification): void
     {
-        $message = $notification->toSMS($notifiable);
+        $notification->toSMS($notifiable);
     }
 }
