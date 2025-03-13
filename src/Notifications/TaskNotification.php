@@ -15,7 +15,12 @@ class TaskNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public FinisterreTask $task, public array $taskChanges = []) {}
+    protected $wasRecentlyCreated = false;
+
+    public function __construct(public FinisterreTask $task, public array $taskChanges = [])
+    {
+        $this->wasRecentlyCreated = $task->wasRecentlyCreated;
+    }
 
     public function via(object $notifiable): array
     {
@@ -71,7 +76,8 @@ class TaskNotification extends Notification implements ShouldQueue
         }
 
         // only notify on creation
-        if (! $this->task->wasRecentlyCreated) {
+        // using a queue, can't use $this->task->wasRecentlyCreated because will always be false
+        if (! $this->wasRecentlyCreated) {
             return;
         }
 
