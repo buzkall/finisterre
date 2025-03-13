@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.8.1 - 2025-03-13
+
+Set timeout for sms and retries
+
 ## 1.8.0 - 2025-03-12
 
 Laravel 12 support and align with kanban new version
