@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.8.2 - 2025-03-13
+
+Add implements ShouldQueue to the notifications
+
 ## 1.8.1 - 2025-03-13
 
 Set timeout for sms and retries
