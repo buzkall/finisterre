@@ -4,11 +4,12 @@ namespace Buzkall\Finisterre\Notifications;
 
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\HtmlString;
 
-class TaskCommentNotification extends Notification
+class TaskCommentNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

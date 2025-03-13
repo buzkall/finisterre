@@ -5,12 +5,13 @@ namespace Buzkall\Finisterre\Notifications;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Exception;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\HtmlString;
 
-class TaskNotification extends Notification
+class TaskNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -81,7 +82,7 @@ class TaskNotification extends Notification
         $retryDelay = 1; // seconds
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
-                $call = Http::timeout(10)->get(config('finisterre.sms_notification.url'), [
+                Http::timeout(10)->get(config('finisterre.sms_notification.url'), [
                     'auth_key' => config('finisterre.sms_notification.auth_key'),
                     'id'       => $this->task->id . '_' . now()->timestamp,
                     'from'     => config('finisterre.sms_notification.sender'),
