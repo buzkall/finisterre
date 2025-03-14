@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.8.4 - 2025-03-14
+
+Change the way wasRecentlyCreated is checked
+
 ## 1.8.3 - 2025-03-13
 
 Change the way wasRecentlyCreated is checked
