@@ -5,11 +5,11 @@ namespace Buzkall\Finisterre\Filament\Pages;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Models\FinisterreTask;
-use Faker\Provider\Text;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Actions\Action as FormAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
@@ -92,27 +92,31 @@ class TasksKanbanBoard extends KanbanBoard
                 ->slideOver(false)
                 ->modalWidth('2xl')
                 ->keyBindings(['mod+shift+f']) // open filters with mod+shift+f
-                ->label(__('filament-panels::pages/dashboard.actions.filter.label'))
+                ->label(__('finisterre::finisterre.filter.label'))
                 ->icon('heroicon-m-funnel')
-                ->badge(fn() => $this->filters ? count($this->filters) : null)
+                ->badge(fn() => $this->filters ? count(array_filter($this->filters)) : null)
                 ->badgeColor('warning')
                 ->form(
                     [
-                        Select::make('filter_tags')
+                        CheckboxList::make('filter_tags')
                             ->label(__('finisterre::finisterre.tags'))
-                            ->multiple()
-                            ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
-                            ->formatStateUsing(function() {
-                                $state = $this->filters['filter_tags'] ?? null;
+                            ->options(fn() => Tag::withType('tasks')->pluck('name', 'id')),
 
-                                return $state ? Tag::findMany($state)->pluck('name')->toArray() : null;
-                            }),
-
-                       /* TextInput::make('filter_text')
-                            ->label(__('finisterre::finisterre.text'))*/
+                        TextInput::make('filter_text')
+                            ->autofocus()
+                            ->label(__('finisterre::finisterre.filter.text'))
                     ]
                 )
-                ->action(fn($data) => $this->filters = $data),
+                ->fillForm(fn() => $this->filters)
+                ->action(fn($data) => $this->filters = $data)
+                ->modalSubmitActionLabel(__('finisterre::finisterre.filter.cta'))
+                ->extraModalFooterActions(fn() => [
+                    Action::make('clear_filters')
+                        ->label(__('finisterre::finisterre.filter.clear'))
+                        ->color('warning')
+                        ->visible(fn() => $this->filters)
+                        ->action(fn() => $this->filters = null)->cancelParentActions()
+                ])
         ];
     }
 
@@ -125,6 +129,15 @@ class TasksKanbanBoard extends KanbanBoard
                 $this->filters['filter_tags'] ?? null,
                 function($query, $tagIds) {
                     $query->withAnyTags(Tag::findMany($tagIds));
+
+                    return $query;
+                }
+            )->when(
+                $this->filters['filter_text'] ?? null,
+                function($query, $text) {
+                    $query->where(fn($query) => $query
+                        ->where('title', 'like', "%$text%")
+                        ->orWhere('description', 'like', "%$text%"));
 
                     return $query;
                 }

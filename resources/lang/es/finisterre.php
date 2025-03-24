@@ -58,4 +58,10 @@ return [
         'greeting' => 'Nuevo comentario en la tarea :title',
         'cta'      => 'Ver tarea',
     ],
+    'filter' => [
+        'label' => 'Filtros',
+        'cta'   => 'Filtrar',
+        'text'  => 'Texto',
+        'clear' => 'Limpiar filtros',
+    ]
 ];

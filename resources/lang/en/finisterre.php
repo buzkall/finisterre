@@ -58,4 +58,10 @@ return [
         'greeting' => 'New comment in task :title',
         'cta'      => 'View task',
     ],
+    'filter' => [
+        'label' => 'Filters',
+        'cta'   => 'Filter',
+        'text'  => 'Text',
+        'clear' => 'Clear filters',
+    ]
 ];
