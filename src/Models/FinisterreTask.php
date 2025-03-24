@@ -58,22 +58,21 @@ class FinisterreTask extends Model implements HasMedia, Sortable
                     $taskChanges = $task->getChanges();
                     $task->assignee->notify(new TaskNotification($task, $taskChanges));
 
+                    Notification::make()
+                        ->title(__(
+                            'finisterre::finisterre.notification.subject',
+                            ['priority' => $task->priority->getLabel(), 'title' => $task->title]
+                        ))
+                        ->body(empty($taskChanges) ?
+                            __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
+                            __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
+                        ->actions([
+                            Action::make('view')
+                                ->button()
+                                ->markAsRead(),
+                        ])
+                        ->sendToDatabase($task->assignee);
                 }
-
-                Notification::make()
-                    ->title(__(
-                        'finisterre::finisterre.notification.subject',
-                        ['priority' => $task->priority->getLabel(), 'title' => $task->title]
-                    ))
-                    ->body(empty($taskChanges) ?
-                        __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
-                        __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
-                    ->actions([
-                        Action::make('view')
-                            ->button()
-                            ->markAsRead(),
-                    ])
-                    ->sendToDatabase($task->assignee);
             });
         });
     }
