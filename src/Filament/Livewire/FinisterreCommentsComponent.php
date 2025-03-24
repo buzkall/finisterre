@@ -9,10 +9,10 @@ use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -90,16 +90,37 @@ class FinisterreCommentsComponent extends Component implements HasForms
             ->send();
 
         if ($data['notify']) {
-            config('finisterre.authenticatable')::findMany($data['notify'])
-                ->each
-                ->notify(new TaskCommentNotification($this->record));
+            foreach (config('finisterre.authenticatable')::findMany($data['notify']) as $user) {
+                $this->notifyUser($user);
+            }
         } else {
-            $this->record->assignee->notify(new TaskCommentNotification($this->record));
+            $this->notifyUser($this->record->assignee);
         }
 
         $this->form->fill();
 
         $this->dispatch('commentCreated')->to(TasksKanbanBoard::class);
+    }
+
+    private function notifyUser($user): void
+    {
+        $user->notify(new TaskCommentNotification($this->record));
+
+        $latestComment = $this->record->comments->last();
+        $body = (new HtmlString($latestComment->comment));
+
+        Notification::make()
+            ->title(__(
+                'finisterre::finisterre.comment_notification.subject',
+                ['title' => $this->record->title]
+            ))
+            ->body($body)
+           /* ->actions([
+                Action::make('view')
+                    ->button()
+                    ->markAsRead(),
+            ])*/
+            ->sendToDatabase($this->record->assignee);
     }
 
     public function delete(int $id): void

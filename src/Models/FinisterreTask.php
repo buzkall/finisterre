@@ -6,6 +6,8 @@ use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Notifications\TaskNotification;
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -53,8 +55,25 @@ class FinisterreTask extends Model implements HasMedia, Sortable
                     $task->assignee_id = config('finisterre.fallback_notifiable_id');
                 }
                 if ($task->assignee && $task->assignee->id !== auth()->id()) { // don't notify myself
-                    $task->assignee->notify(new TaskNotification($task, $task->getChanges()));
+                    $taskChanges = $task->getChanges();
+                    $task->assignee->notify(new TaskNotification($task, $taskChanges));
+
                 }
+
+                Notification::make()
+                    ->title(__(
+                        'finisterre::finisterre.notification.subject',
+                        ['priority' => $task->priority->getLabel(), 'title' => $task->title]
+                    ))
+                    ->body(empty($taskChanges) ?
+                        __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
+                        __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
+                    ->actions([
+                        Action::make('view')
+                            ->button()
+                            ->markAsRead(),
+                    ])
+                    ->sendToDatabase($task->assignee);
             });
         });
     }
