@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.0 - 2025-03-24
+
+Send Filament notifications
+Improve task filters
+
 ## 1.8.4 - 2025-03-14
 
 Change the way wasRecentlyCreated is checked
