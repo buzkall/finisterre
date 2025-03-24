@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.1 - 2025-03-24
+
+Fix notification sent
+
 ## 1.9.0 - 2025-03-24
 
 Send Filament notifications
