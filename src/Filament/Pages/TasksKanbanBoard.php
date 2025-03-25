@@ -117,7 +117,6 @@ class TasksKanbanBoard extends KanbanBoard
                                     ->get()
                                     ->pluck('assignee.name', 'assignee.id')
                             )
-
                     ]
                 )
                 ->fillForm(fn() => $this->filters)
@@ -151,6 +150,13 @@ class TasksKanbanBoard extends KanbanBoard
                     $query->where(fn($query) => $query
                         ->where('title', 'like', "%$text%")
                         ->orWhere('description', 'like', "%$text%"));
+
+                    return $query;
+                }
+            )->when(
+                $this->filters['filter_assignee'] ?? null,
+                function($query, $assigneeId) {
+                    $query->where('assignee_id', $assigneeId);
 
                     return $query;
                 }
