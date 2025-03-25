@@ -100,11 +100,24 @@ class TasksKanbanBoard extends KanbanBoard
                     [
                         CheckboxList::make('filter_tags')
                             ->label(__('finisterre::finisterre.tags'))
-                            ->options(fn() => Tag::withType('tasks')->pluck('name', 'id')),
+                            ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
+                            ->columns(2),
 
                         TextInput::make('filter_text')
                             ->autofocus()
                             ->label(__('finisterre::finisterre.filter.text'))
+                            ->helperText(__('finisterre::finisterre.filter.text_description')),
+
+                        Select::make('filter_assignee')
+                            ->label(__('finisterre::finisterre.filter.assignee'))
+                            ->options(
+                                fn() => FinisterreTask::query()
+                                    ->distinct('assignee_id')
+                                    ->with('assignee')
+                                    ->get()
+                                    ->pluck('assignee.name', 'assignee.id')
+                            )
+
                     ]
                 )
                 ->fillForm(fn() => $this->filters)

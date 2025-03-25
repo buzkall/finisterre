@@ -59,9 +59,11 @@ return [
         'cta'      => 'View task',
     ],
     'filter' => [
-        'label' => 'Filters',
-        'cta'   => 'Filter',
-        'text'  => 'Text',
-        'clear' => 'Clear filters',
+        'label'            => 'Filters',
+        'cta'              => 'Filter',
+        'text'             => 'Text',
+        'clear'            => 'Clear filters',
+        'assignee'         => 'Assignee',
+        'text_description' => 'Search by title and description',
     ]
 ];

@@ -59,9 +59,11 @@ return [
         'cta'      => 'Ver tarea',
     ],
     'filter' => [
-        'label' => 'Filtros',
-        'cta'   => 'Filtrar',
-        'text'  => 'Texto',
-        'clear' => 'Limpiar filtros',
+        'label'            => 'Filtros',
+        'cta'              => 'Filtrar',
+        'text'             => 'Texto',
+        'clear'            => 'Limpiar filtros',
+        'assignee'         => 'Asignada a',
+        'text_description' => 'Busca en título o descripción'
     ]
 ];
