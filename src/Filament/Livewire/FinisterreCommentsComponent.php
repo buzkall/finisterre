@@ -120,7 +120,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
                     ->button()
                     ->markAsRead(),
             ])*/
-            ->sendToDatabase($this->record->assignee);
+            ->sendToDatabase($user);
     }
 
     public function delete(int $id): void

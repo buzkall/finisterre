@@ -66,11 +66,11 @@ class FinisterreTask extends Model implements HasMedia, Sortable
                         ->body(empty($taskChanges) ?
                             __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
                             __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
-                        ->actions([
+                        /*->actions([
                             Action::make('view')
                                 ->button()
                                 ->markAsRead(),
-                        ])
+                        ])*/
                         ->sendToDatabase($task->assignee);
                 }
             });
