@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.3 - 2025-04-03
+
+Fix comments notifications
+
 ## 1.9.2 - 2025-03-25
 
 Add filter by assignee
