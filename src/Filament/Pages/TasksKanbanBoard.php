@@ -48,12 +48,12 @@ class TasksKanbanBoard extends KanbanBoard
 
     public static function shouldRegisterNavigation(): bool
     {
-        return config('finisterre.active') ?? false;
+        return self::canAccess();
     }
 
     public static function canAccess(): bool
     {
-        return config('finisterre.active') ?? false;
+        return auth()->guard(config('finisterre.guard'))->user()->can('viewAny', FinisterreTask::class) && config('finisterre.active') ?? false;
     }
 
     public function getTitle(): string|Htmlable
