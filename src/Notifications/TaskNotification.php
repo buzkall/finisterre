@@ -11,9 +11,6 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\HtmlString;
 
-/**
- * @method string toSMS()
- */
 class TaskNotification extends Notification implements ShouldQueue
 {
     use Queueable;

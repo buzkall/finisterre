@@ -2,11 +2,9 @@
 
 namespace Buzkall\Finisterre\Notifications;
 
-use Illuminate\Notifications\Notification;
-
 class SMSChannel
 {
-    public function send(object $notifiable, Notification $notification): void
+    public function send(object $notifiable, TaskNotification $notification): void
     {
         $notification->toSMS($notifiable);
     }

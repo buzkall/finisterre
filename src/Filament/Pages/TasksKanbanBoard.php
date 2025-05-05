@@ -137,7 +137,7 @@ class TasksKanbanBoard extends KanbanBoard
     {
         return $this->getEloquentQuery()
             ->withCount(['comments', 'media'])
-            ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered())
+            ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered()) // @phpstan-ignore-line
             ->when(
                 $this->filters['filter_tags'] ?? null,
                 function($query, $tagIds) {

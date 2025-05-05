@@ -8,7 +8,6 @@ use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Notifications\TaskNotification;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,9 +27,8 @@ use Spatie\Tags\HasTags;
  * @property TaskPriorityEnum $priority
  * @property \Illuminate\Support\Carbon $due_at
  * @property \Illuminate\Support\Carbon $completed_at
- * @property \Illuminate\Support\Carbon $created_at
- *
- * @method static Builder|static ordered()
+ * @property int $creator_id
+ * @property int $assignee_id
  */
 class FinisterreTask extends Model implements HasMedia, Sortable
 {
