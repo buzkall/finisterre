@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.10 - 2025-05-05
+
+Add type to record model
+
 ## 1.9.9 - 2025-05-05
 
 Add type to record model
