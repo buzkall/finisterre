@@ -7,8 +7,7 @@ return [
 
     'model_policy' => Buzkall\Finisterre\Policies\FinisterreTaskPolicy::class,
 
-    // @phpstan-ignore-line
-    'authenticatable'            => \App\Models\User::class,
+    'authenticatable'            => \App\Models\User::class, // @phpstan-ignore-line
     'authenticatable_table_name' => 'users',
     'authenticatable_attribute'  => 'name',
     'guard'                      => 'web', // filament
