@@ -2,7 +2,7 @@
 
 namespace Buzkall\Finisterre\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
