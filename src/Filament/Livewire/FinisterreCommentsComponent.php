@@ -6,6 +6,7 @@ use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Filament\Forms;
+use Filament\Forms\ComponentContainer;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -16,6 +17,9 @@ use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
+/**
+ * @property ComponentContainer $form
+ */
 class FinisterreCommentsComponent extends Component implements HasForms
 {
     use InteractsWithForms;
