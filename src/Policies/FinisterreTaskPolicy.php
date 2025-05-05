@@ -29,7 +29,7 @@ class FinisterreTaskPolicy
 
     public function delete(Authenticatable $user, FinisterreTask $finisterreTask): bool
     {
-        return $user->id === $finisterreTask->creator_id;
+        return $user->id === $finisterreTask->creator_id; // @phpstan-ignore-line
     }
 
     public function deleteAny(Authenticatable $user): bool
