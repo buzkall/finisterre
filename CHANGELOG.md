@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.8 - 2025-05-05
+
+Yet another phpstan fix
+
 ## 1.9.7 - 2025-05-05
 
 Fix controller extension
