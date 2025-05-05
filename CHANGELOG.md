@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.13 - 2025-05-05
+
+Add phpDocs
+
 ## 1.9.12 - 2025-05-05
 
 Extra checks for comments
