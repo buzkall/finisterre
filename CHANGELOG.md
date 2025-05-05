@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.12 - 2025-05-05
+
+Extra checks for comments
+
 ## 1.9.11 - 2025-05-05
 
 Check comment is defined
