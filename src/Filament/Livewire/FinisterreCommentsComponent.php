@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Filament\Livewire;
 
 use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Filament\Forms;
@@ -12,7 +13,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -25,7 +25,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
     use InteractsWithForms;
 
     public ?array $data = [];
-    public ?Model $record = null;
+    public ?FinisterreTask $record = null;
 
     public function mount(): void
     {
