@@ -53,7 +53,8 @@ class TasksKanbanBoard extends KanbanBoard
 
     public static function canAccess(): bool
     {
-        return auth()->guard(config('finisterre.guard'))->user()->can('viewAny', FinisterreTask::class) && config('finisterre.active') ?? false;
+        return auth()->guard(config('finisterre.guard'))->user()->can('viewAny', FinisterreTask::class) &&
+            config('finisterre.active');
     }
 
     public function getTitle(): string|Htmlable

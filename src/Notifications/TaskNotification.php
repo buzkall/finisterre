@@ -11,11 +11,14 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\HtmlString;
 
+/**
+ * @method string toSMS()
+ */
 class TaskNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $wasRecentlyCreated = false;
+    protected bool $wasRecentlyCreated = false;
 
     public function __construct(public FinisterreTask $task, public array $taskChanges = [])
     {

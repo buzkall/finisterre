@@ -8,6 +8,7 @@ use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Notifications\TaskNotification;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,19 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Tags\HasTags;
 
+/**
+ * @property string $title
+ * @property string $description
+ * @property \Illuminate\Support\Collection $tags
+ * @property \Illuminate\Support\Collection $comments
+ * @property TaskStatusEnum $status
+ * @property TaskPriorityEnum $priority
+ * @property \Illuminate\Support\Carbon $due_at
+ * @property \Illuminate\Support\Carbon $completed_at
+ * @property \Illuminate\Support\Carbon $created_at
+ *
+ * @method static Builder|static ordered()
+ */
 class FinisterreTask extends Model implements HasMedia, Sortable
 {
     use HasFactory, HasTags, InteractsWithMedia, SortableTrait;

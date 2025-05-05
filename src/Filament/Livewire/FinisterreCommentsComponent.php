@@ -111,12 +111,12 @@ class FinisterreCommentsComponent extends Component implements HasForms
         $user->notify(new TaskCommentNotification($this->record));
 
         $latestComment = $this->record->comments->last();
-        $body = (new HtmlString($latestComment->comment ?? ''));
+        $body = (new HtmlString($latestComment->comment));
 
         Notification::make()
             ->title(__(
                 'finisterre::finisterre.comment_notification.subject',
-                ['title' => $this->record->title ?? '']
+                ['title' => $this->record->title]
             ))
             ->body($body)
            /* ->actions([

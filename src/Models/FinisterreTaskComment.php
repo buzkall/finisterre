@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+/**
+ * @property string $comment
+ */
 class FinisterreTaskComment extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
