@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.5 - 2025-05-05
+
+Ignore line for phpstan
+
 ## 1.9.4 - 2025-05-05
 
 Fix check access policy
