@@ -116,7 +116,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
         Notification::make()
             ->title(__(
                 'finisterre::finisterre.comment_notification.subject',
-                ['title' => $this->record->title]
+                ['title' => $this->record->title ?? '']
             ))
             ->body($body)
            /* ->actions([
@@ -131,7 +131,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
     {
         $comment = FinisterreTaskComment::find($id);
 
-        if (! $comment || ! auth()->user()->can('delete', $comment)) {
+        if (! $comment || ! auth()->guard(config('finisterre.guard'))->user()->can('delete', $comment)) {
             return;
         }
 
