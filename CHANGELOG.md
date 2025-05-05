@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.4 - 2025-05-05
+
+Fix check access policy
+
 ## 1.9.3 - 2025-04-03
 
 Fix comments notifications
