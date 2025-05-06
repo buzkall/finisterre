@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.17 - 2025-05-06
+
+Parse urls in comments
+
 ## 1.9.16 - 2025-05-05
 
 Add phpDocs
