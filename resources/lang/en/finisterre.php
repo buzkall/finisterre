@@ -42,8 +42,9 @@ return [
         'notify'        => 'Notify to',
         'notify_hint'   => 'The selected users will receive an email notification.',
         'notifications' => [
-            'created' => 'Comment created',
-            'deleted' => 'Comment deleted',
+            'created'              => 'Comment created',
+            'created_and_notified' => 'Comment created and notified to :notified',
+            'deleted'              => 'Comment deleted',
         ],
     ],
     'notification' => [

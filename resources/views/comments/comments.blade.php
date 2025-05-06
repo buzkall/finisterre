@@ -51,7 +51,21 @@
                                 @if(config('finisterre.comments.editor') === 'markdown')
                                     {{ Str::of($comment->comment)->markdown()->toHtmlString() }}
                                 @else
-                                    {{ Str::of($comment->comment)->toHtmlString() }}
+                                    @php
+                                        // First, temporarily mark URLs in HTML tags to protect them
+                                        $content = preg_replace_callback('/<[^>]*>/', function($match) {
+                                            return str_replace(['http://', 'https://'], ['__HTTP__', '__HTTPS__'], $match[0]);
+                                        }, $comment->comment);
+                                        
+                                        // Now safely replace URLs that are not in tags
+                                        $content = preg_replace('/(https?:\/\/[^\s<]+)/', '<a href="$1" target="_blank" class="text-blue-500 underline">$1</a>', $content);
+                                        
+                                        // Restore protected URLs
+                                        $content = str_replace(['__HTTP__', '__HTTPS__'], ['http://', 'https://'], $content);
+                                        
+                                        $htmlString = new \Illuminate\Support\HtmlString($content);
+                                    @endphp
+                                    {{ $htmlString }}
                                 @endif
                             </div>
                         </div>

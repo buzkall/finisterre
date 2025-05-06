@@ -42,8 +42,9 @@ return [
         'notify'        => 'Notificar a',
         'notify_hint'   => 'Los usuarios seleccionados recibirán una notificación por correo electrónico.',
         'notifications' => [
-            'created' => 'Comentario creado',
-            'deleted' => 'Comentario eliminado',
+            'created'              => 'Comentario creado',
+            'created_and_notified' => 'Comentario creado y notificado a :notified',
+            'deleted'              => 'Comentario eliminado',
         ],
     ],
     'notification' => [

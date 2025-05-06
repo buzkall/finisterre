@@ -88,18 +88,24 @@ class FinisterreCommentsComponent extends Component implements HasForms
             'creator_id' => auth()->id(),
         ]);
 
-        Notification::make()
-            ->title(__('finisterre::finisterre.comments.notifications.created'))
-            ->success()
-            ->send();
+        $notified = collect();
 
         if ($data['notify']) {
             foreach (config('finisterre.authenticatable')::findMany($data['notify']) as $user) {
                 $this->notifyUser($user);
+                $notified->push($user->name);
             }
         } else {
             $this->notifyUser($this->record->assignee);
+            $notified->push($this->record->assignee->name);
         }
+
+        Notification::make()
+            ->title($notified->isEmpty() ?
+                __('finisterre::finisterre.comments.notifications.created') :
+                __('finisterre::finisterre.comments.notifications.created_and_notified', ['notified' => $notified->implode(', ')]))
+            ->success()
+            ->send();
 
         $this->form->fill();
 
