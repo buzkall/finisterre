@@ -13,6 +13,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -62,12 +63,21 @@ class FinisterreCommentsComponent extends Component implements HasForms
                     ->label(__('finisterre::finisterre.comments.notify'))
                     ->hint(__('finisterre::finisterre.comments.notify_hint'))
                     ->options(
-                        fn() => config('finisterre.authenticatable')::query()
-                            ->where('id', '!=', auth()->id())
-                            ->when(
-                                config('finisterre.authenticatable_filter_column'),
-                                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
-                            )->pluck('name', 'id')
+                        function() {
+                            $query = config('finisterre.authenticatable')::query();
+
+                            if (Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active')) {
+                                $query->where('active', true);
+                            }
+
+                            return $query
+                                ->where('id', '!=', auth()->id())
+                                ->when(
+                                    config('finisterre.authenticatable_filter_column'),
+                                    fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+                                )
+                                ->pluck('name', 'id');
+                        }
                     )
                 ])
             ->statePath('data');
@@ -97,7 +107,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
             }
         } else {
             $this->notifyUser($this->record->assignee);
-            $notified->push($this->record->assignee->name);
+            $notified->push($this->record->assignee->name); // @phpstan-ignore-line
         }
 
         Notification::make()
