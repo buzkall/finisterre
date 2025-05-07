@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.9.18 - 2025-05-07
+
+Filter notifiable users by active flag (if exists)
+
 ## 1.9.17 - 2025-05-06
 
 Parse urls in comments
