@@ -25,6 +25,7 @@ use Spatie\Tags\HasTags;
  * @property \Illuminate\Support\Collection $comments
  * @property TaskStatusEnum $status
  * @property TaskPriorityEnum $priority
+ * @property array $subtasks
  * @property \Illuminate\Support\Carbon $due_at
  * @property \Illuminate\Support\Carbon $completed_at
  * @property int $creator_id
@@ -34,11 +35,12 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 {
     use HasFactory, HasTags, InteractsWithMedia, SortableTrait;
 
-    public $fillable = ['title', 'description', 'status', 'priority', 'due_at', 'completed_at',
+    public $fillable = ['title', 'description', 'status', 'priority', 'subtasks', 'due_at', 'completed_at',
         'creator_id', 'assignee_id'];
     protected $casts = [
         'status'       => TaskStatusEnum::class,
         'priority'     => TaskPriorityEnum::class,
+        'subtasks'     => 'array',
         'due_at'       => 'datetime',
         'completed_at' => 'datetime',
     ];

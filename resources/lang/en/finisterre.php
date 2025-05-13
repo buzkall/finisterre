@@ -66,5 +66,10 @@ return [
         'clear'            => 'Clear filters',
         'assignee'         => 'Assignee',
         'text_description' => 'Search by title and description',
+    ],
+    'subtasks' => [
+        'label'       => 'Subtasks',
+        'add'         => 'Add subtask',
+        'placeholder' => 'Write a subtask...',
     ]
 ];

@@ -66,5 +66,10 @@ return [
         'clear'            => 'Limpiar filtros',
         'assignee'         => 'Asignada a',
         'text_description' => 'Busca en título o descripción'
+    ],
+    'subtasks' => [
+        'label'       => 'Subtareas',
+        'add'         => 'Añadir subtarea',
+        'placeholder' => 'Descripción de la subtarea',
     ]
 ];

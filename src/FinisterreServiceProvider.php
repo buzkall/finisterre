@@ -25,7 +25,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasAssets()
             ->hasTranslations()
-            ->hasMigration('create_finisterre_tables');
+            ->hasMigrations([
+                'create_finisterre_tables',
+                'add_subtasks_to_finisterre_tasks',
+            ]);
     }
 
     public function packageBooted(): void

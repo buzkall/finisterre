@@ -4,6 +4,7 @@ namespace Buzkall\Finisterre\Filament\Pages;
 
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
+use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -13,11 +14,9 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\SpatieTagsInput;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\View;
 use Illuminate\Contracts\Support\Htmlable;
@@ -25,6 +24,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Url;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
+use Rawilk\FilamentQuill\Filament\Forms\Components\QuillEditor;
 use Spatie\Tags\Tag;
 
 class TasksKanbanBoard extends KanbanBoard
@@ -174,29 +174,11 @@ class TasksKanbanBoard extends KanbanBoard
                 ->maxLength(255)
                 ->columnSpanFull(),
 
-            Tabs::make('Tabs')
-                ->tabs([
-                    Tabs\Tab::make('view')
-                        ->label(__('finisterre::finisterre.description'))
-                        ->schema([
-                            Placeholder::make('description_placeholder')
-                                ->hiddenLabel()
-                                // hacky fix to hide the attachment captions
-                                ->content(fn($record) => new HtmlString(
-                                    $record?->description .
-                                    ' <style>.attachment__caption { display: none; }</style>'
-                                )),
-                        ])->hiddenOn('create'),
-
-                    Tabs\Tab::make('edit')
-                        ->label(__('finisterre::finisterre.edit_description'))
-                        ->schema([
-                            RichEditor::make('description')
-                                ->hiddenLabel()
-                                ->fileAttachmentsVisibility('private')
-                                ->columnSpanFull()
-                        ]),
-                ]),
+            QuillEditor::make('description')
+                ->label(__('finisterre::finisterre.description'))
+                ->hiddenLabel()
+                ->fileAttachmentsVisibility('private')
+                ->columnSpanFull(),
 
             Group::make([
                 Select::make('status')
@@ -245,6 +227,10 @@ class TasksKanbanBoard extends KanbanBoard
                 SpatieTagsInput::make('tags')
                     ->label(__('finisterre::finisterre.tags'))
                     ->type('tasks'),
+
+                SubtasksField::make('subtasks')
+                    ->label(__('finisterre::finisterre.subtasks.label'))
+                    ->columnSpanFull(),
 
                 Placeholder::make('dates')
                     ->hiddenLabel()
