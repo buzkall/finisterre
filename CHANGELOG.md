@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.10.1 - 2025-05-13
+
+Fix translations in enum trait
+
 ## 1.10.0 - 2025-05-13
 
 Add subtasks
