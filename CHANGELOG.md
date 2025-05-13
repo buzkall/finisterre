@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.10.0 - 2025-05-13
+
+Add subtasks
+
 ## 1.9.18 - 2025-05-07
 
 Filter notifiable users by active flag (if exists)
