@@ -12,7 +12,7 @@ trait HasEnumFunctions
     public function getLabel(): ?string
     {
         if (trans()->has('finisterre::finisterre.' . $this->name)) {
-            __('finisterre::finisterre.' . $this->name);
+            return __('finisterre::finisterre.' . $this->name);
         }
 
         return __($this->name);
