@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.11.1 - 2025-06-24
+
+Convert edit modal to page
+
 ## 1.10.1 - 2025-05-13
 
 Fix translations in enum trait
