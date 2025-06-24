@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 class FinisterreTaskPolicy
 {
+    // Note to future self: remember that this policy can be overridden by the finisterre config
     public function viewAny(Authenticatable $user): bool
     {
         return true;
@@ -24,7 +25,7 @@ class FinisterreTaskPolicy
 
     public function update(Authenticatable $user, FinisterreTask $finisterreTask): bool
     {
-        return false;
+        return true;
     }
 
     public function delete(Authenticatable $user, FinisterreTask $finisterreTask): bool

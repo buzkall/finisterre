@@ -49,7 +49,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
 
         $editor
             ->hiddenLabel()
-            ->autofocus() // this solves the problem of losing focus when clicking on the editor
+            // ->autofocus() // this solves the problem of losing focus when clicking on the editor
             ->required()
             ->placeholder(__('finisterre::finisterre.comments.placeholder'))
             ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));
@@ -63,21 +63,17 @@ class FinisterreCommentsComponent extends Component implements HasForms
                     ->label(__('finisterre::finisterre.comments.notify'))
                     ->hint(__('finisterre::finisterre.comments.notify_hint'))
                     ->options(
-                        function() {
-                            $query = config('finisterre.authenticatable')::query();
-
-                            if (Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active')) {
-                                $query->where('active', true);
-                            }
-
-                            return $query
-                                ->where('id', '!=', auth()->id())
-                                ->when(
-                                    config('finisterre.authenticatable_filter_column'),
-                                    fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
-                                )
-                                ->pluck('name', 'id');
-                        }
+                        fn() => config('finisterre.authenticatable')::query()
+                            ->where('id', '!=', auth()->id())
+                            ->when(
+                                config('finisterre.authenticatable_filter_column'),
+                                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+                            )
+                            ->when(
+                                Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
+                                fn($query) => $query->where('active', true)
+                            )
+                            ->pluck('name', 'id')
                     )
                 ])
             ->statePath('data');

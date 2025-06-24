@@ -9,7 +9,7 @@
 
             {{-- the key now is the key! otherwise, the nested component gets loaded
                 when the kanban is loaded and we have no record --}}
-            <livewire:finisterre-comments key="{{ now() }}" :record="$getRecord()"/>
+            <livewire:finisterre-comments key="{{ now() }}" :record="$record"/>
         </div>
     </div>
 </div>

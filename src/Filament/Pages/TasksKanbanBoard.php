@@ -21,6 +21,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\View;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Url;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
@@ -40,6 +41,7 @@ class TasksKanbanBoard extends KanbanBoard
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
     protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
     protected $listeners = ['commentCreated' => '$refresh'];
+    public bool $disableEditModal = true;
 
     public static function getSlug(): string
     {
@@ -102,7 +104,7 @@ class TasksKanbanBoard extends KanbanBoard
                         CheckboxList::make('filter_tags')
                             ->label(__('finisterre::finisterre.tags'))
                             ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
-                            ->columns(2),
+                            ->columns(),
 
                         TextInput::make('filter_text')
                             ->autofocus()
@@ -220,6 +222,10 @@ class TasksKanbanBoard extends KanbanBoard
                             ->when(
                                 config('finisterre.authenticatable_filter_column'),
                                 fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+                            )
+                            ->when(
+                                Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
+                                fn($query) => $query->where('active', true)
                             )
                     )
                     ->default(config('finisterre.fallback_notifiable_id')),

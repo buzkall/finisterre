@@ -15,11 +15,11 @@
         },
     }">
         <template x-for="(subtask, index)  in subtasks" :key="index">
-            <div class="flex items-center mb-1">
+            <div class="flex justify-start items-center mb-2">
                 <input type="checkbox" x-model="subtask.completed" class="mr-2">
 
                 <input type="text" x-model="subtask.title"
-                       class="border-none focus:ring-0 bg-transparent  text-sm"
+                       class="border-none focus:ring-0 bg-transparent text-sm flex-grow"
                        :class="{ 'line-through text-gray-500': subtask.completed }"
                        placeholder="{{ __('finisterre::finisterre.subtasks.placeholder') }}"/>
 
