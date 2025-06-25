@@ -1,11 +1,4 @@
 <x-filament-panels::page>
-    <x-filament-panels::header
-            :actions="$this->getCachedHeaderActions()"
-            :breadcrumbs="filament()->hasBreadcrumbs() ? $this->getBreadcrumbs() : []"
-            heading=""
-            subheading=""
-    />
-
     <x-filament-panels::form wire:submit="save">
         {{ $this->form }}
 

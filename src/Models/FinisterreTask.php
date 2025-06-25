@@ -6,8 +6,8 @@ use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Notifications\TaskNotification;
-use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +24,7 @@ use Spatie\Tags\HasTags;
  * @property \Illuminate\Support\Collection $tags
  * @property \Illuminate\Support\Collection $comments
  * @property TaskStatusEnum $status
+ * @property bool $archived
  * @property TaskPriorityEnum $priority
  * @property array $subtasks
  * @property \Illuminate\Support\Carbon $due_at
@@ -35,10 +36,11 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 {
     use HasFactory, HasTags, InteractsWithMedia, SortableTrait;
 
-    public $fillable = ['title', 'description', 'status', 'priority', 'subtasks', 'due_at', 'completed_at',
+    public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'subtasks', 'due_at', 'completed_at',
         'creator_id', 'assignee_id'];
     protected $casts = [
         'status'       => TaskStatusEnum::class,
+        'archived'     => 'boolean',
         'priority'     => TaskPriorityEnum::class,
         'subtasks'     => 'array',
         'due_at'       => 'datetime',
@@ -94,6 +96,11 @@ class FinisterreTask extends Model implements HasMedia, Sortable
     public function getTable()
     {
         return config('finisterre.table_name');
+    }
+
+    public function scopeNotArchived(Builder $query): Builder
+    {
+        return $query->where('archived', false);
     }
 
     protected static function newFactory(): FinisterreTaskFactory

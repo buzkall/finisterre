@@ -28,6 +28,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasMigrations([
                 'create_finisterre_tables',
                 'add_subtasks_to_finisterre_tasks',
+                'add_archived_to_finisterre_tasks',
             ]);
     }
 

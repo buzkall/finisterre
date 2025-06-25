@@ -18,6 +18,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\View;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
@@ -119,7 +120,14 @@ class TasksKanbanBoard extends KanbanBoard
                                     ->with('assignee')
                                     ->get()
                                     ->pluck('assignee.name', 'assignee.id')
-                            )
+                            ),
+
+                        Toggle::make('filter_show_archived')
+                            ->label(__('finisterre::finisterre.filter.show_archived'))
+                            ->helperText(__('finisterre::finisterre.filter.show_archived_description'))
+                            ->default(false)
+                            ->inline(false)
+                            ->columnSpanFull()
                     ]
                 )
                 ->fillForm(fn() => $this->filters)
@@ -163,6 +171,11 @@ class TasksKanbanBoard extends KanbanBoard
 
                     return $query;
                 }
+            )
+            ->when(
+                $this->filters['filter_show_archived'] ?? false,
+                fn($query) => $query,
+                fn($query) => $query->notArchived()
             )
             ->get();
     }
