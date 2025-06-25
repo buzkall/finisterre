@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.12.0 - 2025-06-25
+
+Add action to archive tasks
+
 ## 1.11.1 - 2025-06-24
 
 Convert edit modal to page
