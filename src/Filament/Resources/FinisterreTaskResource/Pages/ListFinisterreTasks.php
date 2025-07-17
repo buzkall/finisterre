@@ -16,4 +16,10 @@ class ListFinisterreTasks extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    // in case the project has a spotlight integration, we don't want it to register the listPage
+    public static function shouldRegisterSpotlight(): bool
+    {
+        return false;
+    }
 }

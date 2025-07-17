@@ -66,11 +66,19 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         });
 
         static::saved(function($task) {
+            // If the only dirty field is the updated_at timestamp, means that it has been
+            // touched by a comment, that has its own notification logic, so skip notification here
+            if (count($task->getDirty()) === 1 && array_key_exists('updated_at', $task->getDirty())) {
+                return;
+            }
+
             defer(function() use ($task) {
                 if (is_null($task->assignee_id)) {
                     $task->assignee_id = config('finisterre.fallback_notifiable_id');
                 }
-                if ($task->assignee && $task->assignee->id !== auth()->id()) { // don't notify myself
+
+                // don't notify myself
+                if ($task->assignee && $task->assignee->id !== auth()->id()) {
                     $taskChanges = $task->getChanges();
                     $task->assignee->notify(new TaskNotification($task, $taskChanges));
 
