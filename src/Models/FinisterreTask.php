@@ -68,7 +68,8 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         static::saved(function($task) {
             // If the only dirty field is the updated_at timestamp, means that it has been
             // touched by a comment, that has its own notification logic, so skip notification here
-            if (count($task->getDirty()) === 1 && array_key_exists('updated_at', $task->getDirty())) {
+            if (empty($task->getDirty()) ||
+                (count($task->getDirty()) === 1 && array_key_exists('updated_at', $task->getDirty()))) {
                 return;
             }
 
