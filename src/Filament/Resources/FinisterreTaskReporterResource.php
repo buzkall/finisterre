@@ -55,7 +55,7 @@ class FinisterreTaskReporterResource extends Resource
                 Select::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
                     ->options(TaskPriorityEnum::class)
-                    ->default(TaskPriorityEnum::Low)
+                    ->default(TaskPriorityEnum::Urgent)
                     ->required()
                     ->helperText(__('finisterre::finisterre.priority_help')),
 

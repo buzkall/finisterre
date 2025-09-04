@@ -6,6 +6,7 @@ use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Notifications\TaskNotification;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -91,11 +92,12 @@ class FinisterreTask extends Model implements HasMedia, Sortable
                         ->body(empty($taskChanges) ?
                             __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
                             __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
-                        /*->actions([
+                        ->actions([
                             Action::make('view')
+                                ->label(__('finisterre::finisterre.comment_notification.cta'))
                                 ->button()
-                                ->markAsRead(),
-                        ])*/
+                                ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)),
+                        ])
                         ->sendToDatabase($task->assignee);
                 }
             });

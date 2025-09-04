@@ -11,6 +11,7 @@ use Filament\Forms\ComponentContainer;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Schema;
@@ -141,11 +142,12 @@ class FinisterreCommentsComponent extends Component implements HasForms
                 ['title' => $this->record->title]
             ))
             ->body($body)
-            /* ->actions([
-                 Action::make('view')
-                     ->button()
-                     ->markAsRead(),
-             ])*/
+            ->actions([
+                Action::make('view')
+                    ->label(__('finisterre::finisterre.comment_notification.cta'))
+                    ->button()
+                    ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->record)),
+            ])
             ->sendToDatabase($user);
     }
 

@@ -4,6 +4,7 @@ namespace Buzkall\Finisterre\Models;
 
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Notifications\TaskNotification;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 
 class FinisterreTaskReport extends FinisterreTask
@@ -29,6 +30,12 @@ class FinisterreTaskReport extends FinisterreTask
                         ['priority' => $task->priority->getLabel(), 'title' => $task->title]
                     ))
                     ->body(__('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]))
+                    ->actions([
+                        Action::make('view')
+                            ->label(__('finisterre::finisterre.comment_notification.cta'))
+                            ->button()
+                            ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)),
+                    ])
                     ->sendToDatabase($task->assignee);
             });
         });
