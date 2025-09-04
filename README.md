@@ -93,7 +93,15 @@ return [
         'sender'            => env('FINISTERRE_SMS_SENDER'),
         'notify_to'         => env('FINISTERRE_SMS_NOTIFY_TO'),
         'notify_priorities' => [Buzkall\Finisterre\Enums\TaskPriorityEnum::Urgent],
-    ]
+    ],
+
+    'restrict_task_reports' => false,
+
+    'policies' => [
+        'task_report' => [
+            'before_function' => null, // Set to a closure or string for custom logic
+        ],
+    ],
 ];
 ```
 
@@ -148,15 +156,14 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-
 ## SMS notifications
 
 Using smsarena.es as provider.
 By default only notifies tasks on creation with priority TaskPriorityEnum::Urgent
 That can be changed in the config file
 
-Add to your .env file the following:   
- 
+Add to your .env file the following:
+
 ```
 # Finisterre
 FINISTERRE_SMS_ENABLED=false
@@ -165,10 +172,26 @@ FINISTERRE_SMS_SENDER=CHANGE
 FINISTERRE_SMS_NOTIFY_TO=CHANGE
 ```
 
+## Example Usage
 
+Here's how you can use the configurable policy feature in your Laravel application:
 
+### 1. Configure the Policy Logic
 
+In your `config/finisterre.php` file:
 
+```php
+'restrict_task_reports_callback' =>  function($user) {
+        return $user->hasAnyRole([App\Enums\RoleEnum::Admin, App\Enums\RoleEnum::Manager]);
+    }
+,
+```
+
+### 2. The Policy Will Automatically Use Your Logic
+
+The `FinisterreTaskReportPolicy` will now use your custom logic in its `before` method if is a callback.
+
+If the callback returns true, the user will not be authorized to view any task report.
 
 ## Testing
 

@@ -34,17 +34,21 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
+        if (class_exists(\Livewire\Livewire::class)) {
+            Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
+        }
 
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
 
         // this will get copied to the project's public folder when
         // running php artisan filament:assets
-        FilamentAsset::register(
-            [Css::make('finisterre-styles', __DIR__ . '/../resources/dist/finisterre.css')],
-            package: 'buzkall/finisterre'
-        );
+        if (class_exists(\Filament\Support\Facades\FilamentAsset::class) && class_exists(\Filament\Support\Assets\Css::class)) {
+            FilamentAsset::register(
+                [Css::make('finisterre-styles', __DIR__ . '/../resources/dist/finisterre.css')],
+                package: 'buzkall/finisterre'
+            );
+        }
 
         // remember to run php artisan filament:assets after changing assets in the site
         // also run npm run purge to clean filament styles

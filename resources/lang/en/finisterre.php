@@ -8,7 +8,9 @@ return [
     'edit_description'  => 'Edit description',
     'status'            => 'State',
     'priority'          => 'Priority',
+    'priority_help'     => 'If you set it to Urgent, the assignee will be notified right away. Use it wisely!',
     'due_at'            => 'Due at',
+    'created_by'        => 'Created by',
     'created_at'        => 'Created at',
     'updated_at'        => 'Updated at',
     'completed_at'      => 'Completed at',
@@ -78,5 +80,7 @@ return [
         'label'       => 'Subtasks',
         'add'         => 'Add subtask',
         'placeholder' => 'Write a subtask...',
-    ]
+    ],
+    'task_reports' => 'Issues',
+    'task_report'  => 'Issue'
 ];

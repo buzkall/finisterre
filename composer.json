@@ -79,7 +79,9 @@
         "lint": [
             "@php vendor/bin/pint --ansi",
             "@php vendor/bin/phpstan analyse --verbose --ansi"
-        ]
+        ],
+        "make-filament-resource": "./move-resources.sh",
+        "move-resources": "./move-resources.sh"
     },
     "config": {
         "sort-packages": true,

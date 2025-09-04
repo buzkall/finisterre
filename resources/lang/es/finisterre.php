@@ -8,7 +8,9 @@ return [
     'edit_description'  => 'Editar descripción',
     'status'            => 'Estado',
     'priority'          => 'Prioridad',
+    'priority_help'     => 'Si lo marcas como urgente se notificará inmediatamente al usuario asignado. Úsalo con responsabilidad!',
     'due_at'            => 'Vence el',
+    'created_by'        => 'Creada por',
     'created_at'        => 'Creada el',
     'updated_at'        => 'Actualizada el',
     'completed_at'      => 'Finalizada el',
@@ -78,5 +80,8 @@ return [
         'label'       => 'Subtareas',
         'add'         => 'Añadir subtarea',
         'placeholder' => 'Descripción de la subtarea',
-    ]
+    ],
+    'task_reports' => 'Incidencias',
+    'task_report'  => 'Incidencia',
+
 ];

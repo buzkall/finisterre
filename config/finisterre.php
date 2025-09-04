@@ -3,6 +3,7 @@
 return [
     'active'     => env('FINISTERRE_ACTIVE', false),
     'table_name' => 'finisterre_tasks',
+    'panel_slug' => 'admin',
     'slug'       => 'tasks',
 
     'model_policy' => Buzkall\Finisterre\Policies\FinisterreTaskPolicy::class,
@@ -75,5 +76,12 @@ return [
         'sender'            => env('FINISTERRE_SMS_SENDER'),
         'notify_to'         => env('FINISTERRE_SMS_NOTIFY_TO'),
         'notify_priorities' => [Buzkall\Finisterre\Enums\TaskPriorityEnum::Urgent],
-    ]
+    ],
+
+    // This can be a callback to restrict the access to task reports.
+    // for example:
+    // function($user) {
+    //    return $user->hasAnyRole([App\Enums\RoleEnum::Admin, App\Enums\RoleEnum::Manager]);
+    // }
+    'restrict_task_reports_callback' => null,
 ];

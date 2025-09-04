@@ -4,15 +4,13 @@ namespace Buzkall\Finisterre\Filament\Resources;
 
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource\Pages;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Buzkall\Finisterre\Filament\Resources\FinisterreTaskReporterResource\Pages;
+use Buzkall\Finisterre\Models\FinisterreTaskReport;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -21,11 +19,15 @@ use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Rawilk\FilamentQuill\Filament\Forms\Components\QuillEditor;
 
-class FinisterreTaskResource extends Resource
+class FinisterreTaskReporterResource extends Resource
 {
-    protected static ?string $model = FinisterreTask::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $model = FinisterreTaskReport::class;
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
+
+    public static function getModelLabel(): string
+    {
+        return __('finisterre::finisterre.task_report');
+    }
 
     public static function form(Form $form): Form
     {
@@ -54,10 +56,8 @@ class FinisterreTaskResource extends Resource
                     ->label(__('finisterre::finisterre.priority'))
                     ->options(TaskPriorityEnum::class)
                     ->default(TaskPriorityEnum::Low)
-                    ->required(),
-
-                /*DatePicker::make('due_at')
-                    ->label(__('finisterre::finisterre.due_at')),*/
+                    ->required()
+                    ->helperText(__('finisterre::finisterre.priority_help')),
 
                 DatePicker::make('completed_at')
                     ->label(__('finisterre::finisterre.completed_at'))
@@ -84,25 +84,14 @@ class FinisterreTaskResource extends Resource
                                 fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
                             )
                     )
-                    ->default(config('finisterre.fallback_notifiable_id')),
-
-                SpatieTagsInput::make('tags')
-                    ->label(__('finisterre::finisterre.tags'))
-                    ->type('tasks'),
-
-                SubtasksField::make('subtasks')
-                    ->label(__('finisterre::finisterre.subtasks.label'))
-                    ->columnSpanFull(),
+                    ->hiddenOn('create')
+                    ->disabled(),
 
                 Placeholder::make('dates')
                     ->hiddenLabel()
                     ->hiddenOn('create')
                     ->hintIcon('heroicon-o-clock')
                     ->hint(fn($record) => new HtmlString(
-                        __('finisterre::finisterre.created_by') . ': ' .
-                        '&nbsp;&nbsp;&nbsp;&nbsp;' . // fake alignment
-                        $record?->creator->name .
-                        '<br />' .
                         __('finisterre::finisterre.created_at') . ': ' .
                         '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . // fake alignment
                         $record?->created_at->format('d/m/y H:i:s') .
@@ -118,37 +107,41 @@ class FinisterreTaskResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('title')
+                    ->label(__('finisterre::finisterre.title'))
                     ->searchable()
                     ->sortable()
                     ->limit(50),
 
                 Tables\Columns\TextColumn::make('description')
+                    ->label(__('finisterre::finisterre.description'))
+                    ->html()
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('finisterre::finisterre.status'))
+                    ->badge(),
 
-                Tables\Columns\TextColumn::make('priority'),
+                Tables\Columns\TextColumn::make('priority')
+                    ->label(__('finisterre::finisterre.priority')),
 
-                Tables\Columns\TextColumn::make('due_at')
-                    ->dateTime(),
                 Tables\Columns\TextColumn::make('completed_at')
+                    ->label(__('finisterre::finisterre.completed_at'))
                     ->dateTime(),
-            ])->filters([])
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFinisterreTasks::route('/'), // Needed for the delete action
-            'edit'  => Pages\EditFinisterreTask::route('/{record}/edit'),
+            'index'  => Pages\ListFinisterreTaskReporters::route('/'),
+            'create' => Pages\CreateFinisterreTaskReporter::route('/create'),
+            'edit'   => Pages\EditFinisterreTaskReporter::route('/{record}/edit'),
         ];
     }
 }

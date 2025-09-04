@@ -40,6 +40,7 @@ class TaskNotification extends Notification implements ShouldQueue
                     __('finisterre::finisterre.notification.greeting_changes', ['title' => $this->task->title])
             )
             ->line(new HtmlString('<style>img {height: auto !important}</style>'))
+            ->line(__('finisterre::finisterre.created_by') . ': ' . $this->task->creator->name ?? 'N/A')
             ->when(
                 empty($this->taskChanges),
                 fn(MailMessage $mail) => $mail->line(new HtmlString($this->task->description)),
@@ -60,8 +61,11 @@ class TaskNotification extends Notification implements ShouldQueue
                     ->map(fn($comment) => $comment->comment . ' ' . $comment->created_at->format('d-m-y H:i:s'))
                     ->implode('<br><hr/>')));
             })
-            // ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug') . '/' . $this->task->id))
-            ->action(__('finisterre::finisterre.notification.cta'), url(config('finisterre.slug')))
+            ->action(
+                __('finisterre::finisterre.notification.cta'),
+                // note that can't use config slug, because the resource has finisterre-tasks as slug and will override the default one
+                url(config('finisterre.panel_slug') . '/finisterre-tasks/' . $this->task->id . '/edit')
+            )
             ->salutation(' ');
     }
 
