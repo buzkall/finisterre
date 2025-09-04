@@ -172,26 +172,21 @@ FINISTERRE_SMS_SENDER=CHANGE
 FINISTERRE_SMS_NOTIFY_TO=CHANGE
 ```
 
-## Example Usage
+## Role restriction for Task Reports
 
 Here's how you can use the configurable policy feature in your Laravel application:
 
 ### 1. Configure the Policy Logic
 
-In your `config/finisterre.php` file:
+In your `config/finisterre.php` file (needs to be a string to be able to cache config):
 
 ```php
-'restrict_task_reports_callback' =>  function($user) {
-        return $user->hasAnyRole([App\Enums\RoleEnum::Admin, App\Enums\RoleEnum::Manager]);
-    }
-,
+'restrict_task_reports_callback' =>  '$user->hasRole(App\Enums\RoleEnum::Admin)'
 ```
 
 ### 2. The Policy Will Automatically Use Your Logic
 
-The `FinisterreTaskReportPolicy` will now use your custom logic in its `before` method if is a callback.
-
-If the callback returns true, the user will not be authorized to view any task report.
+The `FinisterreTaskReportPolicy` will now use your custom logic in its `before` method.
 
 ## Testing
 

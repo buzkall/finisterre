@@ -80,8 +80,9 @@ return [
 
     // This can be a callback to restrict the access to task reports.
     // for example:
-    // function($user) {
+    // 'function($user) {
     //    return $user->hasAnyRole([App\Enums\RoleEnum::Admin, App\Enums\RoleEnum::Manager]);
-    // }
+    // }'
+    // but in order to cache config it needs to be a string
     'restrict_task_reports_callback' => null,
 ];
