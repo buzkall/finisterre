@@ -27,11 +27,13 @@ class FinisterreTaskReportPolicy
             if (str_contains($role, '::')) {
                 $role = $this->resolveEnumValue($role);
             }
+
             return method_exists($user, 'hasRole') ? /** @phpstan-ignore-next-line */ $user->hasRole($role) : false;
         }
 
         if (preg_match('/^\$user->hasPermission\(([^)]+)\)$/', $expression, $matches)) {
             $permission = trim($matches[1], '"\'');
+
             return method_exists($user, 'hasPermission') ? /** @phpstan-ignore-next-line */ $user->hasPermission($permission) : false;
         }
 
@@ -47,7 +49,7 @@ class FinisterreTaskReportPolicy
         if ($enumReference === 'App\Enums\RoleEnum::Admin') {
             return 'admin';
         }
-        
+
         throw new \InvalidArgumentException("Unsupported enum reference: {$enumReference}");
     }
 
