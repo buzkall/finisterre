@@ -13,6 +13,11 @@ class FinisterreTaskPolicy
         return true;
     }
 
+    public function canAccessKanban(Authenticatable $user): bool
+    {
+        return true;
+    }
+
     public function view(Authenticatable $user, FinisterreTask $finisterreTask): bool
     {
         return true;
