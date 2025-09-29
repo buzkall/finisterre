@@ -18,6 +18,10 @@ return [
     'authenticatable_filter_value'  => '', // admin
     'fallback_notifiable_id'        => 1,
 
+    // to filter to only report
+    'can_only_report_filter_column' => '', // role
+    'can_only_report_filter_value'  => '', // user
+
     'hidden_statuses' => [],
 
     // To set the attachments as private:
@@ -77,12 +81,4 @@ return [
         'notify_to'         => env('FINISTERRE_SMS_NOTIFY_TO'),
         'notify_priorities' => [Buzkall\Finisterre\Enums\TaskPriorityEnum::Urgent],
     ],
-
-    // This can be a callback to restrict the access to task reports.
-    // for example:
-    // 'function($user) {
-    //    return $user->hasAnyRole([App\Enums\RoleEnum::Admin, App\Enums\RoleEnum::Manager]);
-    // }'
-    // but in order to cache config it needs to be a string
-    'restrict_task_reports_callback' => null,
 ];

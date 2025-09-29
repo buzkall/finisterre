@@ -50,7 +50,6 @@ class FinisterreCommentsComponent extends Component implements HasForms
 
         $editor
             ->hiddenLabel()
-            // ->autofocus() // this solves the problem of losing focus when clicking on the editor
             ->required()
             ->placeholder(__('finisterre::finisterre.comments.placeholder'))
             ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));
@@ -75,12 +74,12 @@ class FinisterreCommentsComponent extends Component implements HasForms
                                     Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
                                     fn($query) => $query->where('active', true)
                                 )
-                                ->pluck('name', 'id');
+                                ->pluck(config('finisterre.authenticatable_attribute'), 'id');
 
                             // Append task creator if not the authenticated user and not already in options
                             if ($this->record->creator->getKey() !== auth()->id() &&
                                 ! $options->has($this->record->creator->getKey())) {
-                                $options->put($this->record->creator->getKey(), $this->record->creator->name);
+                                $options->put($this->record->creator->getKey(), $this->record->creator->{config('finisterre.authenticatable_attribute')});
                             }
 
                             return $options;
@@ -110,11 +109,11 @@ class FinisterreCommentsComponent extends Component implements HasForms
         if ($data['notify']) {
             foreach (config('finisterre.authenticatable')::findMany($data['notify']) as $user) {
                 $this->notifyUser($user);
-                $notified->push($user->name);
+                $notified->push($user->{config('finisterre.authenticatable_attribute')});
             }
         } else {
             $this->notifyUser($this->record->assignee);
-            $notified->push($this->record->assignee->name); // @phpstan-ignore-line
+            $notified->push($this->record->assignee->{config('finisterre.authenticatable_attribute')}); // @phpstan-ignore-line
         }
 
         Notification::make()

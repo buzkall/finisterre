@@ -4,6 +4,7 @@ namespace Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource\Pages;
 
 use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
+use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
@@ -20,6 +21,10 @@ class EditFinisterreTask extends EditRecord
 
     protected function getHeaderActions(): array
     {
+        if (FinisterreTask::userCanOnlyReport()) {
+            return [];
+        }
+
         return [
             Action::make('archive')
                 ->label(__('finisterre::finisterre.archive'))

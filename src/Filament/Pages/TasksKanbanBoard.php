@@ -60,6 +60,11 @@ class TasksKanbanBoard extends KanbanBoard
             config('finisterre.active');
     }
 
+    public static function shouldRegisterSpotlight(): bool
+    {
+        return false;
+    }
+
     public function getTitle(): string|Htmlable
     {
         return __('finisterre::finisterre.tasks');

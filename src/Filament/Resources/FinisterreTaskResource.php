@@ -24,11 +24,31 @@ use Rawilk\FilamentQuill\Filament\Forms\Components\QuillEditor;
 class FinisterreTaskResource extends Resource
 {
     protected static ?string $model = FinisterreTask::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return FinisterreTask::userCanOnlyReport();
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('finisterre::finisterre.task_report');
+    }
 
     public static function form(Form $form): Form
     {
+        $userIsReporterOnly = FinisterreTask::userCanOnlyReport();
+
+        $subtaskArray = [];
+        if (! $userIsReporterOnly) {
+            $subtaskArray = [
+                SubtasksField::make('subtasks')
+                    ->label(__('finisterre::finisterre.subtasks.label'))
+                    ->columnSpanFull()
+            ];
+        }
+
         return $form->schema([
             TextInput::make('title')
                 ->label(__('finisterre::finisterre.title'))
@@ -53,11 +73,9 @@ class FinisterreTaskResource extends Resource
                 Select::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
                     ->options(TaskPriorityEnum::class)
-                    ->default(TaskPriorityEnum::Low)
-                    ->required(),
-
-                /*DatePicker::make('due_at')
-                    ->label(__('finisterre::finisterre.due_at')),*/
+                    ->default(fn() => $userIsReporterOnly ? TaskPriorityEnum::Urgent : TaskPriorityEnum::Low)
+                    ->required()
+                    ->helperText(fn() => $userIsReporterOnly ? __('finisterre::finisterre.priority_help') : ''),
 
                 DatePicker::make('completed_at')
                     ->label(__('finisterre::finisterre.completed_at'))
@@ -84,15 +102,15 @@ class FinisterreTaskResource extends Resource
                                 fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
                             )
                     )
+                    ->hidden(fn($operation) => $userIsReporterOnly && $operation == 'create')
+                    ->disabled(fn() => $userIsReporterOnly)
                     ->default(config('finisterre.fallback_notifiable_id')),
 
                 SpatieTagsInput::make('tags')
                     ->label(__('finisterre::finisterre.tags'))
                     ->type('tasks'),
 
-                SubtasksField::make('subtasks')
-                    ->label(__('finisterre::finisterre.subtasks.label'))
-                    ->columnSpanFull(),
+                ...$subtaskArray,
 
                 Placeholder::make('dates')
                     ->hiddenLabel()
@@ -101,7 +119,7 @@ class FinisterreTaskResource extends Resource
                     ->hint(fn($record) => new HtmlString(
                         __('finisterre::finisterre.created_by') . ': ' .
                         '&nbsp;&nbsp;&nbsp;&nbsp;' . // fake alignment
-                        $record?->creator->name .
+                        $record?->creator->{config('finisterre.authenticatable_attribute')} .
                         '<br />' .
                         __('finisterre::finisterre.created_at') . ': ' .
                         '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . // fake alignment
@@ -118,37 +136,41 @@ class FinisterreTaskResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('title')
+                    ->label(__('finisterre::finisterre.title'))
                     ->searchable()
                     ->sortable()
                     ->limit(50),
 
                 Tables\Columns\TextColumn::make('description')
+                    ->label(__('finisterre::finisterre.description'))
+                    ->html()
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('finisterre::finisterre.status'))
+                    ->badge(),
 
-                Tables\Columns\TextColumn::make('priority'),
+                Tables\Columns\TextColumn::make('priority')
+                    ->label(__('finisterre::finisterre.priority')),
 
-                Tables\Columns\TextColumn::make('due_at')
-                    ->dateTime(),
                 Tables\Columns\TextColumn::make('completed_at')
+                    ->label(__('finisterre::finisterre.completed_at'))
                     ->dateTime(),
-            ])->filters([])
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFinisterreTasks::route('/'), // Needed for the delete action
-            'edit'  => Pages\EditFinisterreTask::route('/{record}/edit'),
+            'index'  => Pages\ListFinisterreTasks::route('/'), // Needed for the delete action
+            'create' => Pages\CreateFinisterreTask::route('/create'),
+            'edit'   => Pages\EditFinisterreTask::route('/{record}/edit'),
         ];
     }
 }

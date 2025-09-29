@@ -51,8 +51,16 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 
     protected static function booted(): void
     {
+        // add global scope only for reporter users
+        if (self::userCanOnlyReport()) {
+            static::addGlobalScope('reporter', function($query) {
+                $query->where('creator_id', auth()->id());
+            });
+        }
+
         static::creating(function($task) {
             $task->status = $task->status ?? TaskStatusEnum::Open;
+            $task->order_column = 0;
             $task->creator_id = $task->creator_id ?? auth()->id();
         });
 
@@ -107,6 +115,15 @@ class FinisterreTask extends Model implements HasMedia, Sortable
     public function getTable()
     {
         return config('finisterre.table_name');
+    }
+
+    public static function userCanOnlyReport(): bool
+    {
+        if (! auth()->user() || empty(config('finisterre.can_only_report_filter_column'))) {
+            return false;
+        }
+
+        return auth()->user()->{config('finisterre.can_only_report_filter_column')} === config('finisterre.can_only_report_filter_value');
     }
 
     public function scopeNotArchived(Builder $query): Builder
