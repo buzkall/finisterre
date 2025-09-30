@@ -18,10 +18,6 @@ return [
     'authenticatable_filter_value'  => '', // admin
     'fallback_notifiable_id'        => 1,
 
-    // to filter to only report
-    'can_only_report_filter_column' => '', // role
-    'can_only_report_filter_value'  => '', // user
-
     'hidden_statuses' => [],
 
     // To set the attachments as private:
@@ -36,7 +32,7 @@ return [
     //        ],
     // 3. Add the route controller to the bootstrap app.php file in withRouting
     // then: function() {
-    //          (new Buzkall\Finisterre\Controllers\FilamentRouteController)();
+    //          (new Buzkall\FinisterrePlugin\Controllers\FilamentRouteController)();
     //       }
     'attachments_disk' => 'public', // finisterre
 

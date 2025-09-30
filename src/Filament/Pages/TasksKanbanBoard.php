@@ -2,31 +2,20 @@
 
 namespace Buzkall\Finisterre\Filament\Pages;
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
+use Buzkall\Finisterre\Facades\Finisterre;
+use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\View;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Url;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
-use Rawilk\FilamentQuill\Filament\Forms\Components\QuillEditor;
 use Spatie\Tags\Tag;
 
 class TasksKanbanBoard extends KanbanBoard
@@ -56,8 +45,7 @@ class TasksKanbanBoard extends KanbanBoard
 
     public static function canAccess(): bool
     {
-        return auth()->guard(config('finisterre.guard'))->user()->can('canAccessKanban', FinisterreTask::class) &&
-            config('finisterre.active');
+        return Finisterre::get()->canViewAllTasks();
     }
 
     public static function shouldRegisterSpotlight(): bool
@@ -89,11 +77,8 @@ class TasksKanbanBoard extends KanbanBoard
     {
         return [
             CreateAction::make()
-                ->model(FinisterreTask::class)
                 ->label(__('finisterre::finisterre.create_task'))
-                ->modalHeading(__('finisterre::finisterre.create_task'))
-                ->form($this->getEditModalFormSchema(null))
-                ->modalSubmitAction(fn($action) => $action->keyBindings(['mod+s'])) // save with mod+s
+                ->url(FinisterreTaskResource::getUrl('create'))
                 ->createAnother(false)
                 ->keyBindings(['mod+b']), // open create new with mod+b
 
@@ -183,106 +168,5 @@ class TasksKanbanBoard extends KanbanBoard
                 fn($query) => $query->notArchived()
             )
             ->get();
-    }
-
-    protected function getEditModalFormSchema(string|int|null $recordId): array
-    {
-        return [
-            TextInput::make('title')
-                ->label(__('finisterre::finisterre.title'))
-                ->required()
-                ->maxLength(255)
-                ->columnSpanFull(),
-
-            QuillEditor::make('description')
-                ->label(__('finisterre::finisterre.description'))
-                ->hiddenLabel()
-                ->fileAttachmentsVisibility('private')
-                ->columnSpanFull(),
-
-            Group::make([
-                Select::make('status')
-                    ->label(__('finisterre::finisterre.status'))
-                    ->hiddenOn('create')
-                    ->options(TaskStatusEnum::options())
-                    ->default(TaskStatusEnum::Open)
-                    ->required(),
-
-                Select::make('priority')
-                    ->label(__('finisterre::finisterre.priority'))
-                    ->options(TaskPriorityEnum::class)
-                    ->default(TaskPriorityEnum::Low)
-                    ->required(),
-
-                DatePicker::make('due_at')
-                    ->label(__('finisterre::finisterre.due_at')),
-
-                DatePicker::make('completed_at')
-                    ->label(__('finisterre::finisterre.completed_at'))
-                    ->hiddenOn('create')
-                    ->disabled(),
-
-                SpatieMediaLibraryFileUpload::make('attachments')
-                    ->label(__('finisterre::finisterre.attachments'))
-                    ->multiple()
-                    ->disk(config('finisterre.attachments_disk') ?? 'public')
-                    ->collection('tasks')
-                    ->openable()
-                    ->downloadable(),
-
-                Select::make('assignee_id')
-                    ->label(__('finisterre::finisterre.assignee_id'))
-                    ->required()
-                    ->relationship(
-                        'assignee',
-                        config('finisterre.authenticatable_attribute'),
-                        fn($query) => $query
-                            ->when(
-                                config('finisterre.authenticatable_filter_column'),
-                                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
-                            )
-                            ->when(
-                                Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
-                                fn($query) => $query->where('active', true)
-                            )
-                    )
-                    ->default(config('finisterre.fallback_notifiable_id')),
-
-                SpatieTagsInput::make('tags')
-                    ->label(__('finisterre::finisterre.tags'))
-                    ->type('tasks'),
-
-                SubtasksField::make('subtasks')
-                    ->label(__('finisterre::finisterre.subtasks.label'))
-                    ->columnSpanFull(),
-
-                Placeholder::make('dates')
-                    ->hiddenLabel()
-                    ->hiddenOn('create')
-                    ->hintIcon('heroicon-o-clock')
-                    ->hint(fn($record) => new HtmlString(
-                        __('finisterre::finisterre.created_at') . ': ' .
-                        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . // fake alignment
-                        $record?->created_at->format('d/m/y H:i:s') .
-                        '<br />' .
-                        __('finisterre::finisterre.updated_at') . ': ' . $record?->updated_at->format('d/m/y H:i:s')
-                    ))->columnSpanFull(),
-
-                // Add submit buttons above the comments
-                Actions::make([
-                    FormAction::make('submit')
-                        ->label(self::getEditModalSaveButtonLabel())
-                        ->submit('save')
-                        ->keyBindings(['mod+s'])
-
-                ])->columnSpanFull()
-                    ->alignEnd()
-                    ->hiddenOn('create'),
-
-                View::make('finisterre::comments.view')
-                    ->hiddenOn('create')
-                    ->columnSpanFull()
-            ])->columns()
-        ];
     }
 }

@@ -79,7 +79,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
                             // Append task creator if not the authenticated user and not already in options
                             if ($this->record->creator->getKey() !== auth()->id() &&
                                 ! $options->has($this->record->creator->getKey())) {
-                                $options->put($this->record->creator->getKey(), $this->record->creator->{config('finisterre.authenticatable_attribute')});
+                                $options->put($this->record->creator->getKey(), $this->record->creatorName());
                             }
 
                             return $options;
@@ -113,7 +113,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
             }
         } else {
             $this->notifyUser($this->record->assignee);
-            $notified->push($this->record->assignee->{config('finisterre.authenticatable_attribute')}); // @phpstan-ignore-line
+            $notified->push($this->record->assignee->{config('finisterre.authenticatable_attribute')});
         }
 
         Notification::make()

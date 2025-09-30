@@ -13,7 +13,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn(string $modelName) => 'Buzkall\\Finisterre\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+            fn(string $modelName) => 'Buzkall\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
 
         // Configure factory for User model
@@ -22,7 +22,7 @@ class TestCase extends Orchestra
                 return 'Workbench\\Database\\Factories\\UserFactory';
             }
 
-            return 'Buzkall\\Finisterre\\Database\\Factories\\' . class_basename($modelName) . 'Factory';
+            return 'Buzkall\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory';
         });
     }
 

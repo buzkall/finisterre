@@ -51,17 +51,19 @@ The package comes with a default policy for the tasks, that can be overridden in
 
 ## Usage
 
-Add the plugin to your panel provider
+Add the plugin to your panel provider and specify the permissions
 
 ```php
 
-use Buzkall\Finisterre\Finisterre;
+use Buzkall\Finisterre\FinisterrePlugin;
 
 public function panel(Panel $panel): Panel
 {
     return $panel
         ->plugins([
-            Finisterre::make(),
+            FinisterrePlugin::make()
+                ->userCanViewAllTasks(fn() => auth()->user()?->hasRole(RoleEnum::Admin))
+                ->userCanViewOnlyTheirTasks(fn() => auth()->user()?->hasAnyRole([RoleEnum::Editor, RoleEnum::Manager])),
         ])
     ])
 }

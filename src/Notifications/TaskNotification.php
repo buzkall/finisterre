@@ -40,7 +40,7 @@ class TaskNotification extends Notification implements ShouldQueue
                     __('finisterre::finisterre.notification.greeting_changes', ['title' => $this->task->title])
             )
             ->line(new HtmlString('<style>img {height: auto !important}</style>'))
-            ->line(__('finisterre::finisterre.created_by') . ': ' . $this->task->creator->{config('finisterre.authenticatable_attribute')} ?? 'N/A')
+            ->line(__('finisterre::finisterre.created_by') . ': ' . $this->task->creatorName())
             ->when(
                 empty($this->taskChanges),
                 fn(MailMessage $mail) => $mail->line(new HtmlString($this->task->description)),

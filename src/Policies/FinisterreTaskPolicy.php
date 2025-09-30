@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre\Policies;
 
+use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Illuminate\Contracts\Auth\Authenticatable;
 
@@ -10,12 +11,7 @@ class FinisterreTaskPolicy
     // Note to future self: remember that this policy can be overridden by the finisterre config
     public function viewAny(Authenticatable $user): bool
     {
-        return true;
-    }
-
-    public function canAccessKanban(Authenticatable $user): bool
-    {
-        return true;
+        return FinisterrePlugin::get()->canViewAllTasks() || FinisterrePlugin::get()->canViewOnlyTheirTasks();
     }
 
     public function view(Authenticatable $user, FinisterreTask $finisterreTask): bool

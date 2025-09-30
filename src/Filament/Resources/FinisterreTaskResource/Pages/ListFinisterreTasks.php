@@ -17,7 +17,7 @@ class ListFinisterreTasks extends ListRecords
         ];
     }
 
-    // in case the project has a spotlight integration, we don't want it to register the listPage
+    // in case the project has a Spotlight integration, we don't want it to register the listPage
     public static function shouldRegisterSpotlight(): bool
     {
         return false;

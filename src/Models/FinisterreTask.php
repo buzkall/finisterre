@@ -5,9 +5,11 @@ namespace Buzkall\Finisterre\Models;
 use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
+use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Notifications\TaskNotification;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,9 +53,14 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 
     protected static function booted(): void
     {
-        // add global scope only for reporter users
-        if (self::userCanOnlyReport()) {
-            static::addGlobalScope('reporter', function($query) {
+        // Only apply in Filament context, not in queue/console
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            return;
+        }
+
+        // add global scope only for users that can only see their tasks
+        if (FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
+            static::addGlobalScope('canViewOnlyTheirTasks', function($query) {
                 $query->where('creator_id', auth()->id());
             });
         }
@@ -62,6 +69,9 @@ class FinisterreTask extends Model implements HasMedia, Sortable
             $task->status = $task->status ?? TaskStatusEnum::Open;
             $task->order_column = 0;
             $task->creator_id = $task->creator_id ?? auth()->id();
+            if (is_null($task->assignee_id)) {
+                $task->assignee_id = config('finisterre.fallback_notifiable_id');
+            }
         });
 
         static::updating(function($task) {
@@ -83,10 +93,6 @@ class FinisterreTask extends Model implements HasMedia, Sortable
             }
 
             defer(function() use ($task) {
-                if (is_null($task->assignee_id)) {
-                    $task->assignee_id = config('finisterre.fallback_notifiable_id');
-                }
-
                 // don't notify myself
                 if ($task->assignee && $task->assignee->id !== auth()->id()) {
                     $taskChanges = $task->getChanges();
@@ -117,15 +123,6 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         return config('finisterre.table_name');
     }
 
-    public static function userCanOnlyReport(): bool
-    {
-        if (! auth()->user() || empty(config('finisterre.can_only_report_filter_column'))) {
-            return false;
-        }
-
-        return auth()->user()->{config('finisterre.can_only_report_filter_column')} === config('finisterre.can_only_report_filter_value');
-    }
-
     public function scopeNotArchived(Builder $query): Builder
     {
         return $query->where('archived', false);
@@ -144,6 +141,17 @@ class FinisterreTask extends Model implements HasMedia, Sortable
     public function creator(): BelongsTo
     {
         return $this->belongsTo(config('finisterre.authenticatable'), 'creator_id');
+    }
+
+    public function creatorName(): string
+    {
+        $creator = $this->creator;
+        if (! $creator) {
+            return 'N/A';
+        }
+
+        /** @var Authenticatable $creator */
+        return $creator->{$creator->getUserNameColumn()};
     }
 
     public function assignee(): BelongsTo
