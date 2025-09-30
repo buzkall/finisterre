@@ -21,15 +21,19 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // More info: https://github.com/spatie/laravel-package-tools
         $package
             ->name('finisterre')
-            ->hasConfigFile()
-            ->hasViews()
-            ->hasAssets()
-            ->hasTranslations()
-            ->hasMigrations([
-                'create_finisterre_tables',
-                'add_subtasks_to_finisterre_tasks',
-                'add_archived_to_finisterre_tasks',
-            ]);
+            ->hasConfigFile();
+
+        if (config('finisterre.active', false)) {
+            $package
+                ->hasViews()
+                ->hasAssets()
+                ->hasTranslations()
+                ->hasMigrations([
+                    'create_finisterre_tables',
+                    'add_subtasks_to_finisterre_tasks',
+                    'add_archived_to_finisterre_tasks',
+                ]);
+        }
     }
 
     public function packageBooted(): void

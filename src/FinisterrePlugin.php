@@ -60,6 +60,10 @@ class FinisterrePlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        if (! config('finisterre.active', false)) {
+            return;
+        }
+
         $panel
             ->resources([
                 FinisterreTaskResource::class
