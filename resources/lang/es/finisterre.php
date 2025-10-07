@@ -67,14 +67,14 @@ return [
         'cta'      => 'Ver tarea',
     ],
     'filter' => [
-        'label'                     => 'Filtros',
-        'cta'                       => 'Filtrar',
-        'text'                      => 'Texto',
-        'clear'                     => 'Limpiar filtros',
-        'assignee'                  => 'Asignada a',
-        'text_description'          => 'Busca en título o descripción',
-        'show_archived'             => 'Mostrar archivadas',
-        'show_archived_description' => 'Por defecto solo se muestran las tareas que no han sido archivadas',
+        'label'            => 'Filtros',
+        'cta'              => 'Filtrar',
+        'text'             => 'Texto',
+        'clear'            => 'Limpiar filtros',
+        'assignee'         => 'Asignada a',
+        'text_description' => 'Busca en título o descripción',
+        'show_archived'    => 'Mostrar archivadas',
+        'reset'            => 'Resetear filtros'
     ],
     'subtasks' => [
         'label'       => 'Subtareas',

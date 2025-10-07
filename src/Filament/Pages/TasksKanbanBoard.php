@@ -6,20 +6,19 @@ use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Facades\Finisterre;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Buzkall\Finisterre\Models\FinisterreTask;
-use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
 use Spatie\Tags\Tag;
 
-class TasksKanbanBoard extends KanbanBoard
+class TasksKanbanBoard extends KanbanBoard implements HasForms
 {
+    use InteractsWithForms;
+
     #[Url]
     public ?array $filters = null;
 
@@ -30,7 +29,10 @@ class TasksKanbanBoard extends KanbanBoard
     protected static string $view = 'finisterre::filament-kanban.kanban-board';
     protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
     protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
-    protected $listeners = ['commentCreated' => '$refresh'];
+    protected $listeners = [
+        'commentCreated' => '$refresh',
+        'filtersUpdated' => 'updateFilters',
+    ];
     public bool $disableEditModal = true;
 
     public static function getSlug(): string
@@ -81,56 +83,14 @@ class TasksKanbanBoard extends KanbanBoard
                 ->url(FinisterreTaskResource::getUrl('create'))
                 ->createAnother(false)
                 ->keyBindings(['mod+b']), // open create new with mod+b
-
-            Action::make('filters')
-                ->slideOver(false)
-                ->modalWidth('2xl')
-                ->keyBindings(['mod+shift+f']) // open filters with mod+shift+f
-                ->label(__('finisterre::finisterre.filter.label'))
-                ->icon('heroicon-m-funnel')
-                ->badge(fn() => $this->filters ? count(array_filter($this->filters)) : null)
-                ->badgeColor('warning')
-                ->form(
-                    [
-                        CheckboxList::make('filter_tags')
-                            ->label(__('finisterre::finisterre.tags'))
-                            ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
-                            ->columns(),
-
-                        TextInput::make('filter_text')
-                            ->autofocus()
-                            ->label(__('finisterre::finisterre.filter.text'))
-                            ->helperText(__('finisterre::finisterre.filter.text_description')),
-
-                        Select::make('filter_assignee')
-                            ->label(__('finisterre::finisterre.filter.assignee'))
-                            ->options(
-                                fn() => FinisterreTask::query()
-                                    ->distinct('assignee_id')
-                                    ->with('assignee')
-                                    ->get()
-                                    ->pluck('assignee.name', 'assignee.id')
-                            ),
-
-                        Toggle::make('filter_show_archived')
-                            ->label(__('finisterre::finisterre.filter.show_archived'))
-                            ->helperText(__('finisterre::finisterre.filter.show_archived_description'))
-                            ->default(false)
-                            ->inline(false)
-                            ->columnSpanFull()
-                    ]
-                )
-                ->fillForm(fn() => $this->filters)
-                ->action(fn($data) => $this->filters = $data)
-                ->modalSubmitActionLabel(__('finisterre::finisterre.filter.cta'))
-                ->extraModalFooterActions(fn() => [
-                    Action::make('clear_filters')
-                        ->label(__('finisterre::finisterre.filter.clear'))
-                        ->color('warning')
-                        ->visible(fn() => $this->filters)
-                        ->action(fn() => $this->filters = null)->cancelParentActions()
-                ])
         ];
+    }
+
+    public function updateFilters(array $filters): void
+    {
+        // this event is called from the FilterTasks component
+        $this->filters = $filters;
+        $this->dispatch('$refresh');
     }
 
     protected function records(): Collection

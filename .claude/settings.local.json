@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan config:clear:*)"
+      "Bash(php artisan config:clear:*)",
+      "Bash(php artisan tinker --execute=\"dd(get_class_methods(''''Filament\\Forms\\Form''''))\")",
+      "Bash(php artisan view:clear:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre;
 
+use Buzkall\Finisterre\Filament\Livewire\FilterTasks;
 use Buzkall\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
@@ -40,6 +41,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
     {
         if (class_exists(\Livewire\Livewire::class)) {
             Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
+            Livewire::component('filter-tasks', FilterTasks::class);
         }
 
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
