@@ -31,7 +31,34 @@ class FinisterreCommentsComponent extends Component implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill();
+        $options = $this->getNotifyOptions();
+
+        $this->form->fill([
+            'notify' => $options->count() === 1 ? $options->keys()->toArray() : [],
+        ]);
+    }
+
+    private function getNotifyOptions()
+    {
+        $options = config('finisterre.authenticatable')::query()
+            ->where('id', '!=', auth()->id())
+            ->when(
+                config('finisterre.authenticatable_filter_column'),
+                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+            )
+            ->when(
+                Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
+                fn($query) => $query->where('active', true)
+            )
+            ->pluck(config('finisterre.authenticatable_attribute'), 'id');
+
+        // Append task creator if not the authenticated user and not already in options
+        if ($this->record->creator->getKey() !== auth()->id() &&
+            ! $options->has($this->record->creator->getKey())) {
+            $options->put($this->record->creator->getKey(), $this->record->creatorName());
+        }
+
+        return $options;
     }
 
     public function form(Form $form): Form
@@ -54,39 +81,15 @@ class FinisterreCommentsComponent extends Component implements HasForms
             ->placeholder(__('finisterre::finisterre.comments.placeholder'))
             ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));
 
-        return $form
-            ->schema([
-                $editor,
+        return $form->schema([
+            $editor,
 
-                Forms\Components\Select::make('notify')
-                    ->multiple()
-                    ->label(__('finisterre::finisterre.comments.notify'))
-                    ->hint(__('finisterre::finisterre.comments.notify_hint'))
-                    ->options(
-                        function() {
-                            $options = config('finisterre.authenticatable')::query()
-                                ->where('id', '!=', auth()->id())
-                                ->when(
-                                    config('finisterre.authenticatable_filter_column'),
-                                    fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
-                                )
-                                ->when(
-                                    Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
-                                    fn($query) => $query->where('active', true)
-                                )
-                                ->pluck(config('finisterre.authenticatable_attribute'), 'id');
-
-                            // Append task creator if not the authenticated user and not already in options
-                            if ($this->record->creator->getKey() !== auth()->id() &&
-                                ! $options->has($this->record->creator->getKey())) {
-                                $options->put($this->record->creator->getKey(), $this->record->creatorName());
-                            }
-
-                            return $options;
-                        }
-                    )
-            ])
-            ->statePath('data');
+            Forms\Components\Select::make('notify')
+                ->multiple()
+                ->label(__('finisterre::finisterre.comments.notify'))
+                ->hint(__('finisterre::finisterre.comments.notify_hint'))
+                ->options(fn() => $this->getNotifyOptions())
+        ])->statePath('data');
     }
 
     public function create(): void
