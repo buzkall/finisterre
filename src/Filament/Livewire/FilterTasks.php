@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Filament\Livewire;
 
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Filament\Forms\ComponentContainer;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -15,6 +16,9 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Spatie\Tags\Tag;
 
+/**
+ * @property ComponentContainer $form
+ */
 class FilterTasks extends Component implements HasForms
 {
     use InteractsWithForms;

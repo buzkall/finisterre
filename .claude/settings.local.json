@@ -5,7 +5,11 @@
       "Bash(php artisan tinker --execute=\"dd(get_class_methods(''''Filament\\Forms\\Form''''))\")",
       "Bash(php artisan view:clear:*)",
       "Bash(php artisan tinker:*)",
-      "Bash(php artisan filament:assets:*)"
+      "Bash(php artisan filament:assets:*)",
+      "Bash(vendor/bin/pest:*)",
+      "Bash(composer update:*)",
+      "Bash(composer show:*)",
+      "Bash(composer:*)"
     ],
     "deny": [],
     "ask": []

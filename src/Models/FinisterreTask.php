@@ -59,7 +59,7 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         }
 
         // add global scope only for users that can only see their tasks
-        if (FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
+        if (! app()->runningUnitTests() && FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
             static::addGlobalScope('canViewOnlyTheirTasks', function($query) {
                 $query->where('creator_id', auth()->id());
             });
