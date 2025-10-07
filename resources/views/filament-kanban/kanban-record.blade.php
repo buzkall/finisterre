@@ -5,7 +5,6 @@
 <a href="{{ route('filament.'.$panelId.'.resources.finisterre-tasks.edit', $record->id) }}"
    id="{{ $record->getKey() }}">
     <div
-        wire:click="recordClicked('{{ $record->getKey() }}', {{ @json_encode($record) }})"
         class="record bg-white dark:bg-gray-700 rounded-lg px-4 py-2 cursor-grab font-medium text-gray-600 dark:text-gray-200"
         @if($record->timestamps && now()->diffInSeconds($record->{$record::UPDATED_AT}) < 3)
             x-data
