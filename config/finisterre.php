@@ -36,6 +36,8 @@ return [
     //       }
     'attachments_disk' => 'public', // finisterre
 
+    'task_changes_table_name' => 'finisterre_task_changes',
+
     'comments' => [
         'table_name'          => 'finisterre_task_comments',
         'model_policy'        => Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy::class,

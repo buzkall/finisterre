@@ -1,0 +1,25 @@
+The mi<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create(config('finisterre.task_changes_table_name', 'finisterre_task_changes'), function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('task_id')->constrained(config('finisterre.table_name', 'finisterre_tasks'))->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->nullOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists(config('finisterre.task_changes_table_name', 'finisterre_task_changes'));
+    }
+};

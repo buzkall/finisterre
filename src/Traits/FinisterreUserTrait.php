@@ -2,7 +2,9 @@
 
 namespace Buzkall\Finisterre\Traits;
 
+use Buzkall\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 
 trait FinisterreUserTrait
@@ -39,5 +41,10 @@ trait FinisterreUserTrait
     public function getUserNameColumn(): string
     {
         return 'name';
+    }
+
+    public function taskChanges(): HasMany
+    {
+        return $this->hasMany(FinisterreTaskChange::class, 'user_id');
     }
 }

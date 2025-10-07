@@ -97,30 +97,19 @@ class TasksKanbanBoard extends KanbanBoard implements HasForms
     {
         return $this->getEloquentQuery()
             ->withCount(['comments', 'media'])
+            ->with('taskChanges')
             ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered()) // @phpstan-ignore-line
             ->when(
                 $this->filters['filter_tags'] ?? null,
-                function($query, $tagIds) {
-                    $query->withAnyTags(Tag::findMany($tagIds));
-
-                    return $query;
-                }
+                fn($query, $tagIds) => $query->withAnyTags(Tag::findMany($tagIds))
             )->when(
                 $this->filters['filter_text'] ?? null,
-                function($query, $text) {
-                    $query->where(fn($query) => $query
-                        ->where('title', 'like', "%$text%")
-                        ->orWhere('description', 'like', "%$text%"));
-
-                    return $query;
-                }
+                fn($query, $text) => $query->where(fn($query) => $query
+                    ->where('title', 'like', "%$text%")
+                    ->orWhere('description', 'like', "%$text%"))
             )->when(
                 $this->filters['filter_assignee'] ?? null,
-                function($query, $assigneeId) {
-                    $query->where('assignee_id', $assigneeId);
-
-                    return $query;
-                }
+                fn($query, $assigneeId) => $query->where('assignee_id', $assigneeId)
             )
             ->when(
                 $this->filters['filter_show_archived'] ?? false,

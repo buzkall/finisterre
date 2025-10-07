@@ -43,6 +43,12 @@ Optionally, you can publish the views using
 php artisan vendor:publish --tag="finisterre-views"
 ```
 
+You can publish the assets (CSS) with:
+
+```bash
+php artisan filament:assets
+```
+
 The package comes with a default policy for the tasks, that can be overridden in the config file and set your own policy
 
 ```php
@@ -88,6 +94,14 @@ FINISTERRE_SMS_NOTIFY_TO=CHANGE
 ## Role restriction for Task Reports
 
 TODO
+
+## Development
+
+To build the CSS assets after making changes to Tailwind classes:
+
+```bash
+npm run build:styles
+```
 
 ## Testing
 

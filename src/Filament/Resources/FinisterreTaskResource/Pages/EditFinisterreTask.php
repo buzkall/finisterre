@@ -23,6 +23,14 @@ class EditFinisterreTask extends EditRecord
     // hiding breadcrumbs and header actions.
     protected ?string $heading = ' ';
 
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        // Remove task change indicator when user views the task
+        $this->record->taskChanges()->where('user_id', auth()->id())->delete();
+    }
+
     protected function getHeaderActions(): array
     {
         return [

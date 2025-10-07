@@ -138,6 +138,11 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         return $this->hasMany(FinisterreTaskComment::class, 'task_id');
     }
 
+    public function taskChanges(): HasMany
+    {
+        return $this->hasMany(FinisterreTaskChange::class, 'task_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(config('finisterre.authenticatable'), 'creator_id');

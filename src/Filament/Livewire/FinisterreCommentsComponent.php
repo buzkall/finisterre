@@ -108,15 +108,25 @@ class FinisterreCommentsComponent extends Component implements HasForms
         ]);
 
         $notified = collect();
+        $notifiedUserIds = collect();
 
         if ($data['notify']) {
             foreach (config('finisterre.authenticatable')::findMany($data['notify']) as $user) {
                 $this->notifyUser($user);
                 $notified->push($user->{config('finisterre.authenticatable_attribute')});
+                $notifiedUserIds->push($user->id);
             }
         } else {
             $this->notifyUser($this->record->assignee);
             $notified->push($this->record->assignee->{config('finisterre.authenticatable_attribute')});
+            $notifiedUserIds->push($this->record->assignee->id);
+        }
+
+        // Create task change records for notified users
+        foreach ($notifiedUserIds as $userId) {
+            if ($userId !== auth()->id()) {
+                $this->record->taskChanges()->firstOrCreate(['user_id' => $userId]);
+            }
         }
 
         Notification::make()
