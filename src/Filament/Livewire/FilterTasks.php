@@ -42,7 +42,9 @@ class FilterTasks extends Component implements HasForms
             $this->filter_show_archived = $sessionFilters['filter_show_archived'] ?? false;
         }
 
-        $this->form->fill($this->getFilters());
+        $filters = $this->getFilters();
+        $this->form->fill($filters);
+        $this->dispatch('filtersUpdated', $filters);
     }
 
     private function getFilters(): array
