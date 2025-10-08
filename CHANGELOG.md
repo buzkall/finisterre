@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.18.4 - 2025-10-08
+
+Add taskChange on create and fix comment width
+
 ## 1.12.0 - 2025-06-25
 
 Add action to archive tasks
