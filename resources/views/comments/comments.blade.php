@@ -47,7 +47,7 @@
                                 @endif
                             </div>
 
-                            <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white">
+                            <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none">
                                 @if(config('finisterre.comments.editor') === 'markdown')
                                     {{ Str::of($comment->comment)->markdown()->toHtmlString() }}
                                 @else

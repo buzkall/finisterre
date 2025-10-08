@@ -59,10 +59,8 @@ class FinisterreTask extends Model implements HasMedia, Sortable
         }
 
         // add global scope only for users that can only see their tasks
-        if (! app()->runningUnitTests() && FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
-            static::addGlobalScope('canViewOnlyTheirTasks', function($query) {
-                $query->where('creator_id', auth()->id());
-            });
+        if (FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
+            static::addGlobalScope('canViewOnlyTheirTasks', fn($query) => $query->where('creator_id', auth()->id()));
         }
 
         static::creating(function($task) {
@@ -71,6 +69,12 @@ class FinisterreTask extends Model implements HasMedia, Sortable
             $task->creator_id = $task->creator_id ?? auth()->id();
             if (is_null($task->assignee_id)) {
                 $task->assignee_id = config('finisterre.fallback_notifiable_id');
+            }
+        });
+
+        static::created(function($task) {
+            if ($task->assignee_id) {
+                $task->taskChanges()->firstOrCreate(['user_id' => $task->assignee_id]);
             }
         });
 
@@ -111,8 +115,7 @@ class FinisterreTask extends Model implements HasMedia, Sortable
                                 ->label(__('finisterre::finisterre.comment_notification.cta'))
                                 ->button()
                                 ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)),
-                        ])
-                        ->sendToDatabase($task->assignee);
+                        ])->sendToDatabase($task->assignee);
                 }
             });
         });
