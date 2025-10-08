@@ -5,8 +5,8 @@
 
             <div class="w-full flex justify-end">
                 <x-filament::button
-                        wire:click="create"
-                        color="primary"
+                    wire:click="create"
+                    color="primary"
                 >
                     {{ __('finisterre::finisterre.comments.add') }}
                 </x-filament::button>
@@ -38,16 +38,16 @@
                                 @if (auth()->user()->can('delete', $comment))
                                     <div class="flex-shrink-0">
                                         <x-filament::icon-button
-                                                wire:click="delete({{ $comment->id }})"
-                                                icon="heroicon-s-trash"
-                                                color="danger"
-                                                tooltip="{{ __('finisterre::finisterre.comments.delete') }}"
+                                            wire:click="delete({{ $comment->id }})"
+                                            icon="heroicon-s-trash"
+                                            color="danger"
+                                            tooltip="{{ __('finisterre::finisterre.comments.delete') }}"
                                         />
                                     </div>
                                 @endif
                             </div>
 
-                            <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none">
+                            <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none pr-8">
                                 @if(config('finisterre.comments.editor') === 'markdown')
                                     {{ Str::of($comment->comment)->markdown()->toHtmlString() }}
                                 @else
@@ -56,13 +56,13 @@
                                         $content = preg_replace_callback('/<[^>]*>/', function($match) {
                                             return str_replace(['http://', 'https://'], ['__HTTP__', '__HTTPS__'], $match[0]);
                                         }, $comment->comment);
-                                        
+
                                         // Now safely replace URLs that are not in tags
                                         $content = preg_replace('/(https?:\/\/[^\s<]+)/', '<a href="$1" target="_blank" class="text-blue-500 underline">$1</a>', $content);
-                                        
+
                                         // Restore protected URLs
                                         $content = str_replace(['__HTTP__', '__HTTPS__'], ['http://', 'https://'], $content);
-                                        
+
                                         $htmlString = new \Illuminate\Support\HtmlString($content);
                                     @endphp
                                     {{ $htmlString }}
@@ -76,8 +76,8 @@
     @else
         <div class="flex-grow flex flex-col items-center justify-center space-y-4">
             <x-filament::icon
-                    icon="heroicon-s-chat-bubble-left-right"
-                    class="h-12 w-12 text-gray-400 dark:text-gray-500"
+                icon="heroicon-s-chat-bubble-left-right"
+                class="h-12 w-12 text-gray-400 dark:text-gray-500"
             />
 
             <div class="text-sm text-gray-400 dark:text-gray-500">
