@@ -53,6 +53,10 @@
         }
     },
     "scripts": {
+        "ready": [
+            "npm run build:styles",
+            "@php vendor/bin/phpstan"
+        ],
         "post-autoload-dump": [
             "@clear",
             "@prepare",
