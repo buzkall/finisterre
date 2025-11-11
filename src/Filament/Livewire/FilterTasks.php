@@ -65,6 +65,7 @@ class FilterTasks extends Component implements HasForms
     {
         return $form->schema([
             Section::make()
+                ->columnSpanFull()
                 ->schema([
                     TextInput::make('filter_text')
                         ->label(__('finisterre::finisterre.filter.text'))

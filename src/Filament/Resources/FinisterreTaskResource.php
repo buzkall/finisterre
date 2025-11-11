@@ -11,6 +11,7 @@ use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\SpatieTagsInput;
@@ -20,7 +21,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Rawilk\FilamentQuill\Filament\Forms\Components\QuillEditor;
 
 class FinisterreTaskResource extends Resource
 {
@@ -48,7 +48,7 @@ class FinisterreTaskResource extends Resource
                 ->maxLength(255)
                 ->columnSpanFull(),
 
-            QuillEditor::make('description')
+            RichEditor::make('description')
                 ->label(__('finisterre::finisterre.description'))
                 ->hiddenLabel()
                 ->fileAttachmentsVisibility('private')
