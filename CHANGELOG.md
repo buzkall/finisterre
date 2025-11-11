@@ -2,6 +2,28 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.0 - 2025-11-11
+
+### Breaking Changes
+
+**Migrate to Filament v4**
+
+This is a major version update migrating from Filament v3 to Filament v4.
+
+#### Changes:
+- Updated `filament/filament` from ^3.3 to ^4.0
+- Updated `filament/spatie-laravel-media-library-plugin` from ^3.3 to ^4.0
+- Updated `filament/spatie-laravel-tags-plugin` from ^3.2 to ^4.0
+- Replaced `mokhosh/filament-kanban` with `leonardo-max/filament-kanban` ^1.0 (Filament v4 compatible fork)
+- Removed `rawilk/filament-quill` dependency and replaced with Filament's built-in `RichEditor` component
+- Added `columnSpanFull()` to `Section` component in filter forms for v4 compatibility
+
+#### Migration Notes:
+- The package now requires Filament v4.0 or higher
+- The Quill editor has been replaced with Filament's native RichEditor (TipTap-based)
+- Layout components (Section, Grid, Fieldset) no longer span full width by default in v4
+- All existing functionality remains the same, only the underlying Filament version has changed
+
 ## 1.18.5 - 2025-10-08
 
 Improve comment styles
