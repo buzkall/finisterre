@@ -40,7 +40,7 @@ trait FinisterreUserTrait
 
     public function getUserNameColumn(): string
     {
-        return 'name';
+        return config('finisterre.authenticatable_attribute', 'name') ?? 'name';
     }
 
     public function taskChanges(): HasMany

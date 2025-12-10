@@ -86,7 +86,7 @@ class FilterTasks extends Component implements HasForms
                                 ->distinct('assignee_id')
                                 ->with('assignee')
                                 ->get()
-                                ->pluck('assignee.name', 'assignee.id')
+                                ->pluck('assignee.' . config('finisterre.authenticatable_attribute'), 'assignee.id')
                         )
                         ->live()
                         ->afterStateUpdated(fn() => $this->dispatchFilters()),
