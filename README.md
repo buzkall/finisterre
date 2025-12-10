@@ -16,7 +16,7 @@ You can publish the config file with:
 php artisan vendor:publish --tag="finisterre-config"
 ```
 
-By default, the package will not be active, this can be changed adding the following to your .env file
+By default, the package will not be active; this can be changed by adding the following to your .env file
 
 ```bash
 FINISTERRE_ACTIVE=true
@@ -35,6 +35,14 @@ If you don't already have the spatie tags package, publish the migrations
 ```bash
 php artisan vendor:publish --provider="Spatie\Tags\TagsServiceProvider" --tag="tags-migrations"
 php artisan migrate
+```
+
+The tasks are linked to users, but the project can have a different model for users.
+You can change the model in the config file and the name attribute column
+Also, there is a trait to be included in the user's model
+
+```
+use Buzkall\Finisterre\Traits\FinisterreUserTrait;
 ```
 
 Optionally, you can publish the views using
