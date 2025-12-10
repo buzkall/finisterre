@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre\Notifications;
 
+use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,8 +39,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
             })
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                // note that can't use config slug, because the resource has finisterre-tasks as slug and will override the default one
-                url(config('finisterre.panel_slug') . '/finisterre-tasks/' . $this->task->id . '/edit')
+                FinisterreTaskResource::getUrl('edit', ['record' => $this->task])
             )
             ->salutation(' ');
     }
