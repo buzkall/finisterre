@@ -2,7 +2,6 @@
 
 namespace Buzkall\Finisterre\Notifications;
 
-use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -64,7 +63,7 @@ class TaskNotification extends Notification implements ShouldQueue
             })
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                FinisterreTaskResource::getUrl('edit', ['record' => $this->task])
+                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->task)
             )
             ->salutation(' ');
     }
