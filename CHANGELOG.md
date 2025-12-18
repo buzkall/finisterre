@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.19.1 - 2025-12-18
+
+Rollback route for notifications
+
 ## 1.19.0 - 2025-12-10
 
 Improve new projects installation
