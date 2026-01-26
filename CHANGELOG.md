@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.20.3 - 2026-01-26
+
+Fix tags relationship
+
 ## 1.20.2 - 2026-01-26
 
 Fix tags table name
