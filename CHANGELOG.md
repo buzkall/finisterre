@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.20.0 - 2026-01-26
+
+Add catalan translation
+
 ## 1.19.1 - 2025-12-18
 
 Rollback route for notifications
