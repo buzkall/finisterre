@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Tags\HasTags;
@@ -165,5 +166,17 @@ class FinisterreTask extends Model implements HasMedia, Sortable
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(config('finisterre.authenticatable'), 'assignee_id');
+    }
+
+    /**
+     * Override the tags() method from HasTags trait to use the correct pivot key.
+     * When using a custom Tag model (FinisterreTag), Laravel defaults to 'finisterre_tag_id'
+     * but the taggables table uses 'tag_id'.
+     */
+    public function tags(): MorphToMany
+    {
+        return $this
+            ->morphToMany(FinisterreTag::class, 'taggable', 'taggables', null, 'tag_id')
+            ->orderBy('order_column');
     }
 }
