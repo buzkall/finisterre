@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.20.1 - 2026-01-26
+
+Make tags translatable
+
 ## 1.20.0 - 2026-01-26
 
 Add catalan translation
