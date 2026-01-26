@@ -6,6 +6,8 @@ use Spatie\Tags\Tag;
 
 class FinisterreTag extends Tag
 {
+    protected $table = 'tags';
+
     public static function findOrCreateFromString(string $name, ?string $type = null, ?string $locale = null)
     {
         $locale = $locale ?? static::getLocale();
