@@ -13,7 +13,7 @@ return [
     'authenticatable_attribute'  => 'name',
     'guard'                      => 'web', // filament
 
-    // fill in case of filtering the assigned user
+    // fill in in case of filtering the assigned user
     'authenticatable_filter_column' => '', // role
     'authenticatable_filter_value'  => '', // admin
     'fallback_notifiable_id'        => 1,
@@ -21,7 +21,7 @@ return [
     'hidden_statuses' => [],
 
     // To set the attachments as private:
-    // 1. Change the 'attachments_disk' to 'finisterre',
+    // 1. Change the 'attachments_disk' to 'finisterre'
     // 2. Add a disk in filesystem named 'finisterre' with url /storage/finisterre and visibility public
     // 'finisterre' => [
     //            'driver'     => 'local',

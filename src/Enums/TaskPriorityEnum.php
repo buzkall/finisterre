@@ -23,4 +23,14 @@ enum TaskPriorityEnum: string implements HasLabel
             self::Urgent => 'bg-red-300',
         };
     }
+
+    public function filamentColor(): string
+    {
+        return match ($this) {
+            self::Low    => 'gray',
+            self::Medium => 'success',
+            self::High   => 'info',
+            self::Urgent => 'danger',
+        };
+    }
 }
