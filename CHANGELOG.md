@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.20.5 - 2026-01-26
+
+Third time is a charm
+
 ## 1.20.4 - 2026-01-26
 
 Fix tags relationship
