@@ -11,6 +11,7 @@ use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
@@ -51,6 +52,11 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
         // Use a custom Tag model to save both Spanish and Catalan translations
         config(['tags.tag_model' => FinisterreTag::class]);
+
+        // Register morph map so Laravel uses 'tag_id' instead of 'finisterre_tag_id'
+        Relation::morphMap([
+            'tag' => FinisterreTag::class,
+        ]);
 
         // this will get copied to the project's public folder when
         // running php artisan filament:assets
