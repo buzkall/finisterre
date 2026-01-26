@@ -4,6 +4,7 @@ namespace Buzkall\Finisterre;
 
 use Buzkall\Finisterre\Filament\Livewire\FilterTasks;
 use Buzkall\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
+use Buzkall\Finisterre\Models\FinisterreTag;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
@@ -47,6 +48,9 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
+
+        // Use a custom Tag model to save both Spanish and Catalan translations
+        config(['tags.tag_model' => FinisterreTag::class]);
 
         // this will get copied to the project's public folder when
         // running php artisan filament:assets

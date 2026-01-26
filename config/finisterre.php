@@ -6,6 +6,9 @@ return [
     'panel_slug' => 'admin',
     'slug'       => 'tasks',
 
+    // Locales to save when creating tags (e.g., ['es', 'ca'])
+    'locales' => ['es', 'ca'],
+
     'model_policy' => Buzkall\Finisterre\Policies\FinisterreTaskPolicy::class,
 
     'authenticatable'            => \App\Models\User::class, // @phpstan-ignore-line
