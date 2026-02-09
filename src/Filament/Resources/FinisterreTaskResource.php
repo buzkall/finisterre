@@ -26,6 +26,7 @@ class FinisterreTaskResource extends Resource
 {
     protected static ?string $model = FinisterreTask::class;
     protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
+    protected static bool $hasTitleCaseModelLabel = false;
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -35,6 +36,11 @@ class FinisterreTaskResource extends Resource
     public static function getModelLabel(): string
     {
         return __('finisterre::finisterre.task_report');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('finisterre::finisterre.task_reports');
     }
 
     public static function form(Form $form): Form

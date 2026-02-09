@@ -81,7 +81,7 @@ return [
         'add'         => 'Añadir subtarea',
         'placeholder' => 'Descripción de la subtarea',
     ],
-    'task_reports' => 'Incidencias',
-    'task_report'  => 'Incidencia',
+    'task_reports' => 'Urgencias técnicas',
+    'task_report'  => 'Urgencia técnica',
 
 ];

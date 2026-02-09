@@ -81,7 +81,7 @@ return [
         'add'         => 'Afegir subtasca',
         'placeholder' => 'Descripció de la subtasca',
     ],
-    'task_reports' => 'Incidències',
-    'task_report'  => 'Incidència',
+    'task_reports' => 'Urgències tècniques',
+    'task_report'  => 'Urgència tècnica',
 
 ];
