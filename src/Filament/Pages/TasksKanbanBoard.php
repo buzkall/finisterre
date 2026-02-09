@@ -5,37 +5,32 @@ namespace Buzkall\Finisterre\Filament\Pages;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Facades\Finisterre;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
+use Buzkall\Finisterre\Filament\Widgets\FilterTasksWidget;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Panel;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
-use Mokhosh\FilamentKanban\Pages\KanbanBoard;
+use Relaticle\Flowforge\Board;
+use Relaticle\Flowforge\BoardPage;
+use Relaticle\Flowforge\Column;
 use Spatie\Tags\Tag;
 
-class TasksKanbanBoard extends KanbanBoard implements HasForms
+class TasksKanbanBoard extends BoardPage
 {
-    use InteractsWithForms;
-
     #[Url]
     public ?array $filters = null;
 
-    protected static string $model = FinisterreTask::class;
-    protected static string $statusEnum = TaskStatusEnum::class;
-    protected string $editModalWidth = '4xl';
-    protected string $editModalTitle = '';
-    protected static string $view = 'finisterre::filament-kanban.kanban-board';
-    protected static string $headerView = 'finisterre::filament-kanban.kanban-header';
-    protected static string $recordView = 'finisterre::filament-kanban.kanban-record';
+    protected static string|null|\BackedEnum $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected $listeners = [
         'commentCreated' => '$refresh',
-        'filtersUpdated' => 'updateFilters',
     ];
-    public bool $disableEditModal = true;
 
-    public static function getSlug(): string
+    public static function getSlug(?Panel $panel = null): string
     {
         return config('finisterre.slug') ?? parent::getSlug();
     }
@@ -65,16 +60,6 @@ class TasksKanbanBoard extends KanbanBoard implements HasForms
         return __('finisterre::finisterre.tasks');
     }
 
-    protected function getEditModalSaveButtonLabel(): string
-    {
-        return __('finisterre::finisterre.save');
-    }
-
-    protected function getEditModalCancelButtonLabel(): string
-    {
-        return __('finisterre::finisterre.cancel');
-    }
-
     protected function getHeaderActions(): array
     {
         return [
@@ -82,32 +67,68 @@ class TasksKanbanBoard extends KanbanBoard implements HasForms
                 ->label(__('finisterre::finisterre.create_task'))
                 ->url(FinisterreTaskResource::getUrl('create'))
                 ->createAnother(false)
-                ->keyBindings(['mod+b']), // open create new with mod+b
+                ->keyBindings(['mod+b']),
         ];
     }
 
+    #[On('filtersUpdated')]
     public function updateFilters(array $filters): void
     {
-        // this event is called from the FilterTasks component
         $this->filters = $filters;
-        $this->dispatch('$refresh');
     }
 
-    protected function records(): Collection
+    public function board(Board $board): Board
     {
-        return $this->getEloquentQuery()
+        return $board
+            ->query(fn() => $this->getFilteredQuery())
+            ->recordTitleAttribute('title')
+            ->columnIdentifier('status')
+            ->positionIdentifier('order_column')
+            ->columns($this->getColumns())
+            ->cardSchema(
+                fn($schema) => $schema
+                    ->components([
+                        ViewEntry::make('card_info')
+                            ->view('finisterre::tasks.task-card-info')
+                            ->viewData(fn(FinisterreTask $record) => [
+                                'assignee'         => $record->assignee_name,
+                                'assigneeInitials' => self::getInitials($record->assignee_name),
+                                'priority'         => $record->priority->getLabel(),
+                                'priorityColor'    => $record->priority->getColor(),
+                                'tagName'          => $record->tags->first()?->name,
+                                'mediaCount'       => $record->media_count ?? 0,
+                                'commentsCount'    => $record->comments_count ?? 0,
+                                'editUrl'          => FinisterreTaskResource::getUrl('edit', ['record' => $record->id]),
+                                'updatedAt'        => $record->updated_at?->format('d/m/y H:i:s'),
+                            ]),
+                    ])
+            );
+    }
+
+    protected function getFilteredQuery(): Builder
+    {
+        $userModel = app(config('finisterre.authenticatable'));
+
+        return FinisterreTask::query()
             ->withCount(['comments', 'media'])
-            ->with('taskChanges')
-            ->when(method_exists(static::$model, 'scopeOrdered'), fn($query) => $query->ordered()) // @phpstan-ignore-line
+            ->addSelect([
+                config('finisterre.table_name') . '.*',
+                'assignee_name' => $userModel->newQuery()
+                    ->select('name')
+                    ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.assignee_id')
+                    ->limit(1),
+            ])
             ->when(
                 $this->filters['filter_tags'] ?? null,
                 fn($query, $tagIds) => $query->withAnyTags(Tag::findMany($tagIds))
-            )->when(
+            )
+            ->when(
                 $this->filters['filter_text'] ?? null,
                 fn($query, $text) => $query->where(fn($query) => $query
                     ->where('title', 'like', "%$text%")
                     ->orWhere('description', 'like', "%$text%"))
-            )->when(
+            )
+            ->when(
                 $this->filters['filter_assignee'] ?? null,
                 fn($query, $assigneeId) => $query->where('assignee_id', $assigneeId)
             )
@@ -115,7 +136,45 @@ class TasksKanbanBoard extends KanbanBoard implements HasForms
                 $this->filters['filter_show_archived'] ?? false,
                 fn($query) => $query,
                 fn($query) => $query->notArchived()
+            );
+    }
+
+    protected function getColumns(): array
+    {
+        $hiddenStatuses = config('finisterre.hidden_statuses', []);
+
+        return collect(TaskStatusEnum::cases())
+            ->reject(fn($status) => in_array($status->value, $hiddenStatuses))
+            ->map(
+                fn(TaskStatusEnum $status) => Column::make($status->value)
+                    ->label($status->getLabel())
+                    ->color($status->getColor())
             )
-            ->get();
+            ->values()
+            ->toArray();
+    }
+
+    protected static function getInitials(?string $name): ?string
+    {
+        if (! $name) {
+            return null;
+        }
+
+        return collect(explode(' ', $name))
+            ->map(fn(string $word) => mb_strtoupper(mb_substr($word, 0, 1)))
+            ->take(2)
+            ->implode('');
+    }
+
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return 1;
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            FilterTasksWidget::class,
+        ];
     }
 }

@@ -83,6 +83,15 @@ php artisan filament:assets
 
 This command publishes all Filament plugin assets, including the Flowforge kanban board JavaScript required for drag-and-drop functionality. **Run this command after installing or updating the package**, otherwise the kanban board will load but drag-and-drop will not work.
 
+## Filament Theme CSS
+
+If you are using a [custom Filament theme](https://filamentphp.com/docs/4.x/styling/overview), you need to add the following lines to your theme's CSS file (e.g. `resources/css/filament/admin/theme.css`) so Tailwind scans the package views for classes:
+
+```css
+@source '../../../../vendor/buzkall/finisterre/resources/views';
+@source '../../../../vendor/relaticle/flowforge/resources/views';
+```
+
 The package comes with a default policy for the tasks that can be overridden in the config file and set your own policy
 
 ```php

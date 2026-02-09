@@ -16,8 +16,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Spatie\EloquentSortable\Sortable;
-use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Tags\HasTags;
@@ -36,9 +34,9 @@ use Spatie\Tags\HasTags;
  * @property int $creator_id
  * @property int $assignee_id
  */
-class FinisterreTask extends Model implements HasMedia, Sortable
+class FinisterreTask extends Model implements HasMedia
 {
-    use HasFactory, HasTags, InteractsWithMedia, SortableTrait;
+    use HasFactory, HasTags, InteractsWithMedia;
 
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'subtasks', 'due_at', 'completed_at',
         'creator_id', 'assignee_id'];
@@ -66,7 +64,6 @@ class FinisterreTask extends Model implements HasMedia, Sortable
 
         static::creating(function($task) {
             $task->status = $task->status ?? TaskStatusEnum::Open;
-            $task->order_column = 0;
             $task->creator_id = $task->creator_id ?? auth()->id();
             if (is_null($task->assignee_id)) {
                 $task->assignee_id = config('finisterre.fallback_notifiable_id');

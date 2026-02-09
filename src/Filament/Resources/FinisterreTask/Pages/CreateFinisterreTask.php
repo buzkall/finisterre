@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource\Pages;
+namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Pages;
 
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Filament\Resources\Pages\CreateRecord;

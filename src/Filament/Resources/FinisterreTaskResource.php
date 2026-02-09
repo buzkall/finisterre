@@ -2,30 +2,32 @@
 
 namespace Buzkall\Finisterre\Filament\Resources;
 
+use BackedEnum;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource\Pages;
+use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Pages;
 use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Rawilk\FilamentQuill\Filament\Forms\Components\QuillEditor;
 
 class FinisterreTaskResource extends Resource
 {
     protected static ?string $model = FinisterreTask::class;
-    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected static bool $hasTitleCaseModelLabel = false;
 
     public static function shouldRegisterNavigation(): bool
@@ -43,20 +45,19 @@ class FinisterreTaskResource extends Resource
         return __('finisterre::finisterre.task_reports');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         $userIsReporterOnly = FinisterrePlugin::get()->canViewOnlyTheirTasks();
 
-        return $form->schema([
+        return $schema->components([
             TextInput::make('title')
                 ->label(__('finisterre::finisterre.title'))
                 ->required()
                 ->maxLength(255)
                 ->columnSpanFull(),
 
-            QuillEditor::make('description')
+            RichEditor::make('description')
                 ->label(__('finisterre::finisterre.description'))
-                ->hiddenLabel()
                 ->fileAttachmentsVisibility('private')
                 ->columnSpanFull(),
 
@@ -113,7 +114,7 @@ class FinisterreTaskResource extends Resource
                     ->columnSpanFull()
                     ->hidden(fn() => $userIsReporterOnly),
 
-                Placeholder::make('dates')
+                TextEntry::make('dates')
                     ->hiddenLabel()
                     ->hiddenOn('create')
                     ->hintIcon('heroicon-o-clock')
@@ -132,7 +133,7 @@ class FinisterreTaskResource extends Resource
         ]);
     }
 
-    public static function table(Table $table): Table
+    public static function table(Tables\Table $table): Tables\Table
     {
         return $table
             ->columns([
@@ -161,10 +162,10 @@ class FinisterreTaskResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([]);
+            ->toolbarActions([]);
     }
 
     public static function getPages(): array

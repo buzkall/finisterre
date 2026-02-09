@@ -24,7 +24,7 @@ enum TaskPriorityEnum: string implements HasLabel
         };
     }
 
-    public function filamentColor(): string
+    public function getColor(): string
     {
         return match ($this) {
             self::Low    => 'gray',

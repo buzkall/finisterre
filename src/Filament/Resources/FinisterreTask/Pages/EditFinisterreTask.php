@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource\Pages;
+namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Pages;
 
 use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
@@ -8,7 +8,9 @@ use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Facades\Filament;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Route;
 
 /**
  * @property FinisterreTask $record
@@ -16,7 +18,7 @@ use Filament\Resources\Pages\EditRecord;
 class EditFinisterreTask extends EditRecord
 {
     protected static string $resource = FinisterreTaskResource::class;
-    protected static string $view = 'finisterre::tasks.edit';
+    protected string $view = 'finisterre::tasks.edit';
 
     // Note the space! We use a blank heading to avoid the default "Edit" text
     // but if we set it to null, the heading will not be displayed at all,
@@ -53,21 +55,43 @@ class EditFinisterreTask extends EditRecord
 
             DeleteAction::make()
                 ->modalHeading(__('finisterre::finisterre.delete'))
-                ->failureRedirectUrl(fn() => FinisterrePlugin::get()->canViewAllTasks() ? TasksKanbanBoard::getUrl() : FinisterreTaskResource::getUrl())
-                ->successRedirectUrl(fn() => FinisterrePlugin::get()->canViewAllTasks() ? TasksKanbanBoard::getUrl() : FinisterreTaskResource::getUrl()),
+                ->failureRedirectUrl(fn() => $this->getKanbanBoardUrl())
+                ->successRedirectUrl(fn() => $this->getKanbanBoardUrl()),
         ];
     }
 
     public function getBreadcrumbs(): array
     {
         if (FinisterrePlugin::get()->canViewAllTasks()) {
+            $url = $this->getKanbanBoardUrl();
+
             return [
-                TasksKanbanBoard::getUrl() => __('finisterre::finisterre.tasks'),
-                null                       => $this->getRecord()?->title ?? __('finisterre::finisterre.edit_task')
+                $url => __('finisterre::finisterre.tasks'),
+                null => $this->getRecord()?->title ?? __('finisterre::finisterre.edit_task')
             ];
         }
 
         return parent::getBreadcrumbs();
+    }
+
+    protected function getKanbanBoardUrl(): string
+    {
+        if (! FinisterrePlugin::get()->canViewAllTasks()) {
+            return FinisterreTaskResource::getUrl();
+        }
+
+        try {
+            $panel = Filament::getCurrentOrDefaultPanel();
+            $routeName = 'filament.' . $panel->getId() . '.pages.' . TasksKanbanBoard::getSlug($panel);
+
+            if (Route::has($routeName)) {
+                return TasksKanbanBoard::getUrl();
+            }
+        } catch (\Throwable) {
+            // Fall through to default
+        }
+
+        return FinisterreTaskResource::getUrl();
     }
 
     protected function getViewData(): array

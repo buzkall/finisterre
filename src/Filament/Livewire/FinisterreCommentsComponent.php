@@ -7,21 +7,17 @@ use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Filament\Forms;
-use Filament\Forms\ComponentContainer;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Schema as DatabaseSchema;
 use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-/**
- * @property ComponentContainer $form
- */
 class FinisterreCommentsComponent extends Component implements HasForms
 {
     use InteractsWithForms;
@@ -47,7 +43,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
                 fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
             )
             ->when(
-                Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
+                DatabaseSchema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
                 fn($query) => $query->where('active', true)
             )
             ->pluck(config('finisterre.authenticatable_attribute'), 'id');
@@ -61,10 +57,10 @@ class FinisterreCommentsComponent extends Component implements HasForms
         return $options;
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
         if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
-            return $form;
+            return $schema;
         }
 
         if (config('finisterre.comments.editor') === 'markdown') {
@@ -81,7 +77,7 @@ class FinisterreCommentsComponent extends Component implements HasForms
             ->placeholder(__('finisterre::finisterre.comments.placeholder'))
             ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));
 
-        return $form->schema([
+        return $schema->components([
             $editor,
 
             Forms\Components\Select::make('notify')

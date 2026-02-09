@@ -3,10 +3,10 @@
   "type": "module",
   "scripts": {
     "dev:styles": "npx tailwindcss -i resources/css/app.css -o resources/dist/finisterre.css --postcss --watch",
-    "build:styles": "npx tailwindcss -i resources/css/app.css -o resources/dist/finisterre.css --postcss --minify && npm run purge",
-    "purge": "filament-purge -i resources/dist/finisterre.css -o resources/dist/finisterre.css -v 3.x",
-    "dev": "npm-run-all --parallel dev:*",
-    "build": "npm-run-all build:*"
+    "build:styles": "npx tailwindcss -i resources/css/app.css -o resources/dist/finisterre.css --postcss --minify",
+    "build:purge": "filament-purge -i resources/dist/finisterre.css -o resources/dist/finisterre.css -v 3.x",
+    "dev": "npm run dev:styles",
+    "build": "npm run build:styles && npm run build:purge"
   },
   "devDependencies": {
     "@awcodes/filament-plugin-purge": "^1.1.1",

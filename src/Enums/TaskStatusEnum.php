@@ -5,12 +5,10 @@ namespace Buzkall\Finisterre\Enums;
 use Buzkall\Finisterre\Traits\HasEnumFunctions;
 use Filament\Support\Contracts\HasLabel;
 use Illuminate\Support\Collection;
-use Mokhosh\FilamentKanban\Concerns\IsKanbanStatus;
 
 enum TaskStatusEnum: string implements HasLabel
 {
     use HasEnumFunctions;
-    use IsKanbanStatus;
 
     case Open = 'open';
     case Doing = 'doing';
@@ -23,6 +21,19 @@ enum TaskStatusEnum: string implements HasLabel
     public function getTitle(): string
     {
         return $this->getLabel();
+    }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::Open     => 'gray',
+            self::Doing    => 'info',
+            self::OnHold   => 'warning',
+            self::ToDeploy => 'primary',
+            self::Done     => 'success',
+            self::Rejected => 'danger',
+            self::Backlog  => 'gray',
+        };
     }
 
     public static function filteredCases(): Collection
@@ -41,15 +52,5 @@ enum TaskStatusEnum: string implements HasLabel
         return self::filteredCases()
             ->mapWithKeys(fn($item) => [$item->value => $item->getLabel()])
             ->toArray();
-    }
-
-    public static function statuses(): Collection
-    {
-        // override the method from IsKanbanStatus trait to filter statuses
-        return self::filteredCases()
-            ->map(fn(self $item) => [
-                'id'    => $item->value,
-                'title' => $item->getTitle(),
-            ]);
     }
 }

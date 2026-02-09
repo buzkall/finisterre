@@ -50,6 +50,8 @@ class FinisterreServiceProvider extends PackageServiceProvider
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
 
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang');
+
         // Use a custom Tag model to save both Spanish and Catalan translations
         config(['tags.tag_model' => FinisterreTag::class]);
 

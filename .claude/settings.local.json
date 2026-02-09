@@ -11,7 +11,11 @@
       "Bash(composer show:*)",
       "Bash(composer:*)",
       "Bash(find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(./vendor/bin/pint:*)",
+      "WebSearch",
+      "mcp__ray-app__get_ray_windows",
+      "mcp__ray-app__get_ray_window_logs"
     ],
     "deny": [],
     "ask": []

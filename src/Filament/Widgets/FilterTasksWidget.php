@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Livewire;
+namespace Buzkall\Finisterre\Filament\Widgets;
 
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Forms\Components\Select;
@@ -10,14 +10,16 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Contracts\View\View;
+use Filament\Widgets\Widget;
 use Livewire\Attributes\Url;
-use Livewire\Component;
 use Spatie\Tags\Tag;
 
-class FilterTasks extends Component implements HasForms
+class FilterTasksWidget extends Widget implements HasForms
 {
     use InteractsWithForms;
+
+    protected string $view = 'finisterre::widgets.filter-tasks-widget';
+    protected int|string|array $columnSpan = 'full';
 
     #[Url]
     public ?string $filter_text = null;
@@ -33,7 +35,6 @@ class FilterTasks extends Component implements HasForms
 
     public function mount(): void
     {
-        // Load from session if URL params are empty
         if (empty($this->filter_text) && empty($this->filter_tags) && empty($this->filter_assignee)) {
             $sessionFilters = session('finisterre.filters', []);
             $this->filter_text = $sessionFilters['filter_text'] ?? null;
@@ -91,14 +92,10 @@ class FilterTasks extends Component implements HasForms
                         ->label(__('finisterre::finisterre.filter.show_archived'))
                         ->inline(false)
                         ->live()
-                        ->afterStateUpdated(fn() => $this->dispatchFilters())
+                        ->afterStateUpdated(fn() => $this->dispatchFilters()),
                 ])
                 ->columns(4)
-                ->compact()
-                ->extraAttributes([
-                    'x-data' => '{}',
-                    'class'  => 'relative'
-                ])
+                ->compact(),
         ]);
     }
 
@@ -108,7 +105,6 @@ class FilterTasks extends Component implements HasForms
 
         $this->form->fill($this->getFilters());
 
-        // Clear session
         session()->forget('finisterre.filters');
 
         $this->dispatchFilters();
@@ -118,14 +114,8 @@ class FilterTasks extends Component implements HasForms
     {
         $filters = $this->getFilters();
 
-        // Persist to session
         session(['finisterre.filters' => $filters]);
 
         $this->dispatch('filtersUpdated', $filters);
-    }
-
-    public function render(): View
-    {
-        return view('finisterre::forms.filter-tasks');
     }
 }
