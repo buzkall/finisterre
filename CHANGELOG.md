@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.0 - 2026-02-09
+
+Upgrade to filament 5 and new kanban board
+
 ## 1.21.0 - 2026-02-09
 
 Rename Task list
