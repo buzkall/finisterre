@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 1.21.0 - 2026-02-09
+
+Rename Task list
+
 ## 1.20.5 - 2026-01-26
 
 Third time is a charm
