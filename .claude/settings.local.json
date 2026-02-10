@@ -15,7 +15,8 @@
       "Bash(./vendor/bin/pint:*)",
       "WebSearch",
       "mcp__ray-app__get_ray_windows",
-      "mcp__ray-app__get_ray_window_logs"
+      "mcp__ray-app__get_ray_window_logs",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

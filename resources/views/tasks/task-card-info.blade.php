@@ -35,6 +35,10 @@
                 <x-filament::icon icon="heroicon-o-chat-bubble-left-right" class="h-3 w-3"/>
                 {{ $commentsCount }}
             </span>
+
+            @if($hasChanges)
+                <span class="h-2.5 w-2.5 bg-blue-500 rounded-full shadow-lg shadow-blue-500/50 animate-pulse"></span>
+            @endif
         </div>
 
         @if($updatedAt)

@@ -99,7 +99,8 @@ class TasksKanbanBoard extends BoardPage
                                 'mediaCount'       => $record->media_count ?? 0,
                                 'commentsCount'    => $record->comments_count ?? 0,
                                 'editUrl'          => FinisterreTaskResource::getUrl('edit', ['record' => $record->id]),
-                                'updatedAt'        => $record->updated_at?->format('d/m/y H:i:s'),
+                                'updatedAt'        => $record->updated_at->diffForHumans(),
+                                'hasChanges'       => (bool)$record->has_changes,
                             ]),
                     ])
             );
@@ -110,7 +111,11 @@ class TasksKanbanBoard extends BoardPage
         $userModel = app(config('finisterre.authenticatable'));
 
         return FinisterreTask::query()
-            ->withCount(['comments', 'media'])
+            ->withCount([
+                'comments',
+                'media',
+                'taskChanges as has_changes' => fn($q) => $q->where('user_id', auth()->id()),
+            ])
             ->addSelect([
                 config('finisterre.table_name') . '.*',
                 'assignee_name' => $userModel->newQuery()
