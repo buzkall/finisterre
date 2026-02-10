@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.1 - 2026-02-10
+
+Fix catalan translation. Add has_changes indicator
+
 ## 2.0.0 - 2026-02-09
 
 Upgrade to filament 5 and new kanban board
