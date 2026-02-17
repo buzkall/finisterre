@@ -58,7 +58,7 @@ class FinisterreTaskResource extends Resource
 
             RichEditor::make('description')
                 ->label(__('finisterre::finisterre.description'))
-                ->fileAttachmentsVisibility('private')
+                // images pasted are private because handled in finisterre-files folder and route
                 ->columnSpanFull(),
 
             Group::make([
