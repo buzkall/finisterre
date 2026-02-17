@@ -10,6 +10,12 @@ You can install the package via composer:
 composer require buzkall/finisterre
 ```
 
+For Filament 3, use the v1 branch:
+
+```bash
+composer require buzkall/finisterre:^1.0
+```
+
 **Critical:** After installation, you must publish Filament assets for the kanban board to work:
 
 ```bash
