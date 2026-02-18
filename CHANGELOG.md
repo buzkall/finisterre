@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.3 - 2026-02-18
+
+Fix problem with images in RichEditor
+
 ## 2.0.2 - 2026-02-17
 
 Fix filament actions import
