@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Notifications;
 
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Buzkall\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,7 +12,7 @@ use Illuminate\Support\HtmlString;
 
 class TaskCommentNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use EmbedsPrivateImages, Queueable;
 
     public function __construct(public FinisterreTask $task) {}
 
@@ -22,7 +23,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__(
                 'finisterre::finisterre.comment_notification.subject',
                 ['title' => $this->task->title]
@@ -31,7 +32,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
             ->line(new HtmlString('<style>img {height: auto !important}</style>'))
             ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
                 $latestComment = $this->task->comments->last();
-                $mail->line(new HtmlString($latestComment->comment));
+                $mail->line(new HtmlString($this->embedImages($latestComment->comment)));
             })
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
                 $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
@@ -41,5 +42,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
                 route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->task)
             )
             ->salutation(' ');
+
+        return $this->withInlineImages($mail);
     }
 }

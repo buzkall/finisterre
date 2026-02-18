@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Notifications;
 
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Buzkall\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,7 +14,7 @@ use Illuminate\Support\HtmlString;
 
 class TaskNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use EmbedsPrivateImages, Queueable;
 
     protected bool $wasRecentlyCreated = false;
 
@@ -29,7 +30,7 @@ class TaskNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__(
                 'finisterre::finisterre.notification.subject',
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
@@ -43,7 +44,7 @@ class TaskNotification extends Notification implements ShouldQueue
             ->line(__('finisterre::finisterre.created_by') . ': ' . $this->task->creatorName())
             ->when(
                 empty($this->taskChanges),
-                fn(MailMessage $mail) => $mail->line(new HtmlString($this->task->description)),
+                fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description))),
                 function(MailMessage $mail) {
                     $mail->line(__('finisterre::finisterre.notification.changes'));
                     $mail->line(new HtmlString('<ul>' . collect($this->taskChanges)
@@ -58,7 +59,7 @@ class TaskNotification extends Notification implements ShouldQueue
             ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
                 $mail->line(__('finisterre::finisterre.comments.title') . ':');
                 $mail->line(new HtmlString($this->task->comments->sortByDesc('created_at')
-                    ->map(fn($comment) => $comment->comment . ' ' . $comment->created_at->format('d-m-y H:i:s'))
+                    ->map(fn($comment) => $this->embedImages($comment->comment) . ' ' . $comment->created_at->format('d-m-y H:i:s'))
                     ->implode('<br><hr/>')));
             })
             ->action(
@@ -66,6 +67,8 @@ class TaskNotification extends Notification implements ShouldQueue
                 route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->task)
             )
             ->salutation(' ');
+
+        return $this->withInlineImages($mail);
     }
 
     public function toSms(object $notifiable): void

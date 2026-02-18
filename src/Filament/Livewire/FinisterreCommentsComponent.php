@@ -66,8 +66,9 @@ class FinisterreCommentsComponent extends Component implements HasForms
         if (config('finisterre.comments.editor') === 'markdown') {
             $editor = Forms\Components\MarkdownEditor::make('comment');
         } else {
-            // images pasted are private because handled in finisterre-files folder and route
+            // images pasted are private because handled in the finisterre-files folder and route
             $editor = Forms\Components\RichEditor::make('comment')
+                ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
                 ->extraInputAttributes(['style' => 'min-height: 6rem']);
         }
 

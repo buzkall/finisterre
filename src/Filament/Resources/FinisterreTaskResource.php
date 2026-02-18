@@ -21,7 +21,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 
 class FinisterreTaskResource extends Resource
@@ -58,7 +59,8 @@ class FinisterreTaskResource extends Resource
 
             RichEditor::make('description')
                 ->label(__('finisterre::finisterre.description'))
-                // images pasted are private because handled in finisterre-files folder and route
+                // images pasted are private because handled in the finisterre-files folder and route
+                ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
                 ->columnSpanFull(),
 
             Group::make([
@@ -133,30 +135,30 @@ class FinisterreTaskResource extends Resource
         ]);
     }
 
-    public static function table(Tables\Table $table): Tables\Table
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->label(__('finisterre::finisterre.title'))
                     ->searchable()
                     ->sortable()
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label(__('finisterre::finisterre.description'))
                     ->html()
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('finisterre::finisterre.status'))
                     ->badge(),
 
-                Tables\Columns\TextColumn::make('priority')
+                TextColumn::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
                     ->badge(),
 
-                Tables\Columns\TextColumn::make('completed_at')
+                TextColumn::make('completed_at')
                     ->label(__('finisterre::finisterre.completed_at'))
                     ->dateTime(),
             ])
