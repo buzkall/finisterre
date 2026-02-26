@@ -39,7 +39,7 @@ class FinisterreTask extends Model implements HasMedia
     use HasFactory, HasTags, InteractsWithMedia;
 
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'subtasks', 'due_at', 'completed_at',
-        'creator_id', 'assignee_id'];
+        'creator_id', 'assignee_id', 'order_column'];
     protected $casts = [
         'status'       => TaskStatusEnum::class,
         'archived'     => 'boolean',
