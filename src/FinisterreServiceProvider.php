@@ -36,6 +36,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                     'add_subtasks_to_finisterre_tasks',
                     'add_archived_to_finisterre_tasks',
                     'add_task_changes_table',
+                    'change_order_column_type_in_finisterre_tasks',
                 ]);
         }
     }
