@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.5 - 2026-02-26
+
+Improvements for different roles
+
 ## 2.0.4 - 2026-02-26
 
 Fix error ordering tabs in kanban
