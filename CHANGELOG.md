@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.6 - 2026-03-02
+
+fix rich editor in comments
+
 ## 2.0.5 - 2026-02-26
 
 Improvements for different roles
