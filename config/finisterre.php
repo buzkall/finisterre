@@ -53,25 +53,6 @@ return [
             'delete' => 'heroicon-s-trash',
             'empty'  => 'heroicon-s-chat-bubble-left-right',
         ],
-
-        // Options: 'rich', 'markdown'
-        'editor' => 'rich',
-
-        // Rich editor toolbar buttons that are available to users.
-        'toolbar_buttons' => [
-            'blockquote',
-            'bold',
-            'bulletList',
-            'codeBlock',
-            'italic',
-            'link',
-            'orderedList',
-            'redo',
-            'strike',
-            'underline',
-            'undo',
-            'attachFiles',
-        ],
     ],
 
     'sms_notification' => [

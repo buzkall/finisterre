@@ -1,4 +1,6 @@
 <div class="flex flex-col h-full space-y-4">
+    <x-filament-actions::modals />
+
     @if (auth()->user()->can('create', \Buzkall\Finisterre\Models\FinisterreTaskComment::class))
         <div class="space-y-4">
             {{ $this->form }}
@@ -48,25 +50,14 @@
                             </div>
 
                             <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none pr-8">
-                                @if(config('finisterre.comments.editor') === 'markdown')
-                                    {{ Str::of($comment->comment)->markdown()->toHtmlString() }}
-                                @else
-                                    @php
-                                        // First, temporarily mark URLs in HTML tags to protect them
-                                        $content = preg_replace_callback('/<[^>]*>/', function($match) {
-                                            return str_replace(['http://', 'https://'], ['__HTTP__', '__HTTPS__'], $match[0]);
-                                        }, $comment->comment);
-
-                                        // Now safely replace URLs that are not in tags
-                                        $content = preg_replace('/(https?:\/\/[^\s<]+)/', '<a href="$1" target="_blank" class="text-blue-500 underline">$1</a>', $content);
-
-                                        // Restore protected URLs
-                                        $content = str_replace(['__HTTP__', '__HTTPS__'], ['http://', 'https://'], $content);
-
-                                        $htmlString = new \Illuminate\Support\HtmlString($content);
-                                    @endphp
-                                    {{ $htmlString }}
-                                @endif
+                                @php
+                                    $content = preg_replace_callback('/<[^>]*>/', function($match) {
+                                        return str_replace(['http://', 'https://'], ['__HTTP__', '__HTTPS__'], $match[0]);
+                                    }, $comment->comment);
+                                    $content = preg_replace('/(https?:\/\/[^\s<]+)/', '<a href="$1" target="_blank" class="text-blue-500 underline">$1</a>', $content);
+                                    $content = str_replace(['__HTTP__', '__HTTPS__'], ['http://', 'https://'], $content);
+                                @endphp
+                                {{ new \Illuminate\Support\HtmlString($content) }}
                             </div>
                         </div>
                     </div>

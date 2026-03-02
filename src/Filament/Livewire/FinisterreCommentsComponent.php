@@ -7,6 +7,8 @@ use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -18,8 +20,9 @@ use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-class FinisterreCommentsComponent extends Component implements HasForms
+class FinisterreCommentsComponent extends Component implements HasActions, HasForms
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?array $data = [];
@@ -63,20 +66,12 @@ class FinisterreCommentsComponent extends Component implements HasForms
             return $schema;
         }
 
-        if (config('finisterre.comments.editor') === 'markdown') {
-            $editor = Forms\Components\MarkdownEditor::make('comment');
-        } else {
-            // images pasted are private because handled in the finisterre-files folder and route
-            $editor = Forms\Components\RichEditor::make('comment')
-                ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
-                ->extraInputAttributes(['style' => 'min-height: 6rem']);
-        }
-
-        $editor
+        $editor = Forms\Components\RichEditor::make('comment')
             ->hiddenLabel()
+            ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+            ->extraInputAttributes(['style' => 'min-height: 6rem'])
             ->required()
-            ->placeholder(__('finisterre::finisterre.comments.placeholder'))
-            ->toolbarButtons(config('finisterre.comments.toolbar_buttons'));
+            ->placeholder(__('finisterre::finisterre.comments.placeholder'));
 
         return $schema->components([
             $editor,
