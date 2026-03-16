@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.7 - 2026-03-16
+
+Stop notifying tasks moved to Done
+
 ## 2.0.6 - 2026-03-02
 
 fix rich editor in comments
