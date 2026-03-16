@@ -95,8 +95,8 @@ class FinisterreTask extends Model implements HasMedia
             }
 
             defer(function() use ($task) {
-                // don't notify myself
-                if ($task->assignee && $task->assignee->id !== auth()->id()) {
+                // don't notify myself, and don't notify when task is moved to done
+                if ($task->assignee && $task->assignee->id !== auth()->id() && $task->status !== TaskStatusEnum::Done) {
                     $taskChanges = $task->getChanges();
                     $task->assignee->notify(new TaskNotification($task, $taskChanges));
 
