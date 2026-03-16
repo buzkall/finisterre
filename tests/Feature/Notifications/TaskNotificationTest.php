@@ -1,10 +1,13 @@
 <?php
 
+use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Notifications\TaskNotification;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Schema;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Workbench\App\Models\User;
 
 uses(RefreshDatabase::class);
@@ -18,7 +21,7 @@ beforeEach(function() {
         'finisterre.authenticatable_table_name' => 'users',
         'finisterre.authenticatable_attribute'  => 'name',
         'finisterre.panel_slug'                 => 'admin',
-        'media-library.media_model'             => \Spatie\MediaLibrary\MediaCollections\Models\Media::class,
+        'media-library.media_model'             => Media::class,
     ]);
 
     // Create comments table
@@ -115,7 +118,7 @@ it('can build mail message for new task', function() {
 
     $mailMessage = $notification->toMail($user);
 
-    expect($mailMessage)->toBeInstanceOf(\Illuminate\Notifications\Messages\MailMessage::class);
+    expect($mailMessage)->toBeInstanceOf(MailMessage::class);
 });
 
 it('can build mail message for updated task', function() {
@@ -131,7 +134,7 @@ it('can build mail message for updated task', function() {
 
     $mailMessage = $notification->toMail($user);
 
-    expect($mailMessage)->toBeInstanceOf(\Illuminate\Notifications\Messages\MailMessage::class);
+    expect($mailMessage)->toBeInstanceOf(MailMessage::class);
 });
 
 it('does not send sms notification when disabled', function() {
@@ -150,11 +153,11 @@ it('does not send sms notification when disabled', function() {
 it('does not send sms notification for non-urgent tasks', function() {
     config([
         'finisterre.sms_notification.enabled'           => true,
-        'finisterre.sms_notification.notify_priorities' => [\Buzkall\Finisterre\Enums\TaskPriorityEnum::Urgent],
+        'finisterre.sms_notification.notify_priorities' => [TaskPriorityEnum::Urgent],
     ]);
 
     $task = FinisterreTask::factory()->create([
-        'priority' => \Buzkall\Finisterre\Enums\TaskPriorityEnum::Low,
+        'priority' => TaskPriorityEnum::Low,
     ]);
     $task->wasRecentlyCreated = true;
     $notification = new TaskNotification($task);

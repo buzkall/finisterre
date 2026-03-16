@@ -5,6 +5,7 @@ use Buzkall\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Workbench\App\Models\User;
 
 uses(RefreshDatabase::class);
@@ -18,7 +19,7 @@ beforeEach(function() {
         'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
         'finisterre.table_name'                 => 'finisterre_tasks',
         'finisterre.authenticatable_table_name' => 'users',
-        'media-library.media_model'             => \Spatie\MediaLibrary\MediaCollections\Models\Media::class,
+        'media-library.media_model'             => Media::class,
     ]);
 
     // Create the task_changes table

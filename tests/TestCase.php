@@ -4,7 +4,9 @@ namespace Buzkall\Finisterre\Tests;
 
 use Buzkall\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Livewire\Livewire;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Workbench\App\Models\User;
 
 class TestCase extends Orchestra
 {
@@ -36,7 +38,7 @@ class TestCase extends Orchestra
     protected function getPackageAliases($app)
     {
         return [
-            'Livewire' => \Livewire\Livewire::class,
+            'Livewire' => Livewire::class,
         ];
     }
 
@@ -45,7 +47,7 @@ class TestCase extends Orchestra
         config()->set('database.default', 'testing');
 
         // Set up the finisterre config for testing
-        config()->set('finisterre.authenticatable', \Workbench\App\Models\User::class);
+        config()->set('finisterre.authenticatable', User::class);
         config()->set('finisterre.table_name', 'finisterre_tasks');
 
         // Run your package migrations

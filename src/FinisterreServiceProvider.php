@@ -43,7 +43,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        if (class_exists(\Livewire\Livewire::class)) {
+        if (class_exists(Livewire::class)) {
             Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
             Livewire::component('filter-tasks', FilterTasks::class);
         }
@@ -63,7 +63,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
         // this will get copied to the project's public folder when
         // running php artisan filament:assets
-        if (class_exists(\Filament\Support\Facades\FilamentAsset::class) && class_exists(\Filament\Support\Assets\Css::class)) {
+        if (class_exists(FilamentAsset::class) && class_exists(Css::class)) {
             FilamentAsset::register(
                 [Css::make('finisterre-styles', __DIR__ . '/../resources/dist/finisterre.css')],
                 package: 'buzkall/finisterre'

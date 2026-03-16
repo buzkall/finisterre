@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Tags\HasTags;
@@ -23,14 +25,14 @@ use Spatie\Tags\HasTags;
 /**
  * @property string $title
  * @property string $description
- * @property \Illuminate\Support\Collection $tags
- * @property \Illuminate\Support\Collection $comments
+ * @property Collection $tags
+ * @property Collection $comments
  * @property TaskStatusEnum $status
  * @property bool $archived
  * @property TaskPriorityEnum $priority
  * @property array $subtasks
- * @property \Illuminate\Support\Carbon $due_at
- * @property \Illuminate\Support\Carbon $completed_at
+ * @property Carbon $due_at
+ * @property Carbon $completed_at
  * @property int $creator_id
  * @property int $assignee_id
  */

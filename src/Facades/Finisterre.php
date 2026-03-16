@@ -2,15 +2,16 @@
 
 namespace Buzkall\Finisterre\Facades;
 
+use Buzkall\Finisterre\FinisterrePlugin;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Buzkall\Finisterre\FinisterrePlugin
+ * @see FinisterrePlugin
  */
 class Finisterre extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Buzkall\Finisterre\FinisterrePlugin::class;
+        return FinisterrePlugin::class;
     }
 }

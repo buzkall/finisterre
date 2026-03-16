@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\User;
+use Buzkall\Finisterre\Enums\TaskPriorityEnum;
+use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
+use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
+
 return [
     'active'     => env('FINISTERRE_ACTIVE', false),
     'table_name' => 'finisterre_tasks',
@@ -9,9 +14,9 @@ return [
     // Locales to save when creating tags (e.g., ['es', 'ca'])
     'locales' => ['es', 'ca'],
 
-    'model_policy' => Buzkall\Finisterre\Policies\FinisterreTaskPolicy::class,
+    'model_policy' => FinisterreTaskPolicy::class,
 
-    'authenticatable'            => \App\Models\User::class, // @phpstan-ignore-line
+    'authenticatable'            => User::class, // @phpstan-ignore-line
     'authenticatable_table_name' => 'users',
     'authenticatable_attribute'  => 'name',
     'guard'                      => 'web', // filament
@@ -43,7 +48,7 @@ return [
 
     'comments' => [
         'table_name'          => 'finisterre_task_comments',
-        'model_policy'        => Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy::class,
+        'model_policy'        => FinisterreTaskCommentPolicy::class,
         'display_avatars'     => true,
         'user_name_attribute' => 'name',
 
@@ -61,6 +66,6 @@ return [
         'auth_key'          => env('FINISTERRE_SMS_AUTH_KEY'),
         'sender'            => env('FINISTERRE_SMS_SENDER'),
         'notify_to'         => env('FINISTERRE_SMS_NOTIFY_TO'),
-        'notify_priorities' => [Buzkall\Finisterre\Enums\TaskPriorityEnum::Urgent],
+        'notify_priorities' => [TaskPriorityEnum::Urgent],
     ],
 ];
