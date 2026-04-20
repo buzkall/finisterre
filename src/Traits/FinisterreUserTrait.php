@@ -21,19 +21,23 @@ trait FinisterreUserTrait
     public function scopeUserIsActive(Builder $query): Builder
     {
         return $query->when(
-            Schema::hasColumn('users', 'active'),
+            Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
             fn($query) => $query->where('active', true)
         );
     }
 
     public function scopeAssignableUsers(Builder $query): Builder
     {
+        $filterColumn = config('finisterre.authenticatable_filter_column');
+        $filterValue = config('finisterre.authenticatable_filter_value');
+        $table = config('finisterre.authenticatable_table_name');
+
         return $query
             ->when(
-                Schema::hasColumn('users', 'role'),
-                fn($query) => $query->where('role', 'admin')
+                $filterColumn && Schema::hasColumn($table, $filterColumn),
+                fn($query) => $query->where($filterColumn, $filterValue)
             )->when(
-                Schema::hasColumn('users', 'active'),
+                Schema::hasColumn($table, 'active'),
                 fn($query) => $query->where('active', true)
             );
     }

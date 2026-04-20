@@ -41,23 +41,27 @@ class Form
                     ->hiddenOn('create')
                     ->options(TaskStatusEnum::options())
                     ->default(TaskStatusEnum::Open)
-                    ->required(),
+                    ->required()
+                    ->columnSpan(1),
 
                 Select::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
                     ->options(TaskPriorityEnum::class)
                     ->default(fn() => $userIsReporterOnly ? TaskPriorityEnum::Urgent : TaskPriorityEnum::Low)
                     ->required()
-                    ->helperText(fn() => $userIsReporterOnly ? __('finisterre::finisterre.priority_help') : ''),
+                    ->helperText(fn() => $userIsReporterOnly ? __('finisterre::finisterre.priority_help') : '')
+                    ->columnSpan(1),
 
                 DatePicker::make('due_at')
                     ->label(__('finisterre::finisterre.due_at'))
-                    ->hidden(fn() => $userIsReporterOnly),
+                    ->hidden(fn() => $userIsReporterOnly)
+                    ->columnSpan(1),
 
                 DatePicker::make('completed_at')
                     ->label(__('finisterre::finisterre.completed_at'))
                     ->hiddenOn('create')
-                    ->disabled(),
+                    ->disabled()
+                    ->columnSpan(1),
 
                 SpatieMediaLibraryFileUpload::make('attachments')
                     ->label(__('finisterre::finisterre.attachments'))
@@ -65,7 +69,8 @@ class Form
                     ->disk(config('finisterre.attachments_disk') ?? 'public')
                     ->collection('tasks')
                     ->openable()
-                    ->downloadable(),
+                    ->downloadable()
+                    ->columnSpan(1),
 
                 Select::make('assignee_id')
                     ->label(__('finisterre::finisterre.assignee_id'))
@@ -77,11 +82,13 @@ class Form
                     )
                     ->hidden(fn($operation) => $userIsReporterOnly && $operation == 'create')
                     ->disabled(fn() => $userIsReporterOnly)
-                    ->default(config('finisterre.fallback_notifiable_id')),
+                    ->default(config('finisterre.fallback_notifiable_id'))
+                    ->columnSpan(1),
 
                 SpatieTagsInput::make('tags')
                     ->label(__('finisterre::finisterre.tags'))
-                    ->type('tasks'),
+                    ->type('tasks')
+                    ->columnSpan(1),
 
                 SubtasksField::make('subtasks')
                     ->label(__('finisterre::finisterre.subtasks.label'))
