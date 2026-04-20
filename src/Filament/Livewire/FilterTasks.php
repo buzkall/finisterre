@@ -94,6 +94,7 @@ class FilterTasks extends Component implements HasForms
                         ->afterStateUpdated(fn() => $this->dispatchFilters())
                 ])
                 ->columns(4)
+                ->columnSpan(1)
                 ->compact()
                 ->extraAttributes([
                     'x-data' => '{}',
