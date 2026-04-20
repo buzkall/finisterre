@@ -67,14 +67,16 @@ class FilterTasksWidget extends Widget implements HasForms
                         ->label(__('finisterre::finisterre.filter.text'))
                         ->placeholder(__('finisterre::finisterre.filter.text_description'))
                         ->live(debounce: 500)
-                        ->afterStateUpdated(fn() => $this->dispatchFilters()),
+                        ->afterStateUpdated(fn() => $this->dispatchFilters())
+                        ->columnSpan(1),
 
                     Select::make('filter_tags')
                         ->multiple()
                         ->label(__('finisterre::finisterre.tags'))
                         ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
                         ->live()
-                        ->afterStateUpdated(fn() => $this->dispatchFilters()),
+                        ->afterStateUpdated(fn() => $this->dispatchFilters())
+                        ->columnSpan(1),
 
                     Select::make('filter_assignee')
                         ->label(__('finisterre::finisterre.filter.assignee'))
@@ -86,13 +88,15 @@ class FilterTasksWidget extends Widget implements HasForms
                                 ->pluck('assignee.' . config('finisterre.authenticatable_attribute'), 'assignee.id')
                         )
                         ->live()
-                        ->afterStateUpdated(fn() => $this->dispatchFilters()),
+                        ->afterStateUpdated(fn() => $this->dispatchFilters())
+                        ->columnSpan(1),
 
                     Toggle::make('filter_show_archived')
                         ->label(__('finisterre::finisterre.filter.show_archived'))
                         ->inline(false)
                         ->live()
-                        ->afterStateUpdated(fn() => $this->dispatchFilters()),
+                        ->afterStateUpdated(fn() => $this->dispatchFilters())
+                        ->columnSpan(1),
                 ])
                 ->columns(4)
                 ->compact(),
