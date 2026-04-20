@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.10 - 2026-04-20
+
+Force filters to show in one row
+
 ## 2.0.9 - 2026-04-20
 
 Force filters to show in one row
