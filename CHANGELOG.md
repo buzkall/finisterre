@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.12 - 2026-04-20
+
+Filter assignee by role
+
 ## 2.0.11 - 2026-04-20
 
 Force filters to show in one row
