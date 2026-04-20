@@ -43,7 +43,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->where('id', '!=', auth()->id())
             ->when(
                 config('finisterre.authenticatable_filter_column'),
-                fn($query) => $query->where(config('finisterre.authenticatable_filter_column'), config('finisterre.authenticatable_filter_value'))
+                fn($query) => $query->whereIn(config('finisterre.authenticatable_filter_column'), (array)config('finisterre.authenticatable_filter_value'))
             )
             ->when(
                 DatabaseSchema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),

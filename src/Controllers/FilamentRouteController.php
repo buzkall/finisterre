@@ -25,8 +25,10 @@ class FilamentRouteController extends Controller
                 abort_unless(Storage::disk($disk)->exists($filePath), 404);
 
                 // access is filtered by the user
-                abort_unless(auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')} ==
-                    config('finisterre.authenticatable_filter_value'), 403);
+                abort_unless(in_array(
+                    auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')},
+                    (array)config('finisterre.authenticatable_filter_value')
+                ), 403);
 
                 return response()->file(Storage::disk($disk)->path($filePath));
             });
@@ -43,8 +45,10 @@ class FilamentRouteController extends Controller
                 abort_unless(Storage::disk($disk)->exists($filePath), 404);
 
                 // access is filtered by the user
-                abort_unless(auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')} ==
-                    config('finisterre.authenticatable_filter_value'), 403);
+                abort_unless(in_array(
+                    auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')},
+                    (array)config('finisterre.authenticatable_filter_value')
+                ), 403);
 
                 return response()->file(Storage::disk($disk)->path($filePath));
             });

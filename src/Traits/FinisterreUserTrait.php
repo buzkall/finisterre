@@ -35,7 +35,7 @@ trait FinisterreUserTrait
         return $query
             ->when(
                 $filterColumn && Schema::hasColumn($table, $filterColumn),
-                fn($query) => $query->where($filterColumn, $filterValue)
+                fn($query) => $query->whereIn($filterColumn, (array)$filterValue)
             )->when(
                 Schema::hasColumn($table, 'active'),
                 fn($query) => $query->where('active', true)
