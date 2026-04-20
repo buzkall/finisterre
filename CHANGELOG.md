@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.8 - 2026-04-20
+
+Stop hardcoding the name column in user query
+
 ## 2.0.7 - 2026-03-16
 
 Stop notifying tasks moved to Done
