@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.14 - 2026-04-22
+
+Add user name attribute config
+
 ## 2.0.13 - 2026-04-20
 
 Filter assignee by several roles
