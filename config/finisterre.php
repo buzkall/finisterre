@@ -18,7 +18,7 @@ return [
 
     'authenticatable'            => User::class, // @phpstan-ignore-line
     'authenticatable_table_name' => 'users',
-    'authenticatable_attribute'  => 'name',
+    'authenticatable_attribute'  => 'name', // string column, or array like ['name', 'lastname'] for full-name display
     'guard'                      => 'web', // filament
 
     // fill in in case of filtering the assigned user

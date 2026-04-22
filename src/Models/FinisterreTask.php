@@ -159,7 +159,7 @@ class FinisterreTask extends Model implements HasMedia
         }
 
         /** @var Authenticatable $creator */
-        return $creator->{$creator->getUserNameColumn()};
+        return $creator->getUserDisplayName();
     }
 
     public function assignee(): BelongsTo

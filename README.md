@@ -124,6 +124,16 @@ public function panel(Panel $panel): Panel
 }
 ```
 
+### Displaying a user's full name
+
+`finisterre.authenticatable_attribute` accepts either a single column (default `'name'`) or an array of columns to concatenate for display:
+
+```php
+'authenticatable_attribute' => ['name', 'lastname'],
+```
+
+With an array, the package shows `"John Doe"` in every user-facing select (task assignee, filter, kanban, comment notify list) and uses `CONCAT_WS(' ', ...)` for SQL-level selects. Columns must exist on the `users` table.
+
 ## SMS notifications
 
 Using smsarena.es as provider.

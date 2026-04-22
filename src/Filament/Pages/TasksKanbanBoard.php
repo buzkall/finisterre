@@ -119,7 +119,7 @@ class TasksKanbanBoard extends BoardPage
             ->addSelect([
                 config('finisterre.table_name') . '.*',
                 'assignee_name' => $userModel->newQuery()
-                    ->select(config('finisterre.authenticatable_attribute', 'name'))
+                    ->select($userModel::getUserNameSelectExpression())
                     ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.assignee_id')
                     ->limit(1),
             ])

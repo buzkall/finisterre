@@ -5,6 +5,8 @@ namespace Buzkall\Finisterre\Traits;
 use Buzkall\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 trait FinisterreUserTrait
@@ -44,7 +46,36 @@ trait FinisterreUserTrait
 
     public function getUserNameColumn(): string
     {
-        return config('finisterre.authenticatable_attribute', 'name') ?? 'name';
+        $attr = config('finisterre.authenticatable_attribute', 'name') ?? 'name';
+
+        return is_array($attr) ? ($attr[0] ?? 'name') : $attr;
+    }
+
+    public function getUserDisplayName(): string
+    {
+        $attr = config('finisterre.authenticatable_attribute', 'name') ?? 'name';
+
+        if (is_array($attr)) {
+            return collect($attr)
+                ->map(fn($col) => $this->{$col})
+                ->filter()
+                ->implode(' ');
+        }
+
+        return (string)($this->{$attr} ?? '');
+    }
+
+    public static function getUserNameSelectExpression(): Expression|string
+    {
+        $attr = config('finisterre.authenticatable_attribute', 'name') ?? 'name';
+
+        if (is_array($attr)) {
+            $cols = implode(', ', array_map(fn($c) => '`' . $c . '`', $attr));
+
+            return DB::raw("CONCAT_WS(' ', $cols)");
+        }
+
+        return $attr;
     }
 
     public function taskChanges(): HasMany

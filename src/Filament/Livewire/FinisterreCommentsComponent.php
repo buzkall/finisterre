@@ -49,7 +49,8 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
                 DatabaseSchema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
                 fn($query) => $query->where('active', true)
             )
-            ->pluck(config('finisterre.authenticatable_attribute'), 'id');
+            ->get()
+            ->mapWithKeys(fn($user) => [$user->getKey() => $user->getUserDisplayName()]);
 
         // Append task creator if not the authenticated user and not already in options
         if ($this->record->creator->getKey() !== auth()->id() &&
@@ -105,12 +106,12 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         if ($data['notify']) {
             foreach (config('finisterre.authenticatable')::findMany($data['notify']) as $user) {
                 $this->notifyUser($user);
-                $notified->push($user->{config('finisterre.authenticatable_attribute')});
+                $notified->push($user->getUserDisplayName());
                 $notifiedUserIds->push($user->getKey());
             }
         } else {
             $this->notifyUser($this->record->assignee);
-            $notified->push($this->record->assignee->{config('finisterre.authenticatable_attribute')});
+            $notified->push($this->record->assignee->getUserDisplayName());
             $notifiedUserIds->push($this->record->assignee->getKey());
         }
 

@@ -80,6 +80,8 @@ class Form
                         FinisterrePlugin::get()->getAuthUser()?->getUserNameColumn(),
                         fn($query) => $query->assignableUsers()
                     )
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record->getUserDisplayName())
+                    ->searchable((array)config('finisterre.authenticatable_attribute', 'name'))
                     ->hidden(fn($operation) => $userIsReporterOnly && $operation == 'create')
                     ->disabled(fn() => $userIsReporterOnly)
                     ->default(config('finisterre.fallback_notifiable_id'))
