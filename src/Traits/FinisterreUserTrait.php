@@ -70,7 +70,8 @@ trait FinisterreUserTrait
         $attr = config('finisterre.authenticatable_attribute', 'name') ?? 'name';
 
         if (is_array($attr)) {
-            $cols = implode(', ', array_map(fn($c) => '`' . $c . '`', $attr));
+            $grammar = DB::connection()->getQueryGrammar();
+            $cols = implode(', ', array_map(fn($c) => $grammar->wrap($c), $attr));
 
             return DB::raw("CONCAT_WS(' ', $cols)");
         }

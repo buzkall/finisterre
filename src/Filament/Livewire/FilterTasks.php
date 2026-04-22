@@ -85,7 +85,7 @@ class FilterTasks extends Component implements HasForms
                                 ->with('assignee')
                                 ->get()
                                 ->filter(fn($task) => $task->assignee)
-                                ->mapWithKeys(fn($task) => [$task->assignee->getKey() => $task->assignee->getUserDisplayName()])
+                                ->mapWithKeys(fn($task) => [$task->assignee->getKey() => $task->assignee->getUserDisplayName()]) // @phpstan-ignore-line method.notFound
                         )
                         ->live()
                         ->afterStateUpdated(fn() => $this->dispatchFilters())

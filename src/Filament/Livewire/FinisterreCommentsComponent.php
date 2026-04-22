@@ -111,7 +111,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             }
         } else {
             $this->notifyUser($this->record->assignee);
-            $notified->push($this->record->assignee->getUserDisplayName());
+            $notified->push($this->record->assignee->getUserDisplayName()); // @phpstan-ignore-line method.notFound
             $notifiedUserIds->push($this->record->assignee->getKey());
         }
 
