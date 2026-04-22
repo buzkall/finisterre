@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.16 - 2026-04-22
+
+Preload assignee users
+
 ## 2.0.15 - 2026-04-22
 
 Fix query for postgresql
