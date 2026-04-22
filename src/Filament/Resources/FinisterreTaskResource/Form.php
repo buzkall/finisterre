@@ -82,6 +82,7 @@ class Form
                     )
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->getUserDisplayName())
                     ->searchable((array)config('finisterre.authenticatable_attribute', 'name'))
+                    ->preload()
                     ->hidden(fn($operation) => $userIsReporterOnly && $operation == 'create')
                     ->disabled(fn() => $userIsReporterOnly)
                     ->default(config('finisterre.fallback_notifiable_id'))
