@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.15 - 2026-04-22
+
+Fix query for postgresql
+
 ## 2.0.14 - 2026-04-22
 
 Add user name attribute config
