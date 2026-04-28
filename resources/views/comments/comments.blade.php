@@ -29,7 +29,7 @@
                             <div class="flex gap-x-2 items-center justify-between">
                                 <div class="flex gap-x-2 items-center">
                                     <div class="text-sm font-medium text-gray-950 dark:text-white">
-                                        {{ $comment->creator[config('finisterre.comments.user_name_attribute')] }}
+                                        {{ $comment->creator->getUserDisplayName() }}
                                     </div>
 
                                     <div class="text-xs font-medium text-gray-400 dark:text-gray-500">

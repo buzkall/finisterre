@@ -21,7 +21,7 @@ return [
     'authenticatable_attribute'  => 'name', // string column, or array like ['name', 'lastname'] for full-name display
     'guard'                      => 'web', // filament
 
-    // fill in in case of filtering the assigned user
+    // fill in case of filtering the assigned user
     'authenticatable_filter_column' => '', // role
     'authenticatable_filter_value'  => '', // admin
     'fallback_notifiable_id'        => 1,
@@ -47,12 +47,11 @@ return [
     'task_changes_table_name' => 'finisterre_task_changes',
 
     'comments' => [
-        'table_name'          => 'finisterre_task_comments',
-        'model_policy'        => FinisterreTaskCommentPolicy::class,
-        'display_avatars'     => true,
-        'user_name_attribute' => 'name',
+        'table_name'      => 'finisterre_task_comments',
+        'model_policy'    => FinisterreTaskCommentPolicy::class,
+        'display_avatars' => true,
 
-        // Icons used in the comments component.
+        // Icons used in the comments' component.
         'icons' => [
             'action' => 'heroicon-s-chat-bubble-left-right',
             'delete' => 'heroicon-s-trash',

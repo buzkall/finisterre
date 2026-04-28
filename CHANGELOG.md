@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.17 - 2026-04-27
+
+Use authenticatable_attribute for the comment author display name
+
 ## 2.0.16 - 2026-04-22
 
 Preload assignee users
