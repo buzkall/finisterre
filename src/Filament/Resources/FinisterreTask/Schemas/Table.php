@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
+namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;

@@ -1,16 +1,17 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
+namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
 use Buzkall\Finisterre\FinisterrePlugin;
+use Buzkall\Finisterre\Models\FinisterreTag;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
@@ -88,9 +89,26 @@ class Form
                     ->default(config('finisterre.fallback_notifiable_id'))
                     ->columnSpan(1),
 
-                SpatieTagsInput::make('tags')
+                Select::make('tags')
                     ->label(__('finisterre::finisterre.tags'))
-                    ->type('tasks')
+                    ->multiple()
+                    ->relationship(
+                        name: 'tags',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn($query) => $query->where('type', 'tasks'),
+                    )
+                    ->getOptionLabelFromRecordUsing(fn(FinisterreTag $record) => $record->name)
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        TextInput::make('name')
+                            ->label(__('finisterre::finisterre.tags'))
+                            ->required(),
+                    ])
+                    ->createOptionUsing(
+                        fn(array $data) => FinisterreTag::findOrCreateFromString($data['name'], 'tasks')->getKey()
+                    )
+                    ->createOptionAction(fn(Action $action) => $action->extraModalFooterActions([]))
                     ->columnSpan(1),
 
                 SubtasksField::make('subtasks')

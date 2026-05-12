@@ -4,6 +4,8 @@ namespace Buzkall\Finisterre\Filament\Resources;
 
 use BackedEnum;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Pages;
+use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas\Form as TaskForm;
+use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTable;
 use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Resources\Resource;
@@ -38,12 +40,12 @@ class FinisterreTaskResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return FinisterreTaskResource\Form::configure($schema);
+        return TaskForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return FinisterreTaskResource\Table::configure($table);
+        return TaskTable::configure($table);
     }
 
     public static function getPages(): array
