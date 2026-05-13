@@ -7,6 +7,7 @@ use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
 use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTag;
+use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
@@ -92,14 +93,21 @@ class Form
                 Select::make('tags')
                     ->label(__('finisterre::finisterre.tags'))
                     ->multiple()
-                    ->relationship(
-                        name: 'tags',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn($query) => $query->where('type', 'tasks'),
-                    )
-                    ->getOptionLabelFromRecordUsing(fn(FinisterreTag $record) => $record->name)
+                    // Avoid ->relationship() here: on PostgreSQL it triggers
+                    // `select distinct "tags".*` through the MorphToMany pivot,
+                    // which fails on the json `name`/`slug` columns (no equality operator).
+                    ->options(fn() => FinisterreTag::withType('tasks')->get()->pluck('name', 'id'))
                     ->searchable()
                     ->preload()
+                    ->afterStateHydrated(function (Select $component, ?FinisterreTask $record): void {
+                        if ($record) {
+                            $component->state($record->tags->pluck('id')->all());
+                        }
+                    })
+                    ->dehydrated(false)
+                    ->saveRelationshipsUsing(function (FinisterreTask $record, $state): void {
+                        $record->tags()->sync($state ?? []);
+                    })
                     ->createOptionForm([
                         TextInput::make('name')
                             ->label(__('finisterre::finisterre.tags'))

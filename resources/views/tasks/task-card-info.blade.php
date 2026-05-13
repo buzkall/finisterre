@@ -7,11 +7,11 @@
                 </x-filament::badge>
             @endif
 
-            @if($tagName)
+            @foreach($tagNames as $tagName)
                 <x-filament::badge color="success" class="shrink-0">
                     #{{ $tagName }}
                 </x-filament::badge>
-            @endif
+            @endforeach
         </div>
 
         @if($assigneeInitials)

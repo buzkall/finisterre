@@ -6,6 +6,7 @@ use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Facades\Finisterre;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Buzkall\Finisterre\Filament\Widgets\FilterTasksWidget;
+use Buzkall\Finisterre\Models\FinisterreTag;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
@@ -18,7 +19,6 @@ use Livewire\Attributes\Url;
 use Relaticle\Flowforge\Board;
 use Relaticle\Flowforge\BoardPage;
 use Relaticle\Flowforge\Column;
-use Spatie\Tags\Tag;
 
 class TasksKanbanBoard extends BoardPage
 {
@@ -95,7 +95,7 @@ class TasksKanbanBoard extends BoardPage
                                 'assigneeInitials' => self::getInitials($record->assignee_name),
                                 'priority'         => $record->priority->getLabel(),
                                 'priorityColor'    => $record->priority->getColor(),
-                                'tagName'          => $record->tags->first()?->name,
+                                'tagNames'         => $record->tags->pluck('name'),
                                 'mediaCount'       => $record->media_count ?? 0,
                                 'commentsCount'    => $record->comments_count ?? 0,
                                 'editUrl'          => FinisterreTaskResource::getUrl('edit', ['record' => $record->id]),
@@ -125,7 +125,7 @@ class TasksKanbanBoard extends BoardPage
             ])
             ->when(
                 $this->filters['filter_tags'] ?? null,
-                fn($query, $tagIds) => $query->withAnyTags(Tag::findMany($tagIds))
+                fn($query, $tagIds) => $query->withAnyTags(FinisterreTag::findMany($tagIds))
             )
             ->when(
                 $this->filters['filter_text'] ?? null,

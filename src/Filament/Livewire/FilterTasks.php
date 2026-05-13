@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre\Filament\Livewire;
 
+use Buzkall\Finisterre\Models\FinisterreTag;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -13,7 +14,6 @@ use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Spatie\Tags\Tag;
 
 class FilterTasks extends Component implements HasForms
 {
@@ -72,7 +72,7 @@ class FilterTasks extends Component implements HasForms
                     Select::make('filter_tags')
                         ->multiple()
                         ->label(__('finisterre::finisterre.tags'))
-                        ->options(fn() => Tag::withType('tasks')->pluck('name', 'id'))
+                        ->options(fn() => FinisterreTag::withType('tasks')->pluck('name', 'id'))
                         ->live()
                         ->afterStateUpdated(fn() => $this->dispatchFilters())
                         ->columnSpan(1),

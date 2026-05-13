@@ -2,6 +2,18 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.19 - 2026-05-13
+
+Stop overriding `tags.tag_model` config globally; the package now pins its tag class internally via `FinisterreTask::getTagClassName()`. This lets host apps keep using `spatie/laravel-tags` for their own models without interference.
+
+Show all tags on the kanban board cards instead of only the first one.
+
+Fix PostgreSQL error when editing a task with tags. The Filament tags `Select` no longer relies on `->relationship()` (which triggers `select distinct tags.*` over json columns on PG); options load and tag sync are handled explicitly.
+
+## 2.0.18 - 2026-05-12
+
+Refactor resource structure and use a Select for Spatie Tags
+
 ## 2.0.17 - 2026-04-27
 
 Use authenticatable_attribute for the comment author display name

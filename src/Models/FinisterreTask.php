@@ -178,4 +178,9 @@ class FinisterreTask extends Model implements HasMedia
             ->morphToMany(FinisterreTag::class, 'taggable', 'taggables', null, 'tag_id')
             ->orderBy('order_column');
     }
+
+    public static function getTagClassName(): string
+    {
+        return FinisterreTag::class;
+    }
 }
