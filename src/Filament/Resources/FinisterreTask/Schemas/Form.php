@@ -99,13 +99,13 @@ class Form
                     ->options(fn() => FinisterreTag::withType('tasks')->get()->pluck('name', 'id'))
                     ->searchable()
                     ->preload()
-                    ->afterStateHydrated(function (Select $component, ?FinisterreTask $record): void {
+                    ->afterStateHydrated(function(Select $component, ?FinisterreTask $record): void {
                         if ($record) {
                             $component->state($record->tags->pluck('id')->all());
                         }
                     })
                     ->dehydrated(false)
-                    ->saveRelationshipsUsing(function (FinisterreTask $record, $state): void {
+                    ->saveRelationshipsUsing(function(FinisterreTask $record, $state): void {
                         $record->tags()->sync($state ?? []);
                     })
                     ->createOptionForm([
