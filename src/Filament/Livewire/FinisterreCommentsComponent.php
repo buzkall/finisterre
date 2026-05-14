@@ -34,7 +34,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         $options = $this->getNotifyOptions();
 
         $this->form->fill([
-            'notify' => $options->count() === 1 ? $options->keys()->toArray() : [],
+            'notify'        => $options->count() === 1 ? $options->keys()->toArray() : [],
             'scheduled_for' => null,
         ]);
     }
@@ -56,7 +56,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         // Append task creator if not the authenticated user and not already in options
         if ($this->record->creator->getKey() !== auth()->id() &&
-            !$options->has($this->record->creator->getKey())) {
+            ! $options->has($this->record->creator->getKey())) {
             $options->put($this->record->creator->getKey(), $this->record->creatorName());
         }
 
@@ -65,7 +65,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     public function form(Schema $schema): Schema
     {
-        if (!auth()->user()->can('create', FinisterreTaskComment::class)) {
+        if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
             return $schema;
         }
 
@@ -104,7 +104,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     public function create(): void
     {
-        if (!auth()->user()->can('create', FinisterreTaskComment::class)) {
+        if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
             return;
         }
 
@@ -113,13 +113,13 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         $data = $this->form->getState();
 
         $canSchedule = FinisterrePlugin::get()->canScheduleComments();
-        $scheduledFor = $canSchedule && !empty($data['scheduled_for']) ? Carbon::parse($data['scheduled_for']) : null;
-        $notifyIds = !empty($data['notify']) ? $data['notify'] : [$this->record->assignee_id];
+        $scheduledFor = $canSchedule && ! empty($data['scheduled_for']) ? Carbon::parse($data['scheduled_for']) : null;
+        $notifyIds = ! empty($data['notify']) ? $data['notify'] : [$this->record->assignee_id];
 
         $comment = $this->record->comments()->create([
-            'comment' => $data['comment'],
-            'creator_id' => auth()->id(),
-            'scheduled_for' => $scheduledFor,
+            'comment'         => $data['comment'],
+            'creator_id'      => auth()->id(),
+            'scheduled_for'   => $scheduledFor,
             'notify_user_ids' => $scheduledFor ? $notifyIds : null,
         ]);
 
@@ -158,11 +158,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->icon('heroicon-s-pencil')
             ->color('warning')
             ->modalHeading(__('finisterre::finisterre.comments.edit_heading'))
-            ->fillForm(function (array $arguments): array {
+            ->fillForm(function(array $arguments): array {
                 $comment = FinisterreTaskComment::find($arguments['comment_id']);
 
                 return [
-                    'comment' => $comment?->comment,
+                    'comment'       => $comment?->comment,
                     'scheduled_for' => $comment?->scheduled_for,
                 ];
             })
@@ -179,15 +179,15 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
                     ->seconds(false)
                     ->minDate(today()),
             ])
-            ->action(function (array $arguments, array $data) {
+            ->action(function(array $arguments, array $data) {
                 $comment = FinisterreTaskComment::find($arguments['comment_id']);
 
-                if (!$comment || !auth()->user()->can('update', $comment)) {
+                if (! $comment || ! auth()->user()->can('update', $comment)) {
                     return;
                 }
 
                 $comment->update([
-                    'comment' => $data['comment'],
+                    'comment'       => $data['comment'],
                     'scheduled_for' => $data['scheduled_for'],
                 ]);
 
@@ -202,7 +202,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
     {
         $comment = FinisterreTaskComment::find($id);
 
-        if (!$comment || !auth()->guard(config('finisterre.guard'))->user()->can('delete', $comment)) {
+        if (! $comment || ! auth()->guard(config('finisterre.guard'))->user()->can('delete', $comment)) {
             return;
         }
 

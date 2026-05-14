@@ -9,10 +9,10 @@ uses(RefreshDatabase::class);
 
 beforeEach(function() {
     config([
-        'finisterre.active'                      => false,
-        'finisterre.authenticatable'             => User::class,
-        'finisterre.authenticatable_table_name'  => 'users',
-        'finisterre.authenticatable_attribute'   => 'name',
+        'finisterre.active'                        => false,
+        'finisterre.authenticatable'               => User::class,
+        'finisterre.authenticatable_table_name'    => 'users',
+        'finisterre.authenticatable_attribute'     => 'name',
         'finisterre.authenticatable_filter_column' => '',
         'finisterre.authenticatable_filter_value'  => '',
     ]);

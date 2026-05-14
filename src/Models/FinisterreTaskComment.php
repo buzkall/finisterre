@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Spatie\MediaLibrary\HasMedia;
@@ -17,12 +18,12 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property string $comment
- * @property \Illuminate\Support\Carbon|null $scheduled_for
- * @property \Illuminate\Support\Carbon|null $sent_at
+ * @property Carbon|null $scheduled_for
+ * @property Carbon|null $sent_at
  * @property array|null $notify_user_ids
  * @property int $creator_id
  * @property int $task_id
- * @property \Buzkall\Finisterre\Models\FinisterreTask $task
+ * @property FinisterreTask $task
  */
 class FinisterreTaskComment extends Model implements HasMedia
 {

@@ -6,6 +6,7 @@ use Buzkall\Finisterre\Notifications\TaskNotification;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Workbench\App\Models\User;
@@ -34,7 +35,7 @@ beforeEach(function() {
         });
     }
 
-    \Illuminate\Support\Facades\Route::get('/__test/tasks/{task}', fn() => 'ok')
+    Route::get('/__test/tasks/{task}', fn() => 'ok')
         ->name('filament.admin.resources.finisterre-tasks.edit');
 
     // Create comments table

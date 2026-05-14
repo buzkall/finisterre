@@ -5,6 +5,7 @@ use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Workbench\App\Models\User;
@@ -194,5 +195,5 @@ it('declares correct casts', function() {
     ]);
 
     expect($task->status)->toBeInstanceOf(TaskStatusEnum::class)
-        ->and($task->due_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+        ->and($task->due_at)->toBeInstanceOf(Carbon::class);
 });

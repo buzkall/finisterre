@@ -2,11 +2,12 @@
 
 use Buzkall\Finisterre\Commands\DispatchScheduledCommentsCommand;
 use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Workbench\App\Models\User;
@@ -69,10 +70,10 @@ beforeEach(function() {
         });
     }
 
-    $this->app[\Illuminate\Contracts\Console\Kernel::class]
+    $this->app[Kernel::class]
         ->registerCommand(new DispatchScheduledCommentsCommand);
 
-    \Illuminate\Support\Facades\Route::get('/__test/tasks/{task}', fn() => 'ok')
+    Route::get('/__test/tasks/{task}', fn() => 'ok')
         ->name('filament.admin.resources.finisterre-tasks.edit');
 
     if (! Schema::hasTable('media')) {

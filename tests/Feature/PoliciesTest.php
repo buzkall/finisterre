@@ -1,7 +1,6 @@
 <?php
 
 use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
 use Illuminate\Database\Schema\Blueprint;
