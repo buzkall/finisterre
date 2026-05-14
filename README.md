@@ -118,7 +118,8 @@ public function panel(Panel $panel): Panel
         ->plugins([
             FinisterrePlugin::make()
                 ->userCanViewAllTasks(fn() => auth()->user()?->hasRole(RoleEnum::Admin))
-                ->userCanViewOnlyTheirTasks(fn() => auth()->user()?->hasAnyRole([RoleEnum::Editor, RoleEnum::Manager])),
+                ->userCanViewOnlyTheirTasks(fn() => auth()->user()?->hasAnyRole([RoleEnum::Editor, RoleEnum::Manager]))
+                ->userCanScheduleComments(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
         ])
     ])
 }

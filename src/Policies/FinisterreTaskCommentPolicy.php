@@ -24,7 +24,8 @@ class FinisterreTaskCommentPolicy
 
     public function update(Authenticatable $user, FinisterreTaskComment $finisterreTaskComment): bool
     {
-        return false;
+        return $user->id === $finisterreTaskComment->creator_id // @phpstan-ignore-line
+            && $finisterreTaskComment->sent_at === null;
     }
 
     public function delete(Authenticatable $user, FinisterreTaskComment $finisterreTaskComment): bool

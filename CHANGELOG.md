@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.0.20 - 2026-05-14
+
+Add scheduled comments: comments can be queued for a future delivery time and are dispatched by the new `finisterre:dispatch-scheduled-comments` scheduled command. Run `php artisan vendor:publish --tag="finisterre-migrations"` followed by `php artisan migrate` to pick up the new `add_scheduling_to_finisterre_task_comments` migration.
+
+Add `finisterre:reset-sequences` command. Resets every PostgreSQL sequence in the `public` schema to `MAX(id)`, fixing the `duplicate key value violates unique constraint "migrations_pkey"` (and similar) errors that appear after importing a database dump that doesn't include sequence values. No-op on non-PostgreSQL connections.
+
 ## 2.0.19 - 2026-05-13
 
 Stop overriding `tags.tag_model` config globally; the package now pins its tag class internally via `FinisterreTask::getTagClassName()`. This lets host apps keep using `spatie/laravel-tags` for their own models without interference.

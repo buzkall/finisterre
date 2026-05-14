@@ -17,12 +17,25 @@ beforeEach(function() {
         'finisterre.active'                     => false,
         'finisterre.table_name'                 => 'finisterre_tasks',
         'finisterre.comments.table_name'        => 'finisterre_task_comments',
+        'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
         'finisterre.authenticatable'            => User::class,
         'finisterre.authenticatable_table_name' => 'users',
         'finisterre.authenticatable_attribute'  => 'name',
         'finisterre.panel_slug'                 => 'admin',
         'media-library.media_model'             => Media::class,
     ]);
+
+    if (! Schema::hasTable('finisterre_task_changes')) {
+        Schema::create('finisterre_task_changes', function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('task_id')->constrained('finisterre_tasks')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    \Illuminate\Support\Facades\Route::get('/__test/tasks/{task}', fn() => 'ok')
+        ->name('filament.admin.resources.finisterre-tasks.edit');
 
     // Create comments table
     if (! Schema::hasTable('finisterre_task_comments')) {

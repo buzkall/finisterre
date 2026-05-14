@@ -2,6 +2,8 @@
 
 namespace Buzkall\Finisterre;
 
+use Buzkall\Finisterre\Commands\DispatchScheduledCommentsCommand;
+use Buzkall\Finisterre\Commands\ResetSequencesCommand;
 use Buzkall\Finisterre\Filament\Livewire\FilterTasks;
 use Buzkall\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Buzkall\Finisterre\Models\FinisterreTask;
@@ -10,6 +12,7 @@ use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
@@ -35,6 +38,11 @@ class FinisterreServiceProvider extends PackageServiceProvider
                     'add_archived_to_finisterre_tasks',
                     'add_task_changes_table',
                     'change_order_column_type_in_finisterre_tasks',
+                    'add_scheduling_to_finisterre_task_comments',
+                ])
+                ->hasCommands([
+                    DispatchScheduledCommentsCommand::class,
+                    ResetSequencesCommand::class,
                 ]);
         }
     }
@@ -44,6 +52,14 @@ class FinisterreServiceProvider extends PackageServiceProvider
         if (class_exists(Livewire::class)) {
             Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
             Livewire::component('filter-tasks', FilterTasks::class);
+        }
+
+        if (config('finisterre.active', false)) {
+            $this->callAfterResolving(Schedule::class, function(Schedule $schedule) {
+                $schedule->command('finisterre:dispatch-scheduled-comments')
+                    ->everyMinute()
+                    ->withoutOverlapping();
+            });
         }
 
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));

@@ -14,6 +14,7 @@ class FinisterrePlugin implements Plugin
 {
     protected bool|Closure $canViewAllTasks = false;
     protected bool|Closure $canViewOnlyTheirTasks = false;
+    protected bool|Closure $canScheduleComments = true;
 
     public function getId(): string
     {
@@ -42,6 +43,18 @@ class FinisterrePlugin implements Plugin
     public function canViewOnlyTheirTasks(): bool
     {
         return $this->evaluate($this->canViewOnlyTheirTasks);
+    }
+
+    public function userCanScheduleComments(bool|Closure $condition): static
+    {
+        $this->canScheduleComments = $condition;
+
+        return $this;
+    }
+
+    public function canScheduleComments(): bool
+    {
+        return $this->evaluate($this->canScheduleComments);
     }
 
     protected function evaluate(bool|Closure $value): bool

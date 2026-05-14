@@ -1,14 +1,29 @@
 <?php
 
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
-it('can create a finisterre task', function() {
-    // Disable Finisterre for this test to avoid the Filament dependency
-    config(['finisterre.active' => false]);
+beforeEach(function() {
+    config([
+        'finisterre.active'                  => false,
+        'finisterre.task_changes_table_name' => 'finisterre_task_changes',
+    ]);
 
+    if (! Schema::hasTable('finisterre_task_changes')) {
+        Schema::create('finisterre_task_changes', function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('task_id')->constrained('finisterre_tasks')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+    }
+});
+
+it('can create a finisterre task', function() {
     $task = FinisterreTask::factory()->create([
         'title'       => 'Test Task',
         'description' => 'Test Description',

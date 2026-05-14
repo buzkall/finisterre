@@ -3,9 +3,9 @@
 namespace Buzkall\Finisterre\Filament\Livewire;
 
 use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
-use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -13,10 +13,11 @@ use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema as DatabaseSchema;
-use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -34,6 +35,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $this->form->fill([
             'notify' => $options->count() === 1 ? $options->keys()->toArray() : [],
+            'scheduled_for' => null,
         ]);
     }
 
@@ -54,7 +56,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         // Append task creator if not the authenticated user and not already in options
         if ($this->record->creator->getKey() !== auth()->id() &&
-            ! $options->has($this->record->creator->getKey())) {
+            !$options->has($this->record->creator->getKey())) {
             $options->put($this->record->creator->getKey(), $this->record->creatorName());
         }
 
@@ -63,31 +65,46 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     public function form(Schema $schema): Schema
     {
-        if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
+        if (!auth()->user()->can('create', FinisterreTaskComment::class)) {
             return $schema;
         }
 
-        $editor = Forms\Components\RichEditor::make('comment')
-            ->hiddenLabel()
-            ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
-            ->extraInputAttributes(['style' => 'min-height: 6rem'])
-            ->required()
-            ->placeholder(__('finisterre::finisterre.comments.placeholder'));
+        $canSchedule = FinisterrePlugin::get()->canScheduleComments();
+
+        $notify = Forms\Components\Select::make('notify')
+            ->multiple()
+            ->columnSpan($canSchedule ? 1 : 'full')
+            ->label(__('finisterre::finisterre.comments.notify'))
+            ->hint(__('finisterre::finisterre.comments.notify_hint'))
+            ->options(fn() => $this->getNotifyOptions());
+
+        $gridComponents = $canSchedule
+            ? [
+                $notify,
+                Forms\Components\DateTimePicker::make('scheduled_for')
+                    ->columnSpan(1)
+                    ->label(__('finisterre::finisterre.comments.scheduled_for'))
+                    ->hint(__('finisterre::finisterre.comments.scheduled_for_hint'))
+                    ->seconds(false)
+                    ->minDate(today()),
+            ]
+            : [$notify];
 
         return $schema->components([
-            $editor,
+            Forms\Components\RichEditor::make('comment')
+                ->hiddenLabel()
+                ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                ->extraInputAttributes(['style' => 'min-height: 6rem'])
+                ->required()
+                ->placeholder(__('finisterre::finisterre.comments.placeholder')),
 
-            Forms\Components\Select::make('notify')
-                ->multiple()
-                ->label(__('finisterre::finisterre.comments.notify'))
-                ->hint(__('finisterre::finisterre.comments.notify_hint'))
-                ->options(fn() => $this->getNotifyOptions())
+            Grid::make()->columns()->schema($gridComponents),
         ])->statePath('data');
     }
 
     public function create(): void
     {
-        if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
+        if (!auth()->user()->can('create', FinisterreTaskComment::class)) {
             return;
         }
 
@@ -95,72 +112,97 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $data = $this->form->getState();
 
-        $this->record->comments()->create([
-            'comment'    => $data['comment'],
+        $canSchedule = FinisterrePlugin::get()->canScheduleComments();
+        $scheduledFor = $canSchedule && !empty($data['scheduled_for']) ? Carbon::parse($data['scheduled_for']) : null;
+        $notifyIds = !empty($data['notify']) ? $data['notify'] : [$this->record->assignee_id];
+
+        $comment = $this->record->comments()->create([
+            'comment' => $data['comment'],
             'creator_id' => auth()->id(),
+            'scheduled_for' => $scheduledFor,
+            'notify_user_ids' => $scheduledFor ? $notifyIds : null,
         ]);
 
-        $notified = collect();
-        $notifiedUserIds = collect();
-
-        if ($data['notify']) {
-            foreach (config('finisterre.authenticatable')::findMany($data['notify']) as $user) {
-                $this->notifyUser($user);
-                $notified->push($user->getUserDisplayName());
-                $notifiedUserIds->push($user->getKey());
-            }
+        if ($scheduledFor) {
+            Notification::make()
+                ->title(__('finisterre::finisterre.comments.notifications.scheduled', [
+                    'time' => $scheduledFor->isoFormat('LLL'),
+                ]))
+                ->success()
+                ->send();
         } else {
-            $this->notifyUser($this->record->assignee);
-            $notified->push($this->record->assignee->getUserDisplayName()); // @phpstan-ignore-line method.notFound
-            $notifiedUserIds->push($this->record->assignee->getKey());
-        }
+            $comment->setRelation('task', $this->record);
+            $comment->notify_user_ids = $notifyIds;
+            $notified = $comment->deliver();
+            $comment->update(['notify_user_ids' => null]);
 
-        // Create task change records for notified users
-        foreach ($notifiedUserIds as $userId) {
-            if ($userId !== auth()->id()) {
-                $this->record->taskChanges()->firstOrCreate(['user_id' => $userId]);
-            }
-        }
+            $names = $notified->map(fn($user) => $user->getUserDisplayName());
 
-        Notification::make()
-            ->title($notified->isEmpty() ?
-                __('finisterre::finisterre.comments.notifications.created') :
-                __('finisterre::finisterre.comments.notifications.created_and_notified', ['notified' => $notified->implode(', ')]))
-            ->success()
-            ->send();
+            Notification::make()
+                ->title($names->isEmpty() ?
+                    __('finisterre::finisterre.comments.notifications.created') :
+                    __('finisterre::finisterre.comments.notifications.created_and_notified', ['notified' => $names->implode(', ')]))
+                ->success()
+                ->send();
+        }
 
         $this->form->fill();
 
         $this->dispatch('commentCreated')->to(TasksKanbanBoard::class);
     }
 
-    private function notifyUser($user): void
+    public function editCommentAction(): Action
     {
-        $user->notify(new TaskCommentNotification($this->record));
+        return Action::make('editComment')
+            ->iconButton()
+            ->icon('heroicon-s-pencil')
+            ->color('warning')
+            ->modalHeading(__('finisterre::finisterre.comments.edit_heading'))
+            ->fillForm(function (array $arguments): array {
+                $comment = FinisterreTaskComment::find($arguments['comment_id']);
 
-        $latestComment = $this->record->comments->last();
-        $body = (new HtmlString($latestComment->comment));
+                return [
+                    'comment' => $comment?->comment,
+                    'scheduled_for' => $comment?->scheduled_for,
+                ];
+            })
+            ->schema([
+                Forms\Components\RichEditor::make('comment')
+                    ->hiddenLabel()
+                    ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                    ->extraInputAttributes(['style' => 'min-height: 6rem'])
+                    ->required(),
 
-        Notification::make()
-            ->title(__(
-                'finisterre::finisterre.comment_notification.subject',
-                ['title' => $this->record->title]
-            ))
-            ->body($body)
-            ->actions([
-                Action::make('view')
-                    ->label(__('finisterre::finisterre.comment_notification.cta'))
-                    ->button()
-                    ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->record)),
+                Forms\Components\DateTimePicker::make('scheduled_for')
+                    ->visible(fn() => FinisterrePlugin::get()->canScheduleComments())
+                    ->label(__('finisterre::finisterre.comments.scheduled_for'))
+                    ->seconds(false)
+                    ->minDate(today()),
             ])
-            ->sendToDatabase($user);
+            ->action(function (array $arguments, array $data) {
+                $comment = FinisterreTaskComment::find($arguments['comment_id']);
+
+                if (!$comment || !auth()->user()->can('update', $comment)) {
+                    return;
+                }
+
+                $comment->update([
+                    'comment' => $data['comment'],
+                    'scheduled_for' => $data['scheduled_for'],
+                ]);
+
+                Notification::make()
+                    ->title(__('finisterre::finisterre.comments.notifications.updated'))
+                    ->success()
+                    ->send();
+            });
     }
 
     public function delete(int $id): void
     {
         $comment = FinisterreTaskComment::find($id);
 
-        if (! $comment || ! auth()->guard(config('finisterre.guard'))->user()->can('delete', $comment)) {
+        if (!$comment || !auth()->guard(config('finisterre.guard'))->user()->can('delete', $comment)) {
             return;
         }
 
@@ -177,7 +219,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
     {
         // record will be empty on the kanban load. We'll get the value from the view
         // when the modal is opened
-        return $this->record?->comments()->with('creator')->latest()->get() ?? collect();
+        return $this->record?->comments()
+            ->visibleTo(auth()->id())
+            ->with('creator')
+            ->latest()
+            ->get() ?? collect();
     }
 
     public function render(): View

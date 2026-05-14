@@ -73,6 +73,7 @@ beforeEach(function() {
 it('can create a task change record', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     $taskChange = FinisterreTaskChange::create([
         'task_id' => $task->id,
@@ -87,6 +88,7 @@ it('can create a task change record', function() {
 it('has task changes relation on task model', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     $task->taskChanges()->create(['user_id' => $user->id]);
 
@@ -97,6 +99,7 @@ it('has task changes relation on task model', function() {
 it('has task changes relation on user model', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     FinisterreTaskChange::create([
         'task_id' => $task->id,
@@ -110,6 +113,7 @@ it('has task changes relation on user model', function() {
 it('can check if user has task changes', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     expect($task->taskChanges()->where('user_id', $user->id)->exists())->toBeFalse();
 
@@ -121,6 +125,7 @@ it('can check if user has task changes', function() {
 it('deletes task changes when task is deleted', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     $taskChange = $task->taskChanges()->create(['user_id' => $user->id]);
 
@@ -137,6 +142,7 @@ it('deletes task changes when task is deleted', function() {
 it('nulls task changes when user is deleted', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     $task->taskChanges()->create(['user_id' => $user->id]);
 
@@ -155,6 +161,7 @@ it('can get multiple users with task changes for a task', function() {
     $user1 = User::factory()->create();
     $user2 = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     $task->taskChanges()->create(['user_id' => $user1->id]);
     $task->taskChanges()->create(['user_id' => $user2->id]);
@@ -167,6 +174,7 @@ it('can get multiple users with task changes for a task', function() {
 it('prevents duplicate task changes for same user and task', function() {
     $user = User::factory()->create();
     $task = FinisterreTask::factory()->create();
+    $task->taskChanges()->delete();
 
     $task->taskChanges()->firstOrCreate(['user_id' => $user->id]);
     $task->taskChanges()->firstOrCreate(['user_id' => $user->id]);

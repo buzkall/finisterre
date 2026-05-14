@@ -27,26 +27,36 @@
 
                         <div class="flex-grow space-y-2 pt-[6px]">
                             <div class="flex gap-x-2 items-center justify-between">
-                                <div class="flex gap-x-2 items-center">
+                                <div class="flex flex-wrap gap-x-2 gap-y-1 items-center">
                                     <div class="text-sm font-medium text-gray-950 dark:text-white">
                                         {{ $comment->creator->getUserDisplayName() }}
                                     </div>
 
                                     <div class="text-xs font-medium text-gray-400 dark:text-gray-500">
-                                        {{ $comment->created_at->diffForHumans() }}
+                                        {{ ($comment->scheduled_for ?? $comment->created_at)->diffForHumans() }}
                                     </div>
+
+                                    @if ($comment->isPending())
+                                        <x-filament::badge color="warning" icon="heroicon-s-clock" size="xs">
+                                            {{ __('finisterre::finisterre.comments.scheduled_badge', ['time' => $comment->scheduled_for->isoFormat('LLL')]) }}
+                                        </x-filament::badge>
+                                    @endif
                                 </div>
 
-                                @if (auth()->user()->can('delete', $comment))
-                                    <div class="flex-shrink-0">
+                                <div class="flex-shrink-0 flex gap-x-1">
+                                    @if (auth()->user()->can('update', $comment))
+                                        {{ ($this->editCommentAction)(['comment_id' => $comment->id]) }}
+                                    @endif
+
+                                    @if (auth()->user()->can('delete', $comment))
                                         <x-filament::icon-button
                                             wire:click="delete({{ $comment->id }})"
                                             icon="heroicon-s-trash"
                                             color="danger"
                                             tooltip="{{ __('finisterre::finisterre.comments.delete') }}"
                                         />
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                             </div>
 
                             <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none pr-8">
