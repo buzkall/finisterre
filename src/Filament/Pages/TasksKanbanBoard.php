@@ -112,7 +112,7 @@ class TasksKanbanBoard extends BoardPage
 
         return FinisterreTask::query()
             ->withCount([
-                'comments',
+                'comments' => fn($q) => $q->where(fn($q) => $q->whereNull('scheduled_for')->orWhereNotNull('sent_at')),
                 'media',
                 'taskChanges as has_changes' => fn($q) => $q->where('user_id', auth()->id()),
             ])
