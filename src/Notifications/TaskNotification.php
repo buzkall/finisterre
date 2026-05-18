@@ -30,6 +30,8 @@ class TaskNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $visibleComments = $this->task->comments->reject(fn($comment) => $comment->isPending());
+
         $mail = (new MailMessage)
             ->subject(__(
                 'finisterre::finisterre.notification.subject',
@@ -56,10 +58,12 @@ class TaskNotification extends Notification implements ShouldQueue
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
                 $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
             })
-            ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
+            ->when($visibleComments->isNotEmpty(), function(MailMessage $mail) use ($visibleComments) {
                 $mail->line(__('finisterre::finisterre.comments.title') . ':');
-                $mail->line(new HtmlString($this->task->comments->sortByDesc('created_at')
-                    ->map(fn($comment) => $this->embedImages($comment->comment) . ' ' . $comment->created_at->format('d-m-y H:i:s'))
+                $mail->line(new HtmlString($visibleComments
+                    ->sortByDesc(fn($comment) => $comment->scheduled_for ?? $comment->created_at)
+                    ->map(fn($comment) => $this->embedImages($comment->comment) . ' ' .
+                        ($comment->scheduled_for ?? $comment->created_at)->format('d-m-y H:i:s'))
                     ->implode('<br><hr/>')));
             })
             ->action(
