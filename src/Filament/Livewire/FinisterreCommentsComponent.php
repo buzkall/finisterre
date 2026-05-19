@@ -82,6 +82,9 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ? [
                 $notify,
                 Forms\Components\DateTimePicker::make('scheduled_for')
+                    ->native(false)
+                    ->suffixIcon('heroicon-o-calendar')
+                    ->displayFormat('d/m/y H:i')
                     ->columnSpan(1)
                     ->label(__('finisterre::finisterre.comments.scheduled_for'))
                     ->hint(__('finisterre::finisterre.comments.scheduled_for_hint'))
