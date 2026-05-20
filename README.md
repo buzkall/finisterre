@@ -135,6 +135,25 @@ public function panel(Panel $panel): Panel
 
 With an array, the package shows `"John Doe"` in every user-facing select (task assignee, filter, kanban, comment notify list) and uses `CONCAT_WS(' ', ...)` for SQL-level selects. Columns must exist on the `users` table.
 
+## Kanban ordering
+
+The kanban board (powered by [flowforge](https://github.com/relaticle/flowforge)) stores each
+card's position in the `order_column`, which is an **integer**. Cards within a column are kept as
+`10, 20, 30, …`.
+
+Flowforge's default algorithm computes positions as the decimal midpoint between two cards plus
+random jitter, which fills `order_column` with long decimals like `63821.3847291500`. To keep the
+value a clean integer, `TasksKanbanBoard` overrides flowforge's `calculateAndUpdatePosition()` and
+renumbers the whole target column sequentially on every move. No vendor files are patched, so the
+behavior survives `composer update`.
+
+Notifications follow the move semantics:
+
+- **Reordering a card within the same column** only changes `order_column` and does **not** notify
+  the assignee.
+- **Moving a card to a different column** changes its status and **does** notify the assignee
+  (unless the new status is "Done").
+
 ## SMS notifications
 
 Using smsarena.es as provider.

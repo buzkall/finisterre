@@ -6,9 +6,7 @@ use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Notifications\TaskNotification;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
+use Buzkall\Finisterre\Observers\FinisterreTaskObserver;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -49,6 +47,7 @@ class FinisterreTask extends Model implements HasMedia
         'subtasks'     => 'array',
         'due_at'       => 'datetime',
         'completed_at' => 'datetime',
+        'order_column' => 'integer',
     ];
     protected $with = ['tags'];
 
@@ -64,61 +63,7 @@ class FinisterreTask extends Model implements HasMedia
             static::addGlobalScope('canViewOnlyTheirTasks', fn($query) => $query->where('creator_id', auth()->id()));
         }
 
-        static::creating(function($task) {
-            $task->status = $task->status ?? TaskStatusEnum::Open;
-            $task->creator_id = $task->creator_id ?? auth()->id();
-            if (is_null($task->assignee_id)) {
-                $task->assignee_id = config('finisterre.fallback_notifiable_id');
-            }
-        });
-
-        static::created(function($task) {
-            if ($task->assignee_id) {
-                $task->taskChanges()->firstOrCreate(['user_id' => $task->assignee_id]);
-            }
-        });
-
-        static::updating(function($task) {
-            if ($task->isDirty('status')) {
-                if ($task->status === TaskStatusEnum::Done) {
-                    $task->completed_at = now();
-                } elseif (! is_null($task->completed_at)) {
-                    $task->completed_at = null;
-                }
-            }
-        });
-
-        static::saved(function($task) {
-            // If the only dirty field is the updated_at timestamp, means that it has been
-            // touched by a comment; that has its own notification logic, so skip notification here
-            if (empty($task->getDirty()) ||
-                (count($task->getDirty()) === 1 && array_key_exists('updated_at', $task->getDirty()))) {
-                return;
-            }
-
-            defer(function() use ($task) {
-                // don't notify myself, and don't notify when task is moved to done
-                if ($task->assignee && $task->assignee->id !== auth()->id() && $task->status !== TaskStatusEnum::Done) {
-                    $taskChanges = $task->getChanges();
-                    $task->assignee->notify(new TaskNotification($task, $taskChanges));
-
-                    Notification::make()
-                        ->title(__(
-                            'finisterre::finisterre.notification.subject',
-                            ['priority' => $task->priority->getLabel(), 'title' => $task->title]
-                        ))
-                        ->body(empty($taskChanges) ?
-                            __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
-                            __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
-                        ->actions([
-                            Action::make('view')
-                                ->label(__('finisterre::finisterre.comment_notification.cta'))
-                                ->button()
-                                ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)),
-                        ])->sendToDatabase($task->assignee);
-                }
-            });
-        });
+        static::observe(FinisterreTaskObserver::class);
     }
 
     public function getTable()

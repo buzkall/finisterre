@@ -1,2 +1,24 @@
 @tailwind components;
 @tailwind utilities;
+
+/* Filament notification: keep the date inline with the title, pushed to the right and one size smaller */
+.fi-no-notification-text.fi-no-notification-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: calc(var(--spacing) * 2);
+}
+
+.fi-no-notification-text .fi-no-notification-date {
+    margin-inline-start: auto;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+}
+
+.fi-no-notification-text .fi-no-notification-body {
+    flex-basis: 100%;
+}
+
+.fi-no-notification-actions.fi-no-notification-actions {
+    justify-self: end;
+}

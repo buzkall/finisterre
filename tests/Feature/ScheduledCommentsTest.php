@@ -184,6 +184,35 @@ it('deliver() sends notifications and stamps sent_at', function() {
     expect($comment->fresh()->sent_at)->not->toBeNull();
 });
 
+it('emails the delivered comment body, not the latest comment on the task', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    // An older comment that is the one being delivered now
+    $older = $task->comments()->create([
+        'comment'         => '<p>this is the older comment being delivered</p>',
+        'creator_id'      => $creator->id,
+        'scheduled_for'   => now()->subMinute(),
+        'notify_user_ids' => [$assignee->id],
+    ]);
+
+    // A newer comment exists on the task (higher id / latest)
+    $task->comments()->create([
+        'comment'    => '<p>this is a newer unrelated comment</p>',
+        'creator_id' => $creator->id,
+    ]);
+
+    $older->deliver();
+
+    Notification::assertSentTo($assignee, TaskCommentNotification::class, function($notification) use ($older) {
+        $mail = $notification->toMail($older->task->assignee);
+
+        return collect($mail->introLines)->contains(fn($line) => str_contains($line, 'older comment being delivered'))
+            && collect($mail->introLines)->doesntContain(fn($line) => str_contains($line, 'newer unrelated comment'));
+    });
+});
+
 it('deliver() creates taskChanges for notified users except creator', function() {
     Notification::fake();
 

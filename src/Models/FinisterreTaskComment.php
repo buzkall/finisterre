@@ -4,8 +4,10 @@ namespace Buzkall\Finisterre\Models;
 
 use Buzkall\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
+use Buzkall\Finisterre\Observers\FinisterreTaskCommentObserver;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +27,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property int $task_id
  * @property FinisterreTask $task
  */
+#[ObservedBy(FinisterreTaskCommentObserver::class)]
 class FinisterreTaskComment extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
@@ -36,13 +39,6 @@ class FinisterreTaskComment extends Model implements HasMedia
         'sent_at'         => 'datetime',
         'notify_user_ids' => 'array',
     ];
-
-    protected static function booted(): void
-    {
-        static::creating(function($taskComment) {
-            $taskComment->creator_id = $taskComment->creator_id ?? auth()->id();
-        });
-    }
 
     public function getTable(): string
     {
@@ -90,7 +86,7 @@ class FinisterreTaskComment extends Model implements HasMedia
         $notified = collect();
 
         foreach ($users as $user) {
-            $user->notify(new TaskCommentNotification($this->task));
+            $user->notify(new TaskCommentNotification($this));
 
             Notification::make()
                 ->title(__(

@@ -68,8 +68,8 @@ return [
         'changes'          => 'Cambios',
     ],
     'comment_notification' => [
-        'subject'  => 'Nuevo comentario en la tarea :title',
-        'greeting' => 'Nuevo comentario en la tarea :title',
+        'subject'  => 'Comentario en: :title',
+        'greeting' => 'Comentario en: :title',
         'cta'      => 'Ver tarea',
     ],
     'filter' => [

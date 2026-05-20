@@ -2,7 +2,7 @@
 
 namespace Buzkall\Finisterre\Notifications;
 
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Buzkall\Finisterre\Models\FinisterreTaskComment;
 use Buzkall\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,7 +14,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
 {
     use EmbedsPrivateImages, Queueable;
 
-    public function __construct(public FinisterreTask $task) {}
+    public function __construct(public FinisterreTaskComment $comment) {}
 
     public function via(object $notifiable): array
     {
@@ -23,23 +23,23 @@ class TaskCommentNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $task = $this->comment->task;
+
         $mail = (new MailMessage)
+            ->theme('finisterre::themes.finisterre')
             ->subject(__(
                 'finisterre::finisterre.comment_notification.subject',
-                ['title' => $this->task->title]
+                ['title' => $task->title]
             ))
-            ->greeting(__('finisterre::finisterre.comment_notification.greeting', ['title' => $this->task->title]))
+            ->greeting(__('finisterre::finisterre.comment_notification.greeting', ['title' => $task->title]))
             ->line(new HtmlString('<style>img {height: auto !important}</style>'))
-            ->when($this->task->comments->isNotEmpty(), function(MailMessage $mail) {
-                $latestComment = $this->task->comments->last();
-                $mail->line(new HtmlString($this->embedImages($latestComment->comment)));
-            })
-            ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
-                $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
+            ->line(new HtmlString($this->embedImages($this->comment->comment)))
+            ->when($task->tags->isNotEmpty(), function(MailMessage $mail) use ($task) {
+                $mail->line(new HtmlString($task->tags->map(fn($tag) => '<span style="display:inline-block;background-color:#e5e7eb;color:#374151;padding:2px 10px;margin:2px 4px 2px 0;border-radius:9999px;font-size:13px;line-height:1.6;">#' . e($tag->name) . '</span>')->implode('')));
             })
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->task)
+                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)
             )
             ->salutation(' ');
 

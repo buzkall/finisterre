@@ -39,6 +39,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                     'add_task_changes_table',
                     'change_order_column_type_in_finisterre_tasks',
                     'add_scheduling_to_finisterre_task_comments',
+                    'convert_order_column_to_integer_in_finisterre_tasks',
                 ])
                 ->hasCommands([
                     DispatchScheduledCommentsCommand::class,

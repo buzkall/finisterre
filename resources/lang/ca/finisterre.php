@@ -68,8 +68,8 @@ return [
         'changes'          => 'Canvis',
     ],
     'comment_notification' => [
-        'subject'  => 'Nou comentari a la tasca :title',
-        'greeting' => 'Nou comentari a la tasca :title',
+        'subject'  => 'Comentari a: :title',
+        'greeting' => 'Comentari a: :title',
         'cta'      => 'Veure tasca',
     ],
     'filter' => [

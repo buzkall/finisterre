@@ -33,6 +33,7 @@ class TaskNotification extends Notification implements ShouldQueue
         $visibleComments = $this->task->comments->reject(fn($comment) => $comment->isPending());
 
         $mail = (new MailMessage)
+            ->theme('finisterre::themes.finisterre')
             ->subject(__(
                 'finisterre::finisterre.notification.subject',
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
@@ -56,7 +57,7 @@ class TaskNotification extends Notification implements ShouldQueue
                 },
             )
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
-                $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '#' . $tag->name)->implode(', ')));
+                $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '<span style="display:inline-block;background-color:#e5e7eb;color:#374151;padding:2px 10px;margin:2px 4px 2px 0;border-radius:9999px;font-size:13px;line-height:1.6;">#' . e($tag->name) . '</span>')->implode('')));
             })
             ->when($visibleComments->isNotEmpty(), function(MailMessage $mail) use ($visibleComments) {
                 $mail->line(__('finisterre::finisterre.comments.title') . ':');

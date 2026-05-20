@@ -14,6 +14,8 @@ use Filament\Panel;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Relaticle\Flowforge\Board;
@@ -104,6 +106,82 @@ class TasksKanbanBoard extends BoardPage
                             ]),
                     ])
             );
+    }
+
+    /**
+     * Override flowforge's positioning so order_column stays a clean integer.
+     *
+     * Flowforge (Relaticle\Flowforge\Concerns\InteractsWithBoard) calculates a card's
+     * position as the decimal midpoint between its two neighbours plus random jitter
+     * (see Relaticle\Flowforge\Services\DecimalPosition), which produces long, ugly
+     * decimals such as 63821.3847291500. That service is final readonly and is invoked
+     * through hardcoded static calls, so the only durable seam without patching vendor
+     * files is to override this protected trait method here. Instead of a midpoint we
+     * renumber the whole target column sequentially (10, 20, 30, …): order_column stays
+     * an integer, positions never collide, and flowforge's DecimalPosition /
+     * PositionRebalancer are bypassed entirely. Columns hold few cards (<= 100), so the
+     * extra updates are negligible.
+     */
+    protected function calculateAndUpdatePosition(
+        Model $card,
+        string $targetColumnId,
+        ?string $afterCardId,
+        ?string $beforeCardId
+    ): string {
+        $newPosition = '';
+
+        DB::transaction(function() use ($card, $targetColumnId, $afterCardId, $beforeCardId, &$newPosition) {
+            $board = $this->getBoard();
+            $query = $board->getQuery();
+            $positionField = $board->getPositionIdentifierAttribute();
+            $columnField = $board->getColumnIdentifierAttribute();
+            $keyName = $query->getModel()->getKeyName();
+
+            // Lock every card in the target column so concurrent moves can't race.
+            $columnCards = (clone $query)
+                ->where($columnField, $targetColumnId)
+                ->lockForUpdate()
+                ->orderBy($positionField)
+                ->orderBy($keyName)
+                ->get();
+
+            // Drop the moved card from the list (on a cross-column move it lives elsewhere).
+            $others = $columnCards
+                ->reject(fn($item) => (string)$item->getKey() === (string)$card->getKey())
+                ->values();
+
+            // Resolve where the moved card lands from its new neighbours.
+            $insertIndex = match (true) {
+                $afterCardId === null  => 0,
+                $beforeCardId === null => $others->count(),
+                default                => ($afterIndex = $others->search(
+                    fn($item) => (string)$item->getKey() === $afterCardId
+                )) === false ? $others->count() : $afterIndex + 1,
+            };
+
+            $ordered = $others->slice(0, $insertIndex)
+                ->push($card)
+                ->concat($others->slice($insertIndex))
+                ->values();
+
+            $columnValue = $this->resolveStatusValue($card, $columnField, $targetColumnId);
+
+            // Renumber the column 10, 20, 30, … Sibling rows are rewritten too; the
+            // FinisterreTask::saved() guard ignores order_column-only changes, so the
+            // renumber never triggers assignee notifications.
+            foreach ($ordered as $index => $item) {
+                $position = ($index + 1) * 10;
+
+                if ((string)$item->getKey() === (string)$card->getKey()) {
+                    $card->update([$columnField => $columnValue, $positionField => $position]);
+                    $newPosition = (string)$position;
+                } elseif ((int)$item->getAttribute($positionField) !== $position) {
+                    $item->update([$positionField => $position]);
+                }
+            }
+        });
+
+        return $newPosition;
     }
 
     protected function getFilteredQuery(): Builder
