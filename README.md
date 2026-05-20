@@ -147,6 +147,15 @@ value a clean integer, `TasksKanbanBoard` overrides flowforge's `calculateAndUpd
 renumbers the whole target column sequentially on every move. No vendor files are patched, so the
 behavior survives `composer update`.
 
+If you are upgrading an existing install whose `order_column` is still a decimal, publish and run
+the conversion migration. It renumbers each status column to clean `10, 20, 30, …` integers and
+changes the column type to `unsignedInteger`:
+
+```bash
+php artisan vendor:publish --tag="finisterre-migrations"
+php artisan migrate
+```
+
 Notifications follow the move semantics:
 
 - **Reordering a card within the same column** only changes `order_column` and does **not** notify

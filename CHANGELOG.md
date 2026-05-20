@@ -2,6 +2,28 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.1.4 - 2026-05-20
+
+Fix comment email notifications showing the wrong comment. The notification now carries the specific comment that triggered it instead of guessing the task's latest comment, which sent stale (often the previous) content once comment delivery was queued and scheduled comments were involved.
+
+Convert the kanban `order_column` to an integer. Existing installs whose column is still a decimal should run `php artisan vendor:publish --tag="finisterre-migrations"` followed by `php artisan migrate` to pick up the new `convert_order_column_to_integer_in_finisterre_tasks` migration, which renumbers each status column to clean `10, 20, 30, …` values before changing the column type.
+
+## 2.1.3 - 2026-05-19
+
+Set the comment scheduling date picker to non-native so the calendar renders consistently across browsers.
+
+## 2.1.2 - 2026-05-18
+
+Show the `scheduled_for` date in comment emails.
+
+## 2.1.1 - 2026-05-14
+
+Fix the comments count to exclude pending scheduled comments.
+
+## 2.1.0 - 2026-05-14
+
+Ship the scheduled comments functionality and related styling fixes.
+
 ## 2.0.20 - 2026-05-14
 
 Add scheduled comments: comments can be queued for a future delivery time and are dispatched by the new `finisterre:dispatch-scheduled-comments` scheduled command. Run `php artisan vendor:publish --tag="finisterre-migrations"` followed by `php artisan migrate` to pick up the new `add_scheduling_to_finisterre_task_comments` migration.
