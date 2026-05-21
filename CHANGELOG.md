@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.2.2 - 2026-05-21
+
+Fix the authenticatable filter when `authenticatable_filter_value` is a backed enum (or an array of them). The previous `(array)` cast left enum instances in the `whereIn` and `in_array` checks, so assignable-user filtering and file-access authorization silently failed to match. Values are now normalized through the new `AuthenticatableFilter` helper, which unwraps backed enums to their scalar value.
+
 ## 2.2.0 - 2026-05-21
 
 Add issue reporting from your own models. Models implementing the new `FinisterreReportable` contract (with the optional `InteractsWithFinisterreReports` trait for defaults) can be reported against via the new `ReportIssueAction`, which opens a modal for a title, description and attachments (images, PDF and videos up to 3 MB) and links the created task back to the originating record through a polymorphic `subject`. The task form shows the related record, prefixed with its translated resource label, linking back to it. Run `php artisan vendor:publish --tag="finisterre-migrations"` followed by `php artisan migrate` to pick up the new `add_subject_to_finisterre_tasks` migration.
