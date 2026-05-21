@@ -90,11 +90,11 @@ return [
     'task_reports' => 'Issues',
     'task_report'  => 'Issue',
 
-    'report_issue'         => 'Report issue',
-    'report_issue_heading' => 'Report an issue',
-    'report_issue_sent'    => 'Issue reported. The team has been notified.',
+    'report_issue'                     => 'Report issue',
+    'report_issue_heading'             => 'Report an issue',
+    'report_issue_sent'                => 'Issue reported. The team has been notified.',
     'report_issue_callout_title'       => 'Help us solve it faster',
     'report_issue_callout_description' => 'Please describe the problem with as much detail as possible and attach screenshots if you can. The current page URL and record ID will be automatically attached to the report.',
     'attachments_max_size'             => 'Allowed files: images, PDF and videos. Maximum size: :size per file.',
-    'related_record'       => 'Related record',
+    'related_record'                   => 'Related record',
 ];

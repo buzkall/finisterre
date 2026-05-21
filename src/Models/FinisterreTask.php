@@ -9,6 +9,7 @@ use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Observers\FinisterreTaskObserver;
 use Filament\Facades\Filament;
+use Filament\Resources\Resource;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

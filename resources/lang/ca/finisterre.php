@@ -90,11 +90,11 @@ return [
     'task_reports' => 'Urgències tècniques',
     'task_report'  => 'Urgència tècnica',
 
-    'report_issue'         => 'Reportar incidència',
-    'report_issue_heading' => 'Reportar una incidència',
-    'report_issue_sent'    => 'Incidència reportada. L\'equip ha estat avisat.',
+    'report_issue'                     => 'Reportar incidència',
+    'report_issue_heading'             => 'Reportar una incidència',
+    'report_issue_sent'                => 'Incidència reportada. L\'equip ha estat avisat.',
     'report_issue_callout_title'       => 'Ajuda\'ns a resoldre-ho més ràpid',
     'report_issue_callout_description' => 'Descriu el problema amb el màxim detall possible i adjunta captures de pantalla si pots. La URL de la pàgina actual i l\'ID del registre s\'adjuntaran automàticament a l\'informe.',
     'attachments_max_size'             => 'Fitxers permesos: imatges, PDF i vídeos. Mida màxima: :size per fitxer.',
-    'related_record'       => 'Registre relacionat',
+    'related_record'                   => 'Registre relacionat',
 ];
