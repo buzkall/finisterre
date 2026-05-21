@@ -179,6 +179,51 @@ FINISTERRE_SMS_SENDER=CHANGE
 FINISTERRE_SMS_NOTIFY_TO=CHANGE
 ```
 
+## Reporting issues from your own models
+
+Any model in your app can let users open a Finisterre task against a specific record. The task stores a polymorphic `subject` pointing back to that record, and the task form shows a link to it.
+
+First publish and run the migration that adds the `subject` columns to the tasks table:
+
+```bash
+php artisan vendor:publish --tag="finisterre-migrations"
+php artisan migrate
+```
+
+Make the model implement `FinisterreReportable`. The `InteractsWithFinisterreReports` trait provides sensible defaults (a `ClassName (#id)` label and a link inferred from the model's Filament resource edit/view page):
+
+```php
+use Buzkall\Finisterre\Contracts\FinisterreReportable;
+use Buzkall\Finisterre\Traits\InteractsWithFinisterreReports;
+
+class Order extends Model implements FinisterreReportable
+{
+    use InteractsWithFinisterreReports;
+}
+```
+
+Override either method to customise the label or link:
+
+```php
+public function getFinisterreReportLabel(): string
+{
+    return "Order {$this->reference}";
+}
+
+public function getFinisterreReportUrl(): ?string
+{
+    return route('orders.show', $this);
+}
+```
+
+Then add `ReportIssueAction` wherever the record is available (a resource page, table row, infolist, etc.). It opens a modal asking for a title, description and attachments (images, PDF and videos up to 3&nbsp;MB), and associates the created task with the record:
+
+```php
+use Buzkall\Finisterre\Filament\Actions\ReportIssueAction;
+
+ReportIssueAction::make();
+```
+
 ## Role restriction for Task Reports
 
 TODO

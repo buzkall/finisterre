@@ -2,20 +2,25 @@
 
 namespace Buzkall\Finisterre\Models;
 
+use Buzkall\Finisterre\Contracts\FinisterreReportable;
 use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Observers\FinisterreTaskObserver;
+use Filament\Facades\Filament;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Tags\HasTags;
@@ -33,13 +38,14 @@ use Spatie\Tags\HasTags;
  * @property Carbon $completed_at
  * @property int $creator_id
  * @property int $assignee_id
+ * @property ?Model $subject
  */
 class FinisterreTask extends Model implements HasMedia
 {
     use HasFactory, HasTags, InteractsWithMedia;
 
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'subtasks', 'due_at', 'completed_at',
-        'creator_id', 'assignee_id', 'order_column'];
+        'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id'];
     protected $casts = [
         'status'       => TaskStatusEnum::class,
         'archived'     => 'boolean',
@@ -110,6 +116,40 @@ class FinisterreTask extends Model implements HasMedia
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(config('finisterre.authenticatable'), 'assignee_id');
+    }
+
+    /**
+     * The host record this task was reported against, if any.
+     */
+    public function subject(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * A right-hand label + (optional) deep link to the reported record,
+     * prefixed with its translated resource label. Returns null when the
+     * subject is not reportable.
+     */
+    public function subjectReportLink(): ?HtmlString
+    {
+        $subject = $this->subject;
+
+        if (! $subject instanceof FinisterreReportable) {
+            return null;
+        }
+
+        /** @var class-string<\Filament\Resources\Resource>|null $resource */
+        $resource = Filament::getModelResource($subject);
+        $type = e(Str::headline($resource ? $resource::getModelLabel() : class_basename($subject)));
+        $label = e($subject->getFinisterreReportLabel());
+        $url = $subject->getFinisterreReportUrl();
+
+        $link = $url
+            ? '<a href="' . e($url) . '" class="text-primary-600 underline" target="_blank">' . $label . '</a>'
+            : $label;
+
+        return new HtmlString($type . ': ' . $link);
     }
 
     /**

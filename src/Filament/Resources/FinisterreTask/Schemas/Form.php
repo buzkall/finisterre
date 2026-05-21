@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
+use Buzkall\Finisterre\Contracts\FinisterreReportable;
 use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Buzkall\Finisterre\Enums\TaskStatusEnum;
 use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
@@ -124,6 +125,12 @@ class Form
                     ->columnSpanFull()
                     ->hidden(fn() => $userIsReporterOnly),
 
+                TextEntry::make('subject')
+                    ->label(__('finisterre::finisterre.related_record'))
+                    ->hiddenOn('create')
+                    ->visible(fn(?FinisterreTask $record) => $record?->subject instanceof FinisterreReportable)
+                    ->state(fn(?FinisterreTask $record): ?HtmlString => $record?->subjectReportLink()),
+
                 TextEntry::make('dates')
                     ->hiddenLabel()
                     ->hiddenOn('create')
@@ -138,7 +145,7 @@ class Form
                         $record?->created_at->format('d/m/y H:i:s') .
                         '<br />' .
                         __('finisterre::finisterre.updated_at') . ': ' . $record?->updated_at->format('d/m/y H:i:s')
-                    ))->columnSpanFull(),
+                    ))->alignEnd()->columnStart(3),
             ])->columns(3)->columnSpanFull()
         ]);
     }

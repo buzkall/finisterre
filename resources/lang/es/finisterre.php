@@ -90,4 +90,11 @@ return [
     'task_reports' => 'Urgencias técnicas',
     'task_report'  => 'Urgencia técnica',
 
+    'report_issue'         => 'Reportar incidencia',
+    'report_issue_heading' => 'Reportar una incidencia',
+    'report_issue_sent'    => 'Incidencia reportada. El equipo ha sido avisado.',
+    'report_issue_callout_title'       => 'Ayúdanos a resolverlo más rápido',
+    'report_issue_callout_description' => 'Describe el problema con el mayor detalle posible y adjunta capturas de pantalla si puedes. La URL de la página actual y el ID del registro se adjuntarán automáticamente a la incidencia.',
+    'attachments_max_size'             => 'Archivos permitidos: imágenes, PDF y vídeos. Tamaño máximo: :size por archivo.',
+    'related_record'       => 'Registro relacionado',
 ];
