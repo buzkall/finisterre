@@ -6,6 +6,7 @@ use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\FinisterrePlugin;
 use Buzkall\Finisterre\Models\FinisterreTask;
 use Buzkall\Finisterre\Models\FinisterreTaskComment;
+use Buzkall\Finisterre\Support\AuthenticatableFilter;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -45,7 +46,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->where('id', '!=', auth()->id())
             ->when(
                 config('finisterre.authenticatable_filter_column'),
-                fn($query) => $query->whereIn(config('finisterre.authenticatable_filter_column'), (array)config('finisterre.authenticatable_filter_value'))
+                fn($query) => $query->whereIn(config('finisterre.authenticatable_filter_column'), AuthenticatableFilter::values())
             )
             ->when(
                 DatabaseSchema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),

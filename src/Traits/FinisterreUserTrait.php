@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Traits;
 
 use Buzkall\Finisterre\Models\FinisterreTaskChange;
+use Buzkall\Finisterre\Support\AuthenticatableFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Expression;
@@ -31,13 +32,12 @@ trait FinisterreUserTrait
     public function scopeAssignableUsers(Builder $query): Builder
     {
         $filterColumn = config('finisterre.authenticatable_filter_column');
-        $filterValue = config('finisterre.authenticatable_filter_value');
         $table = config('finisterre.authenticatable_table_name');
 
         return $query
             ->when(
                 $filterColumn && Schema::hasColumn($table, $filterColumn),
-                fn($query) => $query->whereIn($filterColumn, (array)$filterValue)
+                fn($query) => $query->whereIn($filterColumn, AuthenticatableFilter::values())
             )->when(
                 Schema::hasColumn($table, 'active'),
                 fn($query) => $query->where('active', true)

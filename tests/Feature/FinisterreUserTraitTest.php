@@ -1,5 +1,6 @@
 <?php
 
+use Buzkall\Finisterre\Enums\TaskPriorityEnum;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -88,6 +89,48 @@ it('filters assignable users by configured column', function() {
     $names = User::assignableUsers()->pluck('name')->all();
     expect($names)->toContain('admin')
         ->and($names)->not->toContain('user');
+});
+
+it('filters assignable users when the filter value is an array', function() {
+    if (! Schema::hasColumn('users', 'role')) {
+        Schema::table('users', function(Blueprint $table) {
+            $table->string('role')->nullable();
+        });
+    }
+
+    User::factory()->create(['name' => 'admin'])->forceFill(['role' => 'admin'])->save();
+    User::factory()->create(['name' => 'manager'])->forceFill(['role' => 'manager'])->save();
+    User::factory()->create(['name' => 'user'])->forceFill(['role' => 'user'])->save();
+
+    config([
+        'finisterre.authenticatable_filter_column' => 'role',
+        'finisterre.authenticatable_filter_value'  => ['admin', 'manager'],
+    ]);
+
+    $names = User::assignableUsers()->pluck('name')->all();
+    expect($names)->toContain('admin')
+        ->and($names)->toContain('manager')
+        ->and($names)->not->toContain('user');
+});
+
+it('filters assignable users when the filter value is a backed enum', function() {
+    if (! Schema::hasColumn('users', 'role')) {
+        Schema::table('users', function(Blueprint $table) {
+            $table->string('role')->nullable();
+        });
+    }
+
+    User::factory()->create(['name' => 'high'])->forceFill(['role' => 'high'])->save();
+    User::factory()->create(['name' => 'low'])->forceFill(['role' => 'low'])->save();
+
+    config([
+        'finisterre.authenticatable_filter_column' => 'role',
+        'finisterre.authenticatable_filter_value'  => TaskPriorityEnum::High,
+    ]);
+
+    $names = User::assignableUsers()->pluck('name')->all();
+    expect($names)->toContain('high')
+        ->and($names)->not->toContain('low');
 });
 
 it('filters out inactive users when active column exists', function() {

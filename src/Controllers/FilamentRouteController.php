@@ -2,6 +2,7 @@
 
 namespace Buzkall\Finisterre\Controllers;
 
+use Buzkall\Finisterre\Support\AuthenticatableFilter;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -26,8 +27,8 @@ class FilamentRouteController extends Controller
 
                 // access is filtered by the user
                 abort_unless(in_array(
-                    auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')},
-                    (array)config('finisterre.authenticatable_filter_value')
+                    AuthenticatableFilter::scalar(auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')}),
+                    AuthenticatableFilter::values()
                 ), 403);
 
                 return response()->file(Storage::disk($disk)->path($filePath));
@@ -46,8 +47,8 @@ class FilamentRouteController extends Controller
 
                 // access is filtered by the user
                 abort_unless(in_array(
-                    auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')},
-                    (array)config('finisterre.authenticatable_filter_value')
+                    AuthenticatableFilter::scalar(auth()->guard(config('finisterre.guard'))->user()->{config('finisterre.authenticatable_filter_column')}),
+                    AuthenticatableFilter::values()
                 ), 403);
 
                 return response()->file(Storage::disk($disk)->path($filePath));
