@@ -4,11 +4,16 @@ My helper package
 
 ## Installation
 
-You can install the package via composer:
+### Quick install (recommended)
 
 ```bash
 composer require buzkall/finisterre
+php artisan finisterre:install
 ```
+
+The install command does everything wiring-related in one shot: publishes the config and migrations, asks to run them, appends `FINISTERRE_ACTIVE=true` to your `.env`, runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every `app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Then run `npm run build`.
+
+For each step the command falls back to a printed instruction if your project doesn't match the expected shape (different panel directory, custom User location, no Filament theme, etc.).
 
 For Filament 3, use the v1 branch:
 
@@ -16,13 +21,22 @@ For Filament 3, use the v1 branch:
 composer require buzkall/finisterre:^1.0
 ```
 
-**Critical:** After installation, you must publish Filament assets for the kanban board to work:
+### Manual installation
+
+If you'd rather wire things by hand, the package ships the usual publishables. Start with:
+
+```bash
+composer require buzkall/finisterre
+php artisan vendor:publish --tag="finisterre-config"
+```
+
+Publishing Filament assets is required for the kanban board's JavaScript:
 
 ```bash
 php artisan filament:assets
 ```
 
-Without this step, the kanban board will load but drag-and-drop functionality will not work due to missing JavaScript assets.
+Without this step, the kanban board will load but drag-and-drop will not work due to missing JavaScript assets.
 
 You can publish the config file with:
 
@@ -106,23 +120,27 @@ The package comes with a default policy for the tasks that can be overridden in 
 
 ## Usage
 
-Add the plugin to your panel provider and specify the permissions
+Add the plugin to your panel provider. By default every authenticated user can view all tasks — no closure needed:
 
 ```php
-
 use Buzkall\Finisterre\FinisterrePlugin;
 
 public function panel(Panel $panel): Panel
 {
     return $panel
         ->plugins([
-            FinisterrePlugin::make()
-                ->userCanViewAllTasks(fn() => auth()->user()?->hasRole(RoleEnum::Admin))
-                ->userCanViewOnlyTheirTasks(fn() => auth()->user()?->hasAnyRole([RoleEnum::Editor, RoleEnum::Manager]))
-                ->userCanScheduleComments(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
-        ])
-    ])
+            FinisterrePlugin::make(),
+        ]);
 }
+```
+
+To restrict access by role, pass closures to the corresponding `user…` setters:
+
+```php
+FinisterrePlugin::make()
+    ->userCanViewAllTasks(fn() => auth()->user()?->hasRole(RoleEnum::Admin))
+    ->userCanViewOnlyTheirTasks(fn() => auth()->user()?->hasAnyRole([RoleEnum::Editor, RoleEnum::Manager]))
+    ->userCanScheduleComments(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
 ```
 
 ### Displaying a user's full name

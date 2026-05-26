@@ -2,6 +2,14 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 3.0.0 - 2026-05-26
+
+Add a `finisterre:install` command (powered by spatie/laravel-package-tools) that drives the full setup in one shot: publishes the config and migrations, prompts to run migrations, appends `FINISTERRE_ACTIVE=true` to `.env`, runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every `app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Each auto-patch step is idempotent and falls back to a printed instruction when the host project doesn't match the expected shape.
+
+**Breaking:** `FinisterrePlugin::$canViewAllTasks` now defaults to `true`. Existing apps that were relying on the previous "no one can see tasks unless a closure is wired" default must call `->userCanViewAllTasks(fn() => false)` explicitly to keep the resource hidden. Without this change `FinisterrePlugin::make()` alone left the resource hidden in every panel, which is rarely what integrators want.
+
+**Breaking:** Views, assets, translations, migrations and commands are now registered regardless of `FINISTERRE_ACTIVE`. Only the scheduled-comments scheduler still gates on the flag. This unblocks `php artisan vendor:publish` (and `finisterre:install`) before the flag has been set, and makes the package's blade views renderable in tooling and tests without toggling the config.
+
 ## 2.3.1 - 2026-05-26
 
 Turn the notify field's "select all" suffix action into a toggle: once every recipient is selected it switches to a "deselect all" action that clears the field on a second click. Swap the heroicon to `users` / `user-minus` so the affordance fits the field context.

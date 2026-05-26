@@ -12,7 +12,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 class FinisterrePlugin implements Plugin
 {
-    protected bool|Closure $canViewAllTasks = false;
+    protected bool|Closure $canViewAllTasks = true;
     protected bool|Closure $canViewOnlyTheirTasks = false;
     protected bool|Closure $canScheduleComments = true;
 
