@@ -15,6 +15,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
@@ -39,6 +40,13 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             'notify'        => $options->count() === 1 ? $options->keys()->toArray() : [],
             'scheduled_for' => null,
         ]);
+    }
+
+    private function isAllNotifySelected(Get $get): bool
+    {
+        $selected = $get('notify') ?? [];
+
+        return count($selected) >= $this->getNotifyOptions()->count();
     }
 
     private function getNotifyOptions()
@@ -77,17 +85,27 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $notify = Forms\Components\Select::make('notify')
             ->multiple()
+            ->live()
             ->columnSpan($canSchedule ? 1 : 'full')
             ->label(__('finisterre::finisterre.comments.notify'))
             ->hint(__('finisterre::finisterre.comments.notify_hint'))
             ->options(fn() => $this->getNotifyOptions())
             ->suffixAction(
-                Action::make('selectAll')
-                    ->icon('heroicon-m-check-circle')
-                    ->label(__('finisterre::finisterre.comments.select_all'))
-                    ->tooltip(__('finisterre::finisterre.comments.select_all'))
+                Action::make('toggleSelectAll')
+                    ->icon(fn(Get $get): string => $this->isAllNotifySelected($get)
+                        ? 'heroicon-m-user-minus'
+                        : 'heroicon-m-users')
+                    ->label(fn(Get $get): string => $this->isAllNotifySelected($get)
+                        ? __('finisterre::finisterre.comments.deselect_all')
+                        : __('finisterre::finisterre.comments.select_all'))
+                    ->tooltip(fn(Get $get): string => $this->isAllNotifySelected($get)
+                        ? __('finisterre::finisterre.comments.deselect_all')
+                        : __('finisterre::finisterre.comments.select_all'))
                     ->visible($notifyOptions->count() > 1)
-                    ->action(fn(Set $set) => $set('notify', $this->getNotifyOptions()->keys()->toArray()))
+                    ->action(fn(Get $get, Set $set) => $set(
+                        'notify',
+                        $this->isAllNotifySelected($get) ? [] : $this->getNotifyOptions()->keys()->toArray()
+                    ))
             );
 
         $gridComponents = $canSchedule

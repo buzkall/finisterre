@@ -50,6 +50,7 @@ return [
         'notify'             => 'Notify to',
         'notify_hint'        => 'The selected users will receive an email notification.',
         'select_all'         => 'Select all',
+        'deselect_all'       => 'Deselect all',
         'scheduled_for'      => 'Schedule for',
         'scheduled_for_hint' => 'Leave empty to send immediately. The comment will only be visible to you until the scheduled time.',
         'scheduled_badge'    => 'Scheduled for :time',

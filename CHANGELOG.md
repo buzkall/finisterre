@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.3.1 - 2026-05-26
+
+Turn the notify field's "select all" suffix action into a toggle: once every recipient is selected it switches to a "deselect all" action that clears the field on a second click. Swap the heroicon to `users` / `user-minus` so the affordance fits the field context.
+
 ## 2.3.0 - 2026-05-26
 
 Add a "select all" suffix action to the notify field on the comment form. When the available recipients list has more than one entry, the action populates the field with every user in a single click.
