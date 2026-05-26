@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 2.3.0 - 2026-05-26
+
+Add a "select all" suffix action to the notify field on the comment form. When the available recipients list has more than one entry, the action populates the field with every user in a single click.
+
+Fix the kanban board styles by adding the flowforge package's blade views to the Tailwind content paths. Previously the arbitrary utilities used by flowforge (column widths, empty-column min-height, etc.) weren't compiled into `finisterre.css`, leaving the board's columns visually broken.
+
 ## 2.2.2 - 2026-05-21
 
 Fix the authenticatable filter when `authenticatable_filter_value` is a backed enum (or an array of them). The previous `(array)` cast left enum instances in the `whereIn` and `in_array` checks, so assignable-user filtering and file-access authorization silently failed to match. Values are now normalized through the new `AuthenticatableFilter` helper, which unwraps backed enums to their scalar value.

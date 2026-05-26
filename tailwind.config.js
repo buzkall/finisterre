@@ -4,6 +4,7 @@ export default {
     content: [
         './resources/**/*.blade.php',
         './src/**/*.php',
+        './vendor/relaticle/flowforge/resources/views/**/*.blade.php',
     ],
     theme: {
         extend: {},

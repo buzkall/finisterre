@@ -15,6 +15,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
@@ -72,12 +73,22 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $canSchedule = FinisterrePlugin::get()->canScheduleComments();
 
+        $notifyOptions = $this->getNotifyOptions();
+
         $notify = Forms\Components\Select::make('notify')
             ->multiple()
             ->columnSpan($canSchedule ? 1 : 'full')
             ->label(__('finisterre::finisterre.comments.notify'))
             ->hint(__('finisterre::finisterre.comments.notify_hint'))
-            ->options(fn() => $this->getNotifyOptions());
+            ->options(fn() => $this->getNotifyOptions())
+            ->suffixAction(
+                Action::make('selectAll')
+                    ->icon('heroicon-m-check-circle')
+                    ->label(__('finisterre::finisterre.comments.select_all'))
+                    ->tooltip(__('finisterre::finisterre.comments.select_all'))
+                    ->visible($notifyOptions->count() > 1)
+                    ->action(fn(Set $set) => $set('notify', $this->getNotifyOptions()->keys()->toArray()))
+            );
 
         $gridComponents = $canSchedule
             ? [

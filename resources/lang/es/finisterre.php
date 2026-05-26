@@ -49,6 +49,7 @@ return [
         'edit_heading'       => 'Editar comentario',
         'notify'             => 'Notificar a',
         'notify_hint'        => 'Los usuarios seleccionados recibirán una notificación por correo electrónico.',
+        'select_all'         => 'Seleccionar todos',
         'scheduled_for'      => 'Programar para',
         'scheduled_for_hint' => 'Déjalo vacío para enviar inmediatamente. El comentario solo será visible para ti hasta la hora programada.',
         'scheduled_badge'    => 'Programado para el :time',

@@ -49,6 +49,7 @@ return [
         'edit_heading'       => 'Editar comentari',
         'notify'             => 'Notificar a',
         'notify_hint'        => 'Els usuaris seleccionats rebran una notificació per correu electrònic.',
+        'select_all'         => 'Seleccionar tots',
         'scheduled_for'      => 'Programar per a',
         'scheduled_for_hint' => "Deixa-ho buit per enviar immediatament. El comentari només serà visible per a tu fins a l'hora programada.",
         'scheduled_badge'    => 'Programat per a :time',
