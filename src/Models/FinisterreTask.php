@@ -36,10 +36,14 @@ use Spatie\Tags\HasTags;
  * @property TaskPriorityEnum $priority
  * @property array $subtasks
  * @property Carbon $due_at
- * @property Carbon $completed_at
+ * @property ?Carbon $completed_at
  * @property int $creator_id
- * @property int $assignee_id
+ * @property ?int $assignee_id
  * @property ?Model $subject
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read ?string $assignee_name
+ * @property-read int $has_changes
  */
 class FinisterreTask extends Model implements HasMedia
 {
@@ -88,6 +92,7 @@ class FinisterreTask extends Model implements HasMedia
         return FinisterreTaskFactory::new();
     }
 
+    /** @return HasMany<FinisterreTaskComment, $this> */
     public function comments(): HasMany
     {
         return $this->hasMany(FinisterreTaskComment::class, 'task_id');

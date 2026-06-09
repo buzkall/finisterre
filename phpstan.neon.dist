@@ -10,4 +10,20 @@ parameters:
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
+    ignoreErrors:
+        # Package config is a config file: env() is evaluated before the host caches config.
+        -
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/finisterre.php
+        # Public-API traits consumed by host apps, so unused within the package itself.
+        -
+            identifier: trait.unused
+            paths:
+                - src/Traits/FinisterreUserTrait.php
+                - src/Traits/InteractsWithFinisterreReports.php
+        # The "finisterre::" view namespace isn't registered during analysis, so larastan
+        # can't confirm this existing package view literal is a valid view-string.
+        -
+            identifier: property.defaultValue
+            path: src/Filament/Widgets/FilterTasksWidget.php
 

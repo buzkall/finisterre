@@ -15,6 +15,9 @@ use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
+/**
+ * @property-read Schema $form
+ */
 class FilterTasks extends Component implements HasForms
 {
     use InteractsWithForms;

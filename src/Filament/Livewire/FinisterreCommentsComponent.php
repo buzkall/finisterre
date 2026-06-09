@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Schema as DatabaseSchema;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
+/**
+ * @property-read Schema $form
+ */
 class FinisterreCommentsComponent extends Component implements HasActions, HasForms
 {
     use InteractsWithActions;

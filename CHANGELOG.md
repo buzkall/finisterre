@@ -2,6 +2,18 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## Unreleased - 2026-06-09
+
+Restrict GitHub Actions workflow permissions: add a top-level `permissions: contents: read` block to `phpstan.yml` and `run-tests.yml` so they no longer inherit the default write-all token (flagged by Laravel Moat). The `dependabot-auto-merge.yml` and `fix-php-code-style-issues.yml` workflows keep their minimal write scopes since they merge PRs / commit style fixes.
+
+SHA-pin all GitHub Actions: replace every `uses:` tag/branch ref with the full-length commit SHA (tag kept as a trailing comment) across all four workflows, preventing mutable-tag supply-chain attacks (also flagged by Laravel Moat).
+
+Add a `SECURITY.md` disclosure policy directing vulnerability reports to GitHub Private Vulnerability Reporting or email, so researchers have a private channel instead of public issues (flagged by Laravel Moat).
+
+Add Laravel 13 support: widen `orchestra/testbench` to `^10.9|^11.1` and update the test matrix to run against Laravel 13 (Testbench 11) and 12 (Testbench 10), dropping the Laravel 10 and 11 rows. The full test suite passes on Laravel 13.
+
+Fix all 31 PHPStan errors (CI had been red since May). Add missing `@property` annotations and `comments()` relation generics to `FinisterreTask`, document the Filament `$form` magic property on the three form components, use `getKey()` instead of the magic `$id` and `$this->record` instead of `getRecord()` in the observer/edit page, and scope `ignoreErrors` for three genuine false-positives (package `env()` in config, public-API traits, and the unresolvable `finisterre::` view namespace).
+
 ## 3.0.0 - 2026-05-26
 
 Add a `finisterre:install` command (powered by spatie/laravel-package-tools) that drives the full setup in one shot: publishes the config and migrations, prompts to run migrations, appends `FINISTERRE_ACTIVE=true` to `.env`, runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every `app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Each auto-patch step is idempotent and falls back to a printed instruction when the host project doesn't match the expected shape.

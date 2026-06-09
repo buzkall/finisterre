@@ -67,7 +67,7 @@ class EditFinisterreTask extends EditRecord
 
             return [
                 $url => __('finisterre::finisterre.tasks'),
-                null => $this->getRecord()?->title ?? __('finisterre::finisterre.edit_task')
+                '' => $this->record->title ?: __('finisterre::finisterre.edit_task'),
             ];
         }
 

@@ -48,10 +48,12 @@ class FinisterreTaskObserver
         }
 
         defer(function() use ($task) {
+            $assignee = $task->assignee;
+
             // don't notify myself, and don't notify when task is moved to done
-            if ($task->assignee && $task->assignee->id !== auth()->id() && $task->status !== TaskStatusEnum::Done) {
+            if ($assignee && $assignee->getKey() !== auth()->id() && $task->status !== TaskStatusEnum::Done) {
                 $taskChanges = $task->getChanges();
-                $task->assignee->notify(new TaskNotification($task, $taskChanges));
+                $assignee->notify(new TaskNotification($task, $taskChanges)); // @phpstan-ignore-line method.notFound
 
                 Notification::make()
                     ->title(__(
@@ -66,7 +68,7 @@ class FinisterreTaskObserver
                             ->label(__('finisterre::finisterre.comment_notification.cta'))
                             ->button()
                             ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)),
-                    ])->sendToDatabase($task->assignee);
+                    ])->sendToDatabase($assignee);
             }
         });
     }

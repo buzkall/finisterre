@@ -14,6 +14,9 @@ use Filament\Schemas\Schema;
 use Filament\Widgets\Widget;
 use Livewire\Attributes\Url;
 
+/**
+ * @property-read Schema $form
+ */
 class FilterTasksWidget extends Widget implements HasForms
 {
     use InteractsWithForms;
