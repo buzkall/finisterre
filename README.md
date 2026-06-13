@@ -11,7 +11,7 @@ composer require buzkall/finisterre
 php artisan finisterre:install
 ```
 
-The install command does everything wiring-related in one shot: publishes the config and migrations, asks to run them, appends `FINISTERRE_ACTIVE=true` to your `.env`, runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every `app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Then run `npm run build`.
+The install command does everything wiring-related in one shot: publishes the config and migrations, asks to run them, enables Finisterre (active in every environment by default — manage it from the settings page), runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every `app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Then run `npm run build`.
 
 For each step the command falls back to a printed instruction if your project doesn't match the expected shape (different panel directory, custom User location, no Filament theme, etc.).
 
@@ -44,10 +44,10 @@ You can publish the config file with:
 php artisan vendor:publish --tag="finisterre-config"
 ```
 
-By default, the package will not be active; this can be changed by adding the following to your .env file
+By default, the package is active in every environment. To restrict it to specific environments, set a comma-separated list in your `.env` file (or edit it later from the settings page):
 
 ```bash
-FINISTERRE_ACTIVE=true
+FINISTERRE_ENVIRONMENTS=local,production
 ```
 
 **Important:** If your Filament panel uses a different ID than `admin`, add this to your `.env`:

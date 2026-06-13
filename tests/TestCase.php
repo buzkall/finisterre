@@ -6,6 +6,7 @@ use Buzkall\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Livewire\Livewire;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Spatie\LaravelSettings\LaravelSettingsServiceProvider;
 use Workbench\App\Models\User;
 
 class TestCase extends Orchestra
@@ -32,6 +33,7 @@ class TestCase extends Orchestra
     {
         return [
             // FinisterreServiceProvider::class,
+            LaravelSettingsServiceProvider::class,
         ];
     }
 

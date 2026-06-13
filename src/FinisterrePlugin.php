@@ -2,8 +2,10 @@
 
 namespace Buzkall\Finisterre;
 
+use Buzkall\Finisterre\Filament\Pages\ManageFinisterreSettings;
 use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
+use Buzkall\Finisterre\Support\SettingsConfig;
 use Closure;
 use Filament\Contracts\Plugin;
 use Filament\Facades\Filament;
@@ -15,6 +17,7 @@ class FinisterrePlugin implements Plugin
     protected bool|Closure $canViewAllTasks = true;
     protected bool|Closure $canViewOnlyTheirTasks = false;
     protected bool|Closure $canScheduleComments = true;
+    protected bool|Closure $canConfigureFinisterre = true;
 
     public function getId(): string
     {
@@ -57,6 +60,18 @@ class FinisterrePlugin implements Plugin
         return $this->evaluate($this->canScheduleComments);
     }
 
+    public function canConfigureFinisterre(bool|Closure $condition): static
+    {
+        $this->canConfigureFinisterre = $condition;
+
+        return $this;
+    }
+
+    public function canConfigure(): bool
+    {
+        return $this->evaluate($this->canConfigureFinisterre);
+    }
+
     protected function evaluate(bool|Closure $value): bool
     {
         if ($value instanceof Closure) {
@@ -73,15 +88,22 @@ class FinisterrePlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        if (! config('finisterre.active', false)) {
-            return;
-        }
+        // Let the database settings override the config-file values
+        // (idempotent, also called in the service provider).
+        SettingsConfig::apply();
 
+        // Routes are always registered so they never 404/500 when referenced.
+        // The `active` flag instead gates access and navigation (see each
+        // page/resource canAccess()), read at request time once config is
+        // hydrated — registering on a DB read here would be fragile.
         $panel
             ->resources([
-                FinisterreTaskResource::class
+                FinisterreTaskResource::class,
             ])
-            ->pages([TasksKanbanBoard::class]);
+            ->pages([
+                TasksKanbanBoard::class,
+                ManageFinisterreSettings::class,
+            ]);
     }
 
     public function boot(Panel $panel): void

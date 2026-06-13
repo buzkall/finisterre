@@ -5,8 +5,9 @@
     "dev:styles": "npx tailwindcss -i resources/css/app.css -o resources/dist/finisterre.css --postcss --watch",
     "build:styles": "npx tailwindcss -i resources/css/app.css -o resources/dist/finisterre.css --postcss --minify",
     "build:purge": "filament-purge -i resources/dist/finisterre.css -o resources/dist/finisterre.css -v 3.x",
+    "build:scripts": "esbuild resources/js/finisterre-rich-editor-paste-fix.js --bundle --minify --outfile=resources/dist/finisterre-rich-editor-paste-fix.js",
     "dev": "npm run dev:styles",
-    "build": "npm run build:styles && npm run build:purge"
+    "build": "npm run build:styles && npm run build:purge && npm run build:scripts"
   },
   "devDependencies": {
     "@awcodes/filament-plugin-purge": "^1.1.1",

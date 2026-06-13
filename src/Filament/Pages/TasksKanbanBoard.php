@@ -8,6 +8,7 @@ use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Buzkall\Finisterre\Filament\Widgets\FilterTasksWidget;
 use Buzkall\Finisterre\Models\FinisterreTag;
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Panel;
@@ -16,6 +17,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Relaticle\Flowforge\Board;
@@ -44,7 +46,14 @@ class TasksKanbanBoard extends BoardPage
 
     public static function canAccess(): bool
     {
-        return Finisterre::get()->canViewAllTasks();
+        // Route::has() guards against the board's slug colliding with an existing
+        // route in the host panel: when that happens the board page route isn't
+        // registered, so linking to it from the navigation would 500 the whole
+        // panel. Hiding it instead degrades gracefully (re-run the installer to
+        // pick a free slug).
+        return config('finisterre.active', false)
+            && Finisterre::get()->canViewAllTasks()
+            && Route::has(static::getRouteName());
     }
 
     public static function shouldRegisterSpotlight(): bool
@@ -70,6 +79,13 @@ class TasksKanbanBoard extends BoardPage
                 ->url(FinisterreTaskResource::getUrl('create'))
                 ->createAnother(false)
                 ->keyBindings(['mod+b']),
+
+            Action::make('finisterreSettings')
+                ->label(__('finisterre::finisterre.settings.nav_label'))
+                ->icon(Heroicon::Cog6Tooth)
+                ->color('gray')
+                ->url(fn(): string => ManageFinisterreSettings::getUrl())
+                ->visible(fn(): bool => Finisterre::get()->canConfigure()),
         ];
     }
 

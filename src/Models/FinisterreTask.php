@@ -12,6 +12,7 @@ use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -173,5 +174,21 @@ class FinisterreTask extends Model implements HasMedia
     public static function getTagClassName(): string
     {
         return FinisterreTag::class;
+    }
+
+    /**
+     * Filament's SpatieMediaLibraryFileUpload field is named "attachments". When the host app
+     * enables Model::shouldBeStrict(), Filament internally calls data_get($record, 'attachments'),
+     * which would otherwise throw a MissingAttributeException. Exposing it as a lazy-load-safe
+     * accessor (returning the already-loaded media for the field's collection, or an empty
+     * collection) keeps the package compatible with strict mode without triggering a query.
+     */
+    protected function attachments(): Attribute
+    {
+        return Attribute::get(
+            fn(): Collection => $this->relationLoaded('media')
+                ? $this->getRelation('media')->where('collection_name', 'tasks')->values()
+                : collect()
+        );
     }
 }

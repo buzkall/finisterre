@@ -19,9 +19,14 @@ class FinisterreTaskResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected static bool $hasTitleCaseModelLabel = false;
 
+    public static function canAccess(): bool
+    {
+        return (bool)config('finisterre.active', false);
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
-        return FinisterrePlugin::get()->canViewOnlyTheirTasks();
+        return config('finisterre.active', false) && FinisterrePlugin::get()->canViewOnlyTheirTasks();
     }
 
     public static function getModelLabel(): string

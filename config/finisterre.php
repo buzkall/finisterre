@@ -6,10 +6,16 @@ use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
 
 return [
-    'active'     => env('FINISTERRE_ACTIVE', false),
-    'table_name' => 'finisterre_tasks',
-    'panel_slug' => 'admin',
-    'slug'       => 'tasks',
+    // The behavioral options below (environments, slug, hidden_statuses,
+    // fallback_notifiable_id, authenticatable_filter_*, comments.display_avatars,
+    // comments.icons.*, sms_notification.*) can be edited at runtime from the
+    // Filament settings page; the values here are used as defaults until then.
+    // Environments where Finisterre is active (comma-separated, e.g. "local,production").
+    // Empty = active in every environment. Editable from the settings page.
+    'environments' => env('FINISTERRE_ENVIRONMENTS', ''),
+    'table_name'   => 'finisterre_tasks',
+    'panel_slug'   => 'admin',
+    'slug'         => 'tasks',
 
     // Locales to save when creating tags (e.g., ['es', 'ca'])
     'locales' => ['es', 'ca'],
@@ -53,9 +59,9 @@ return [
 
         // Icons used in the comments' component.
         'icons' => [
-            'action' => 'heroicon-s-chat-bubble-left-right',
-            'delete' => 'heroicon-s-trash',
-            'empty'  => 'heroicon-s-chat-bubble-left-right',
+            'action' => 'heroicon-o-chat-bubble-left-right',
+            'delete' => 'heroicon-o-trash',
+            'empty'  => 'heroicon-o-chat-bubble-left-right',
         ],
     ],
 
