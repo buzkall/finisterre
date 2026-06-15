@@ -1,5 +1,12 @@
-@tailwind components;
-@tailwind utilities;
+/*
+ * Finisterre raw plugin styles.
+ *
+ * This file ships as-is — there is no Tailwind build step. The utility classes
+ * used in the package's Blade views are compiled by the host application's own
+ * Filament theme, which scans them via the @source lines added during install
+ * (see the "Filament Theme CSS" section of the README). Only non-utility
+ * overrides that target Filament's own classes live here.
+ */
 
 /* Filament notification: keep the date inline with the title, pushed to the right and one size smaller */
 .fi-no-notification-text.fi-no-notification-text {

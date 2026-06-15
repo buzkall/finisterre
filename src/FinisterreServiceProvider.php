@@ -645,7 +645,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         if (class_exists(FilamentAsset::class) && class_exists(Css::class)) {
             FilamentAsset::register(
                 [
-                    Css::make('finisterre-styles', __DIR__ . '/../resources/dist/finisterre.css'),
+                    Css::make('finisterre-styles', __DIR__ . '/../resources/css/app.css'),
                     // Works around a Filament v5 RichEditor bug where pasting multiple
                     // images at once drops all but the last one.
                     Js::make('finisterre-rich-editor-paste-fix', __DIR__ . '/../resources/dist/finisterre-rich-editor-paste-fix.js'),
@@ -655,6 +655,5 @@ class FinisterreServiceProvider extends PackageServiceProvider
         }
 
         // remember to run php artisan filament:assets after changing assets in the site
-        // also run npm run purge to clean filament styles
     }
 }

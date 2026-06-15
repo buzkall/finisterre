@@ -105,12 +105,16 @@ This command publishes all Filament plugin assets, including the Flowforge kanba
 
 ## Filament Theme CSS
 
-If you are using a [custom Filament theme](https://filamentphp.com/docs/4.x/styling/overview), you need to add the following lines to your theme's CSS file (e.g. `resources/css/filament/admin/theme.css`) so Tailwind scans the package views for classes:
+> **Required.** Following Filament v5 guidance, this package ships **raw CSS only** — it no longer compiles a Tailwind stylesheet of its own. The utility classes used in its Blade views are compiled by **your** application's Filament theme. Without the `@source` lines below the kanban board and task views will render unstyled.
+
+You need a [custom Filament theme](https://filamentphp.com/docs/4.x/styling/overview) (`php artisan make:filament-theme`). Add the following lines to your theme's CSS file (e.g. `resources/css/filament/admin/theme.css`) so Tailwind scans the package views for classes, then rebuild your theme (`npm run build`):
 
 ```css
 @source '../../../../vendor/buzkall/finisterre/resources/views';
 @source '../../../../vendor/relaticle/flowforge/resources/views';
 ```
+
+The installer adds these lines automatically to each detected theme file.
 
 The package comes with a default policy for the tasks that can be overridden in the config file and set your own policy
 
@@ -248,11 +252,13 @@ TODO
 
 ## Development
 
-To build the CSS assets after making changes to Tailwind classes:
+The package ships raw CSS (`resources/css/app.css`) with no Tailwind build — utility classes in the views are compiled by the host application's theme via the `@source` lines above. The only build step is the RichEditor paste-fix JavaScript asset:
 
 ```bash
-npm run build:styles
+npm run build
 ```
+
+Run `php artisan filament:assets` afterwards to publish it.
 
 ## Testing
 
