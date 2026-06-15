@@ -14,7 +14,6 @@ use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
 use Buzkall\Finisterre\Settings\FinisterreSettings;
 use Buzkall\Finisterre\Support\SettingsConfig;
 use Filament\Support\Assets\Css;
-use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Artisan;
@@ -644,12 +643,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // running php artisan filament:assets
         if (class_exists(FilamentAsset::class) && class_exists(Css::class)) {
             FilamentAsset::register(
-                [
-                    Css::make('finisterre-styles', __DIR__ . '/../resources/css/app.css'),
-                    // Works around a Filament v5 RichEditor bug where pasting multiple
-                    // images at once drops all but the last one.
-                    Js::make('finisterre-rich-editor-paste-fix', __DIR__ . '/../resources/dist/finisterre-rich-editor-paste-fix.js'),
-                ],
+                [Css::make('finisterre-styles', __DIR__ . '/../resources/css/app.css')],
                 package: 'buzkall/finisterre'
             );
         }

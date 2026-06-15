@@ -1,16 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "esbuild resources/js/finisterre-rich-editor-paste-fix.js --bundle --minify --outfile=resources/dist/finisterre-rich-editor-paste-fix.js --watch",
-    "build": "esbuild resources/js/finisterre-rich-editor-paste-fix.js --bundle --minify --outfile=resources/dist/finisterre-rich-editor-paste-fix.js"
-  },
   "devDependencies": {
-    "esbuild": "^0.28.1",
     "prettier": "^3.8.4"
-  },
-  "allowScripts": {
-    "esbuild@0.28.1": true,
-    "fsevents@2.3.3": true
   }
 }

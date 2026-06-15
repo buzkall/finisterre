@@ -27,13 +27,6 @@ failed — the board-URL prompt never appeared and the database was left unseede
 a shared `SettingsConfig::defaults()` now also used by the migration, so the two can't drift). With the rows present,
 the board-slug prompt fires again and picks a free path when the default (`tasks`) collides with an existing host route.
 
-Fix images disappearing when pasting several at once into a comment (or task description). Filament v5's RichEditor
-uploads pasted files concurrently, and the racing Livewire temporary uploads evict each other so all but the last image
-silently fail to insert (Filament bails on `if (! url) return`, no console error). Ship a small JS asset (
-`resources/dist/finisterre-rich-editor-paste-fix.js`, registered via `FilamentAsset`) that intercepts a multi-file paste
-and replays it as sequential single-file pastes, waiting for each upload to finish before starting the next — reusing
-Filament's working single-file path. Run `php artisan filament:assets` after updating to publish it.
-
 The `finisterre:uninstall` command now runs the final cleanup itself instead of printing instructions: it executes
 `composer remove buzkall/finisterre` and then `npm run build` (stopping with a hint to run the command manually if
 either fails). It also now deletes the published assets that `php artisan filament:assets` copied into the host's
@@ -51,10 +44,10 @@ to each `resources/css/filament/*/theme.css`. Removed the entire Tailwind 3 tool
 `@tailwindcss/forms`, `@tailwindcss/typography`, `autoprefixer`, `postcss`, `postcss-import`,
 `prettier-plugin-tailwindcss`, and `@awcodes/filament-plugin-purge` (the purge step only supported Filament 2.x/3.x and
 is obsolete under Tailwind v4's on-demand engine) — along with `tailwind.config.js`, `postcss.config.js`, the compiled
-`resources/dist/finisterre.css`, and the `build:styles`/`build:purge` scripts. The only remaining build step is the
-esbuild bundle for the RichEditor paste-fix JS (`npm run build`). **A custom Filament theme is now required** for the
-kanban board and task views to be styled — see the README "Filament Theme CSS" section. `dev` dependencies are now just
-`esbuild` and `prettier` (3.x).
+`resources/dist/finisterre.css`, and the `build:styles`/`build:purge` scripts. The package no longer has a JS or CSS
+build step — `resources/css/app.css` ships as-is. **A custom Filament theme is now required** for the kanban board and
+task views to be styled — see the README "Filament Theme CSS" section. The only `dev` dependency is now `prettier`
+(3.x).
 
 Remove the unused `move-resources.sh` dev helper (and its `make-filament-resource` / `move-resources` Composer scripts).
 Add `export-ignore` `.gitattributes` entries for dev-only root files (`package.json`, `package-lock.json`, `pint.json`,

@@ -252,13 +252,7 @@ TODO
 
 ## Development
 
-The package ships raw CSS (`resources/css/app.css`) with no Tailwind build — utility classes in the views are compiled by the host application's theme via the `@source` lines above. The only build step is the RichEditor paste-fix JavaScript asset:
-
-```bash
-npm run build
-```
-
-Run `php artisan filament:assets` afterwards to publish it.
+The package ships raw CSS (`resources/css/app.css`) with no Tailwind build — utility classes in the views are compiled by the host application's theme via the `@source` lines above. There is no JavaScript build step. Run `php artisan filament:assets` in the host application to publish the package's assets.
 
 ## Testing
 
