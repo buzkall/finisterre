@@ -60,7 +60,7 @@ class FinisterrePlugin implements Plugin
         return $this->evaluate($this->canScheduleComments);
     }
 
-    public function canConfigureFinisterre(bool|Closure $condition): static
+    public function userCanConfigureFinisterre(bool|Closure $condition): static
     {
         $this->canConfigureFinisterre = $condition;
 

@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 3.1.1 - 2026-06-16
+
+Rename the `FinisterrePlugin::canConfigureFinisterre(bool|Closure)` config callback to `userCanConfigureFinisterre(bool|Closure)` to match the `userCan*` naming of the other plugin callbacks.
+
+Fix the CI test suite, which failed on every run with exit code 1 and no test output. The `<coverage><report>` block in `phpunit.xml.dist` forced Pest 4 to collect code coverage on every run, which aborts when no coverage driver is installed (CI sets up PHP with `coverage: none`). Removed the report outputs from the config; `<source>` is kept so `--coverage` still works when a driver is available.
+
 ## 3.1.0 - 2026-06-13
 
 Replace the settings **Active** toggle with an **Active environments** field (a comma-separated list like
@@ -16,7 +22,7 @@ half-installed plugin no longer activates and 500s the panel on its not-yet-regi
 an existing route in the host panel (its page route then isn't registered) the board is hidden instead of crashing the
 whole panel — re-run the installer to pick a free slug. The settings page is no longer shown in the navigation menu —
 it's opened from a **Settings** header action on the Kanban board instead. New
-`FinisterrePlugin::canConfigureFinisterre(bool|Closure)` config callback gates both that header action and access to the
+`FinisterrePlugin::userCanConfigureFinisterre(bool|Closure)` config callback gates both that header action and access to the
 settings page (`canConfigure()`), defaulting to `true`.
 
 Make the installer self-healing for the settings rows. The settings migration only seeds the `finisterre.*` rows the
