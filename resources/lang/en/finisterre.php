@@ -74,6 +74,11 @@ return [
         'greeting' => 'New comment in task :title',
         'cta'      => 'View task',
     ],
+    'scheduled_comment_sent' => [
+        'subject'  => 'Your scheduled message in task :title has been sent',
+        'greeting' => 'Your scheduled message has been sent',
+        'cta'      => 'View task',
+    ],
     'filter' => [
         'label'            => 'Filters',
         'cta'              => 'Filter',

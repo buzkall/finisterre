@@ -3,6 +3,7 @@
 namespace Buzkall\Finisterre\Models;
 
 use Buzkall\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
+use Buzkall\Finisterre\Notifications\ScheduledCommentSentNotification;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Buzkall\Finisterre\Observers\FinisterreTaskCommentObserver;
 use Filament\Actions\Action;
@@ -79,6 +80,8 @@ class FinisterreTaskComment extends Model implements HasMedia
      */
     public function deliver(): Collection
     {
+        $wasScheduled = $this->scheduled_for !== null;
+
         $userIds = $this->notify_user_ids ?: [$this->task->assignee_id];
         $userIds = array_filter($userIds, fn($id) => ! is_null($id));
 
@@ -110,6 +113,10 @@ class FinisterreTaskComment extends Model implements HasMedia
         }
 
         $this->forceFill(['sent_at' => now()])->save();
+
+        if ($wasScheduled) {
+            $this->creator?->notify(new ScheduledCommentSentNotification($this));
+        }
 
         return $notified;
     }

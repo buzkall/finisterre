@@ -74,6 +74,11 @@ return [
         'greeting' => 'Comentari a: :title',
         'cta'      => 'Veure tasca',
     ],
+    'scheduled_comment_sent' => [
+        'subject'  => 'El teu missatge programat a la tasca :title s\'ha enviat',
+        'greeting' => 'El teu missatge programat s\'ha enviat',
+        'cta'      => 'Veure tasca',
+    ],
     'filter' => [
         'label'            => 'Filtres',
         'cta'              => 'Filtrar',

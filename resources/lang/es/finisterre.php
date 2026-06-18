@@ -74,6 +74,11 @@ return [
         'greeting' => 'Comentario en: :title',
         'cta'      => 'Ver tarea',
     ],
+    'scheduled_comment_sent' => [
+        'subject'  => 'Tu mensaje programado en la tarea :title se ha enviado',
+        'greeting' => 'Tu mensaje programado se ha enviado',
+        'cta'      => 'Ver tarea',
+    ],
     'filter' => [
         'label'            => 'Filtros',
         'cta'              => 'Filtrar',

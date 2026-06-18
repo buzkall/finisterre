@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Schema;
 
 beforeEach(function() {
     if (! Schema::hasTable('settings')) {
-        $migration = include base_path('vendor/spatie/laravel-settings/database/migrations/create_settings_table.php.stub');
+        $migration = include __DIR__ . '/../../vendor/spatie/laravel-settings/database/migrations/create_settings_table.php.stub';
         $migration->up();
     }
 });

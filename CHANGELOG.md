@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 3.2.0 - 2026-06-17
+
+When a scheduled (programmed) comment is delivered, its author now receives a confirmation email that the programmed message has been sent, in addition to the recipients' comment notification.
+
+Fix the `SettingsMigrationTest` failure on the `prefer-lowest` CI matrix. The test loaded the spatie/laravel-settings stub via `base_path()`, which under Testbench resolves to the skeleton app (`vendor/orchestra/testbench-core/laravel`) rather than the package root. Switched to a `__DIR__`-relative path, matching the other migration includes in the suite.
+
 ## 3.1.1 - 2026-06-16
 
 Rename the `FinisterrePlugin::canConfigureFinisterre(bool|Closure)` config callback to `userCanConfigureFinisterre(bool|Closure)` to match the `userCan*` naming of the other plugin callbacks.

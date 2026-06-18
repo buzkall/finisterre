@@ -2,6 +2,7 @@
 
 use Buzkall\Finisterre\Commands\DispatchScheduledCommentsCommand;
 use Buzkall\Finisterre\Models\FinisterreTask;
+use Buzkall\Finisterre\Notifications\ScheduledCommentSentNotification;
 use Buzkall\Finisterre\Notifications\TaskCommentNotification;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Schema\Blueprint;
@@ -211,6 +212,39 @@ it('emails the delivered comment body, not the latest comment on the task', func
         return collect($mail->introLines)->contains(fn($line) => str_contains($line, 'older comment being delivered'))
             && collect($mail->introLines)->doesntContain(fn($line) => str_contains($line, 'newer unrelated comment'));
     });
+});
+
+it('deliver() notifies the creator that their scheduled message has been sent', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    $comment = $task->comments()->create([
+        'comment'         => '<p>scheduled body</p>',
+        'creator_id'      => $creator->id,
+        'scheduled_for'   => now()->subMinute(),
+        'notify_user_ids' => [$assignee->id],
+    ]);
+
+    $comment->deliver();
+
+    Notification::assertSentTo($creator, ScheduledCommentSentNotification::class);
+});
+
+it('deliver() does not send the sent-confirmation for immediate comments', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    $comment = $task->comments()->create([
+        'comment'         => '<p>immediate body</p>',
+        'creator_id'      => $creator->id,
+        'notify_user_ids' => [$assignee->id],
+    ]);
+
+    $comment->deliver();
+
+    Notification::assertNotSentTo($creator, ScheduledCommentSentNotification::class);
 });
 
 it('deliver() creates taskChanges for notified users except creator', function() {
