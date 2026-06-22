@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 3.2.1 - 2026-06-22
+
+Fix the **"Asignada a" (assignee)** select showing no options when the assignable-users filter value was configured with more than one value through the settings page. The settings page stores `authenticatable_filter_value` as a comma-separated string (e.g. `super_admin,admin_l1`), but `AuthenticatableFilter::values()` wrapped the whole string in a single-element array, producing `whereIn('role', ['super_admin,admin_l1'])` which matched zero rows. It now splits comma-separated strings into individual, trimmed values. Added a helper text to the settings field documenting the comma-separated format.
+
 ## 3.2.0 - 2026-06-17
 
 When a scheduled (programmed) comment is delivered, its author now receives a confirmation email that the programmed message has been sent, in addition to the recipients' comment notification.

@@ -124,7 +124,8 @@ class ManageFinisterreSettings extends Page
                             ->label(__('finisterre::finisterre.settings.authenticatable_filter_column')),
 
                         TextInput::make('authenticatable_filter_value')
-                            ->label(__('finisterre::finisterre.settings.authenticatable_filter_value')),
+                            ->label(__('finisterre::finisterre.settings.authenticatable_filter_value'))
+                            ->helperText(__('finisterre::finisterre.settings.authenticatable_filter_value_help')),
                     ])
                     ->columns(2),
 
