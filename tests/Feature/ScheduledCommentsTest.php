@@ -1,9 +1,9 @@
 <?php
 
-use Buzkall\Finisterre\Commands\DispatchScheduledCommentsCommand;
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Notifications\ScheduledCommentSentNotification;
-use Buzkall\Finisterre\Notifications\TaskCommentNotification;
+use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
+use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;

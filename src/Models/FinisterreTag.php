@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Models;
+namespace Arzcode\Finisterre\Models;
 
 use Spatie\Tags\Tag;
 

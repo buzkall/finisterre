@@ -1,6 +1,6 @@
 <?php
 
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 

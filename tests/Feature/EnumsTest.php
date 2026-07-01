@@ -1,7 +1,7 @@
 <?php
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
 
 it('lists all task status values', function() {
     expect(TaskStatusEnum::values())->toBe([

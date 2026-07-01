@@ -1,8 +1,8 @@
 <?php
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Settings\FinisterreSettings;
-use Buzkall\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Support\SettingsConfig;
 
 // fake() needs every declared property, otherwise spatie loads the missing
 // ones from the (absent) settings table. This provides sensible defaults so

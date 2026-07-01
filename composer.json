@@ -1,17 +1,17 @@
 {
-    "name": "buzkall/finisterre",
+    "name": "arzcode/finisterre",
     "description": "Helper package",
     "keywords": [
-        "buzkall",
+        "arzcode",
         "laravel",
         "finisterre"
     ],
-    "homepage": "https://github.com/buzkall/finisterre",
+    "homepage": "https://github.com/arzcode/finisterre",
     "license": "MIT",
     "authors": [
         {
-            "name": "buzkall",
-            "email": "buzkall@buzkall.com",
+            "name": "arzcode",
+            "email": "arzcode@arzcode.com",
             "role": "Developer"
         }
     ],
@@ -40,13 +40,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Buzkall\\Finisterre\\": "src/",
-            "Buzkall\\Finisterre\\Database\\Factories\\": "database/factories/"
+            "Arzcode\\Finisterre\\": "src/",
+            "Arzcode\\Finisterre\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Buzkall\\Finisterre\\Tests\\": "tests/",
+            "Arzcode\\Finisterre\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/",
             "Workbench\\Database\\Factories\\": "workbench/database/factories/",
             "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
@@ -93,10 +93,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Buzkall\\Finisterre\\FinisterreServiceProvider"
+                "Arzcode\\Finisterre\\FinisterreServiceProvider"
             ],
             "aliases": {
-                "Finisterre": "Buzkall\\Finisterre\\Facades\\Finisterre"
+                "Finisterre": "Arzcode\\Finisterre\\Facades\\Finisterre"
             }
         }
     },

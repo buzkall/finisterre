@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Models;
+namespace Arzcode\Finisterre\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

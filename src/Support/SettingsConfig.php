@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Support;
+namespace Arzcode\Finisterre\Support;
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Spatie\LaravelSettings\Migrations\SettingsMigrator;
 use Throwable;
 

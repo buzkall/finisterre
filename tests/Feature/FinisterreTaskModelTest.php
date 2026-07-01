@@ -1,8 +1,8 @@
 <?php
 
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskChange;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;

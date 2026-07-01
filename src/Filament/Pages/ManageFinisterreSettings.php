@@ -1,13 +1,13 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Pages;
+namespace Arzcode\Finisterre\Filament\Pages;
 
 use BackedEnum;
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Settings\FinisterreSettings;
-use Buzkall\Finisterre\Traits\HasIconOptions;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Traits\HasIconOptions;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;

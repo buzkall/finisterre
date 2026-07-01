@@ -1,13 +1,13 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources;
+namespace Arzcode\Finisterre\Filament\Resources;
 
 use BackedEnum;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Pages;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas\Form as TaskForm;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTable;
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Form as TaskForm;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTable;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;

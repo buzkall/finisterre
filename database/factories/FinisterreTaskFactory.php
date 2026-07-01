@@ -1,10 +1,10 @@
 <?php
 
-namespace Buzkall\Finisterre\Database\Factories;
+namespace Arzcode\Finisterre\Database\Factories;
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class FinisterreTaskFactory extends Factory

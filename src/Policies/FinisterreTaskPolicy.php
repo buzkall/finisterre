@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Policies;
+namespace Arzcode\Finisterre\Policies;
 
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 class FinisterreTaskPolicy

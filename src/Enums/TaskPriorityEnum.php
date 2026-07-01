@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Enums;
+namespace Arzcode\Finisterre\Enums;
 
-use Buzkall\Finisterre\Traits\HasEnumFunctions;
+use Arzcode\Finisterre\Traits\HasEnumFunctions;
 use Filament\Support\Contracts\HasLabel;
 
 enum TaskPriorityEnum: string implements HasLabel

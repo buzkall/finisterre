@@ -1,6 +1,6 @@
 <?php
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;

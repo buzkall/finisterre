@@ -1,7 +1,7 @@
 <?php
 
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskChange;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;

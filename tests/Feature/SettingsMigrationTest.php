@@ -1,6 +1,6 @@
 <?php
 
-use Buzkall\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function() {

@@ -16,7 +16,7 @@
     backupStaticProperties="false"
 >
     <testsuites>
-        <testsuite name="Buzkall Test Suite">
+        <testsuite name="Arzcode Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

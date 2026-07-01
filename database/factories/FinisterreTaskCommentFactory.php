@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Database\Factories;
+namespace Arzcode\Finisterre\Database\Factories;
 
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class FinisterreTaskCommentFactory extends Factory

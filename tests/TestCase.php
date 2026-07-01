@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Tests;
+namespace Arzcode\Finisterre\Tests;
 
-use Buzkall\Finisterre\FinisterreServiceProvider;
+use Arzcode\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Livewire\Livewire;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -16,7 +16,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn(string $modelName) => 'Buzkall\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+            fn(string $modelName) => 'Arzcode\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
 
         // Configure factory for User model
@@ -25,7 +25,7 @@ class TestCase extends Orchestra
                 return 'Workbench\\Database\\Factories\\UserFactory';
             }
 
-            return 'Buzkall\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory';
+            return 'Arzcode\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory';
         });
     }
 

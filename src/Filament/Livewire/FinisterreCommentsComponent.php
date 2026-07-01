@@ -1,12 +1,12 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Livewire;
+namespace Arzcode\Finisterre\Filament\Livewire;
 
-use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
-use Buzkall\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\AuthenticatableFilter;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;

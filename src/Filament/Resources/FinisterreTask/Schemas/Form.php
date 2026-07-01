@@ -1,14 +1,14 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Schemas;
+namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
-use Buzkall\Finisterre\Contracts\FinisterreReportable;
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Filament\Forms\Components\SubtasksField;
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Models\FinisterreTag;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Contracts\FinisterreReportable;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Filament\Forms\Components\SubtasksField;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Models\FinisterreTag;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;

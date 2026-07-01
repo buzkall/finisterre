@@ -1,8 +1,8 @@
 <?php
 
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
-use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
+use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;

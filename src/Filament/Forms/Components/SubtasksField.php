@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Forms\Components;
+namespace Arzcode\Finisterre\Filament\Forms\Components;
 
 use Filament\Forms\Components\Field;
 

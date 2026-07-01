@@ -1,7 +1,7 @@
 <div class="flex flex-col h-full space-y-4">
     <x-filament-actions::modals />
 
-    @if (auth()->user()->can('create', \Buzkall\Finisterre\Models\FinisterreTaskComment::class))
+    @if (auth()->user()->can('create', \Arzcode\Finisterre\Models\FinisterreTaskComment::class))
         <div class="space-y-4">
             {{ $this->form }}
 

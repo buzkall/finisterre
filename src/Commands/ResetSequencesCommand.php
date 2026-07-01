@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Commands;
+namespace Arzcode\Finisterre\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

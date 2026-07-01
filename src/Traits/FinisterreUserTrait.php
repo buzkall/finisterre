@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Traits;
+namespace Arzcode\Finisterre\Traits;
 
-use Buzkall\Finisterre\Models\FinisterreTaskChange;
-use Buzkall\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Models\FinisterreTaskChange;
+use Arzcode\Finisterre\Support\AuthenticatableFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Expression;

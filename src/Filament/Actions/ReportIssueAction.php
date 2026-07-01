@@ -1,10 +1,10 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Actions;
+namespace Arzcode\Finisterre\Filament\Actions;
 
-use Buzkall\Finisterre\Contracts\FinisterreReportable;
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Contracts\FinisterreReportable;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;

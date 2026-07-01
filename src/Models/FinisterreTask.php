@@ -1,13 +1,13 @@
 <?php
 
-namespace Buzkall\Finisterre\Models;
+namespace Arzcode\Finisterre\Models;
 
-use Buzkall\Finisterre\Contracts\FinisterreReportable;
-use Buzkall\Finisterre\Database\Factories\FinisterreTaskFactory;
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Observers\FinisterreTaskObserver;
+use Arzcode\Finisterre\Contracts\FinisterreReportable;
+use Arzcode\Finisterre\Database\Factories\FinisterreTaskFactory;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Illuminate\Contracts\Auth\Authenticatable;

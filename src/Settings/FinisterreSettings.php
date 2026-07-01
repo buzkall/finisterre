@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Settings;
+namespace Arzcode\Finisterre\Settings;
 
 use Spatie\LaravelSettings\Settings;
 

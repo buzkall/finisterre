@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Widgets;
+namespace Arzcode\Finisterre\Filament\Widgets;
 
-use Buzkall\Finisterre\Models\FinisterreTag;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTag;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;

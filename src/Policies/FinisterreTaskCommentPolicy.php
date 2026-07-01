@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Policies;
+namespace Arzcode\Finisterre\Policies;
 
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 class FinisterreTaskCommentPolicy

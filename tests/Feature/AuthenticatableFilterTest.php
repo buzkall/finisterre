@@ -1,7 +1,7 @@
 <?php
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Support\AuthenticatableFilter;
 
 it('wraps a scalar filter value in an array', function() {
     config(['finisterre.authenticatable_filter_value' => 'admin']);

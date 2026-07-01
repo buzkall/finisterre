@@ -2,10 +2,10 @@
 
 namespace Workbench\App\Models;
 
-use Buzkall\Finisterre\Contracts\FinisterreContract;
-use Buzkall\Finisterre\Contracts\FinisterreReportable;
-use Buzkall\Finisterre\Traits\FinisterreUserTrait;
-use Buzkall\Finisterre\Traits\InteractsWithFinisterreReports;
+use Arzcode\Finisterre\Contracts\FinisterreContract;
+use Arzcode\Finisterre\Contracts\FinisterreReportable;
+use Arzcode\Finisterre\Traits\FinisterreUserTrait;
+use Arzcode\Finisterre\Traits\InteractsWithFinisterreReports;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;

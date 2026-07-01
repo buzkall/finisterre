@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Controllers;
+namespace Arzcode\Finisterre\Controllers;
 
-use Buzkall\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Support\AuthenticatableFilter;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;

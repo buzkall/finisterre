@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Notifications;
+namespace Arzcode\Finisterre\Notifications;
 
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

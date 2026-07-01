@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Notifications\Concerns;
+namespace Arzcode\Finisterre\Notifications\Concerns;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Storage;

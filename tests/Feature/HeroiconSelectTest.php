@@ -1,6 +1,6 @@
 <?php
 
-use Buzkall\Finisterre\Filament\Pages\ManageFinisterreSettings;
+use Arzcode\Finisterre\Filament\Pages\ManageFinisterreSettings;
 
 function invokeHeroiconMethod(string $method, mixed ...$args): mixed
 {

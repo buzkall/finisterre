@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Traits;
+namespace Arzcode\Finisterre\Traits;
 
 trait HasEnumFunctions
 {

@@ -1,32 +1,39 @@
 # Finisterre
 
-My helper package
+A Filament plugin that adds a full task-management system to your panel: a Kanban board, task assignments,
+threaded and schedulable comments, email and SMS notifications, issue reporting from any of your own models, and an
+in-app settings page. Works with Filament v4/v5 — for Filament 3, use the [v1 branch](#quick-install-recommended).
 
 ## Installation
 
 ### Quick install (recommended)
 
 ```bash
-composer require buzkall/finisterre
+composer require arzcode/finisterre
 php artisan finisterre:install
 ```
 
-The install command does everything wiring-related in one shot: publishes the config and migrations, asks to run them, enables Finisterre (active in every environment by default — manage it from the settings page), runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every `app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Then run `npm run build`.
+The installation command does everything wiring-related in one shot: publishes the config and migrations, asks to run
+them, enables Finisterre (active in every environment by default — manage it from the settings page), runs
+`php artisan filament:assets`, injects `FinisterrePlugin::make()` into every
+`app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the
+Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Then run `npm run build`.
 
-For each step the command falls back to a printed instruction if your project doesn't match the expected shape (different panel directory, custom User location, no Filament theme, etc.).
+For each step the command falls back to a printed instruction if your project doesn't match the expected shape
+(different panel directory, custom User location, no Filament theme, etc.).
 
 For Filament 3, use the v1 branch:
 
 ```bash
-composer require buzkall/finisterre:^1.0
+composer require arzcode/finisterre:^1.0
 ```
 
 ### Manual installation
 
-If you'd rather wire things by hand, the package ships the usual publishables. Start with:
+If you'd rather wire things by hand, the package ships the usual "publishables". Start with:
 
 ```bash
-composer require buzkall/finisterre
+composer require arzcode/finisterre
 php artisan vendor:publish --tag="finisterre-config"
 ```
 
@@ -38,13 +45,8 @@ php artisan filament:assets
 
 Without this step, the kanban board will load but drag-and-drop will not work due to missing JavaScript assets.
 
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="finisterre-config"
-```
-
-By default, the package is active in every environment. To restrict it to specific environments, set a comma-separated list in your `.env` file (or edit it later from the settings page):
+By default, the package is active in every environment. To restrict it to specific environments, set a comma-separated
+list in your `.env` file (or edit it later from the settings page):
 
 ```bash
 FINISTERRE_ENVIRONMENTS=local,production
@@ -86,7 +88,7 @@ You can change the model in the config file and the name attribute column
 Also, there is a trait to be included in the user's model
 
 ```
-use Buzkall\Finisterre\Traits\FinisterreUserTrait;
+use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 ```
 
 Optionally, you can publish the views using
@@ -95,22 +97,19 @@ Optionally, you can publish the views using
 php artisan vendor:publish --tag="finisterre-views"
 ```
 
-**Important:** You must publish Filament assets (including Flowforge kanban JavaScript) with:
-
-```bash
-php artisan filament:assets
-```
-
-This command publishes all Filament plugin assets, including the Flowforge kanban board JavaScript required for drag-and-drop functionality. **Run this command after installing or updating the package**, otherwise the kanban board will load but drag-and-drop will not work.
-
 ## Filament Theme CSS
 
-> **Required.** Following Filament v5 guidance, this package ships **raw CSS only** — it no longer compiles a Tailwind stylesheet of its own. The utility classes used in its Blade views are compiled by **your** application's Filament theme. Without the `@source` lines below the kanban board and task views will render unstyled.
+> **Required.** Following Filament v5 guidance, this package ships **raw CSS only** — it no longer compiles a Tailwind
+> stylesheet of its own. The utility classes used in its Blade views are compiled by **your** application's Filament
+> theme. Without the `@source` lines below the kanban board and task views will render unstyled.
 
-You need a [custom Filament theme](https://filamentphp.com/docs/4.x/styling/overview) (`php artisan make:filament-theme`). Add the following lines to your theme's CSS file (e.g. `resources/css/filament/admin/theme.css`) so Tailwind scans the package views for classes, then rebuild your theme (`npm run build`):
+You need a [custom Filament theme](https://filamentphp.com/docs/4.x/styling/overview) (
+`php artisan make:filament-theme`). Add the following lines to your theme's CSS file (e.g.
+`resources/css/filament/admin/theme.css`) so Tailwind scans the package views for classes, then rebuild your theme (
+`npm run build`):
 
 ```css
-@source '../../../../vendor/buzkall/finisterre/resources/views';
+@source '../../../../vendor/arzcode/finisterre/resources/views';
 @source '../../../../vendor/relaticle/flowforge/resources/views';
 ```
 
@@ -119,7 +118,7 @@ The installer adds these lines automatically to each detected theme file.
 The package comes with a default policy for the tasks that can be overridden in the config file and set your own policy
 
 ```php
-'model_policy' => Buzkall\Finisterre\Policies\FinisterreTaskPolicy::class,
+'model_policy' => Arzcode\Finisterre\Policies\FinisterreTaskPolicy::class,
 ``` 
 
 ## Usage
@@ -127,7 +126,7 @@ The package comes with a default policy for the tasks that can be overridden in 
 Add the plugin to your panel provider. By default every authenticated user can view all tasks — no closure needed:
 
 ```php
-use Buzkall\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\FinisterrePlugin;
 
 public function panel(Panel $panel): Panel
 {
@@ -144,18 +143,36 @@ To restrict access by role, pass closures to the corresponding `user…` setters
 FinisterrePlugin::make()
     ->userCanViewAllTasks(fn() => auth()->user()?->hasRole(RoleEnum::Admin))
     ->userCanViewOnlyTheirTasks(fn() => auth()->user()?->hasAnyRole([RoleEnum::Editor, RoleEnum::Manager]))
-    ->userCanScheduleComments(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
+    ->userCanScheduleComments(fn() => auth()->user()?->hasRole(RoleEnum::Admin))
+    ->userCanConfigureFinisterre(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
 ```
 
-### Displaying a user's full name
+## Settings page
 
-`finisterre.authenticatable_attribute` accepts either a single column (default `'name'`) or an array of columns to concatenate for display:
+Most configuration can be managed at runtime from an in-app **settings page** instead of editing the config file. It is
+opened from a header action (⚙️) on the Kanban board — it is intentionally hidden from the navigation menu — and is
+gated by `userCanConfigureFinisterre()` (allowed for everyone by default; see the closure above).
+
+Values are stored in the database and take precedence over `config/finisterre.php` at runtime, so admins can change them
+without a deploy. The page covers:
+
+- **General** — active environments and the Filament panel slug.
+- **Tasks** — statuses to hide from the board, and the fallback user notified when a task has no assignee.
+- **Assignable users filter** — column/value used to limit who can be assigned tasks (e.g. `role` = `admin`).
+- **Comments** — whether to show avatars, and the heroicons used for the comment actions.
+- **SMS** — enable/disable and credentials for SMS notifications (see [SMS notifications](#sms-notifications)).
+
+## Displaying a user's full name
+
+`finisterre.authenticatable_attribute` accepts either a single column (default `'name'`) or an array of columns to
+concatenate for display:
 
 ```php
 'authenticatable_attribute' => ['name', 'lastname'],
 ```
 
-With an array, the package shows `"John Doe"` in every user-facing select (task assignee, filter, kanban, comment notify list) and uses `CONCAT_WS(' ', ...)` for SQL-level selects. Columns must exist on the `users` table.
+With an array, the package shows `"John Doe"` in every user-facing select (task assignee, filter, kanban, comment notify
+list) and uses `CONCAT_WS(' ', ...)` for SQL-level selects. Columns must exist on the `users` table.
 
 ## Kanban ordering
 
@@ -203,7 +220,8 @@ FINISTERRE_SMS_NOTIFY_TO=CHANGE
 
 ## Reporting issues from your own models
 
-Any model in your app can let users open a Finisterre task against a specific record. The task stores a polymorphic `subject` pointing back to that record, and the task form shows a link to it.
+Any model in your app can let users open a Finisterre task against a specific record. The task stores a polymorphic
+`subject` pointing back to that record, and the task form shows a link to it.
 
 First publish and run the migration that adds the `subject` columns to the tasks table:
 
@@ -212,11 +230,12 @@ php artisan vendor:publish --tag="finisterre-migrations"
 php artisan migrate
 ```
 
-Make the model implement `FinisterreReportable`. The `InteractsWithFinisterreReports` trait provides sensible defaults (a `ClassName (#id)` label and a link inferred from the model's Filament resource edit/view page):
+Make the model implement `FinisterreReportable`. The `InteractsWithFinisterreReports` trait provides sensible defaults (
+a `ClassName (#id)` label and a link inferred from the model's Filament resource edit/view page):
 
 ```php
-use Buzkall\Finisterre\Contracts\FinisterreReportable;
-use Buzkall\Finisterre\Traits\InteractsWithFinisterreReports;
+use Arzcode\Finisterre\Contracts\FinisterreReportable;
+use Arzcode\Finisterre\Traits\InteractsWithFinisterreReports;
 
 class Order extends Model implements FinisterreReportable
 {
@@ -238,10 +257,12 @@ public function getFinisterreReportUrl(): ?string
 }
 ```
 
-Then add `ReportIssueAction` wherever the record is available (a resource page, table row, infolist, etc.). It opens a modal asking for a title, description and attachments (images, PDF and videos up to 3&nbsp;MB), and associates the created task with the record:
+Then add `ReportIssueAction` wherever the record is available (a resource page, table row, infolist, etc.). It opens a
+modal asking for a title, description and attachments (images, PDF and videos up to 3&nbsp;MB), and associates the
+created task with the record:
 
 ```php
-use Buzkall\Finisterre\Filament\Actions\ReportIssueAction;
+use Arzcode\Finisterre\Filament\Actions\ReportIssueAction;
 
 ReportIssueAction::make();
 ```
@@ -252,7 +273,9 @@ TODO
 
 ## Development
 
-The package ships raw CSS (`resources/css/app.css`) with no Tailwind build — utility classes in the views are compiled by the host application's theme via the `@source` lines above. There is no JavaScript build step. Run `php artisan filament:assets` in the host application to publish the package's assets.
+The package ships raw CSS (`resources/css/app.css`) with no Tailwind build — utility classes in the views are compiled
+by the host application's theme via the `@source` lines above. There is no JavaScript build step. Run
+`php artisan filament:assets` in the host application to publish the package's assets.
 
 ## Testing
 

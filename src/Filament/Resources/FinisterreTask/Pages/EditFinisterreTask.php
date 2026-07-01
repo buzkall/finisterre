@@ -1,11 +1,11 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Resources\FinisterreTask\Pages;
+namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
 
-use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
-use Buzkall\Finisterre\FinisterrePlugin;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
+use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Facades\Filament;

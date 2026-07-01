@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Contracts;
+namespace Arzcode\Finisterre\Contracts;
 
 interface FinisterreReportable
 {

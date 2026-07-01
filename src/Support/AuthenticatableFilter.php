@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Support;
+namespace Arzcode\Finisterre\Support;
 
 use BackedEnum;
 

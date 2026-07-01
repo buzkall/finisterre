@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Notifications;
+namespace Arzcode\Finisterre\Notifications;
 
 class SMSChannel
 {

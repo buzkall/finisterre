@@ -1,6 +1,6 @@
 <?php
 
-use Buzkall\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Support\SettingsConfig;
 use Spatie\LaravelSettings\Migrations\SettingsMigration;
 
 return new class extends SettingsMigration

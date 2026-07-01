@@ -1,6 +1,6 @@
 <?php
 
-namespace Buzkall\Finisterre\Contracts;
+namespace Arzcode\Finisterre\Contracts;
 
 use Illuminate\Database\Eloquent\Builder;
 

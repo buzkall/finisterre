@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\User;
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
-use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
+use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 
 return [
     // The behavioral options below (environments, slug, hidden_statuses,
@@ -46,7 +46,7 @@ return [
     //        ],
     // 3. Add the route controller to the bootstrap app.php file in withRouting
     // then: function() {
-    //          (new Buzkall\FinisterrePlugin\Controllers\FilamentRouteController)();
+    //          (new Arzcode\FinisterrePlugin\Controllers\FilamentRouteController)();
     //       }
     'attachments_disk' => 'public', // finisterre
 

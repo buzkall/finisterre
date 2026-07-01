@@ -1,10 +1,10 @@
 <?php
 
-namespace Buzkall\Finisterre\Observers;
+namespace Arzcode\Finisterre\Observers;
 
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Notifications\TaskNotification;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Notifications\TaskNotification;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 

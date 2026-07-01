@@ -1,9 +1,9 @@
 <?php
 
-namespace Buzkall\Finisterre\Notifications;
+namespace Arzcode\Finisterre\Notifications;
 
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
-use Buzkall\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

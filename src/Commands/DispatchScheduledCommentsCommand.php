@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Commands;
+namespace Arzcode\Finisterre\Commands;
 
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Illuminate\Console\Command;
 
 class DispatchScheduledCommentsCommand extends Command

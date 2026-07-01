@@ -1,18 +1,18 @@
 <?php
 
-namespace Buzkall\Finisterre;
+namespace Arzcode\Finisterre;
 
-use Buzkall\Finisterre\Commands\DispatchScheduledCommentsCommand;
-use Buzkall\Finisterre\Commands\ResetSequencesCommand;
-use Buzkall\Finisterre\Commands\UninstallCommand;
-use Buzkall\Finisterre\Filament\Livewire\FilterTasks;
-use Buzkall\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
-use Buzkall\Finisterre\Policies\FinisterreTaskCommentPolicy;
-use Buzkall\Finisterre\Policies\FinisterreTaskPolicy;
-use Buzkall\Finisterre\Settings\FinisterreSettings;
-use Buzkall\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
+use Arzcode\Finisterre\Commands\ResetSequencesCommand;
+use Arzcode\Finisterre\Commands\UninstallCommand;
+use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
+use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
+use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
+use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Support\SettingsConfig;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule;
@@ -240,7 +240,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         $target = trim($panelSlug . '/' . $slug, '/');
 
         foreach (app('router')->getRoutes()->getRoutes() as $route) {
-            if (str_starts_with(ltrim($route->getActionName(), '\\'), 'Buzkall\\Finisterre\\')) {
+            if (str_starts_with(ltrim($route->getActionName(), '\\'), 'Arzcode\\Finisterre\\')) {
                 continue;
             }
 
@@ -292,7 +292,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 continue;
             }
 
-            $withImport = $this->addUseImport($contents, 'Buzkall\Finisterre\FinisterrePlugin');
+            $withImport = $this->addUseImport($contents, 'Arzcode\Finisterre\FinisterrePlugin');
 
             // Inject into an existing ->plugins([…]) call, or add a new one to
             // the $panel chain when the provider doesn't have one yet.
@@ -329,7 +329,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             return;
         }
 
-        $patched = $this->addUseImport($contents, 'Buzkall\Finisterre\Traits\FinisterreUserTrait');
+        $patched = $this->addUseImport($contents, 'Arzcode\Finisterre\Traits\FinisterreUserTrait');
         $patched = $this->addTraitInsideClass($patched, 'FinisterreUserTrait');
 
         if ($patched === null) {
@@ -356,7 +356,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // their Tailwind utilities compiled into the host theme, otherwise the
         // task board renders unstyled.
         $sourceLines = [
-            'buzkall/finisterre/resources/views'  => "@source '../../../../vendor/buzkall/finisterre/resources/views/**/*.blade.php';",
+            'arzcode/finisterre/resources/views'  => "@source '../../../../vendor/arzcode/finisterre/resources/views/**/*.blade.php';",
             'relaticle/flowforge/resources/views' => "@source '../../../../vendor/relaticle/flowforge/resources/views/**/*.blade.php';",
         ];
 
@@ -644,7 +644,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         if (class_exists(FilamentAsset::class) && class_exists(Css::class)) {
             FilamentAsset::register(
                 [Css::make('finisterre-styles', __DIR__ . '/../resources/css/app.css')],
-                package: 'buzkall/finisterre'
+                package: 'arzcode/finisterre'
             );
         }
 

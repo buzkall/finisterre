@@ -1,13 +1,13 @@
 <?php
 
-namespace Buzkall\Finisterre\Filament\Pages;
+namespace Arzcode\Finisterre\Filament\Pages;
 
-use Buzkall\Finisterre\Enums\TaskStatusEnum;
-use Buzkall\Finisterre\Facades\Finisterre;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
-use Buzkall\Finisterre\Filament\Widgets\FilterTasksWidget;
-use Buzkall\Finisterre\Models\FinisterreTag;
-use Buzkall\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Facades\Finisterre;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
+use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
+use Arzcode\Finisterre\Models\FinisterreTag;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;

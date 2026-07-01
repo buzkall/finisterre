@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Observers;
+namespace Arzcode\Finisterre\Observers;
 
-use Buzkall\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
 
 class FinisterreTaskCommentObserver
 {

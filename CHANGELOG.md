@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.0.0 - 2026-07-01
+
+**Breaking:** Renamed the package from `buzkall/finisterre` to `arzcode/finisterre` and the PHP namespace from `Buzkall\Finisterre` to `Arzcode\Finisterre`. Consumers must update their `composer require` to `arzcode/finisterre` and replace any `use Buzkall\Finisterre\…` imports (plugin, traits, contracts, policies, actions) with `Arzcode\Finisterre\…`. Also update the Tailwind `@source` line to `vendor/arzcode/finisterre/resources/views`. All other references (homepage, author, published asset paths under `public/css|js/arzcode/finisterre`) were updated to match.
+
+Documentation: replaced the placeholder tagline with a real package description, added a **Settings page** section documenting the in-app configuration page (and the `userCanConfigureFinisterre()` gate), and trimmed duplicated `filament:assets` / config-publish instructions from the README.
+
 ## 3.3.0 - 2026-07-01
 
 Task notification emails now include the related record (the polymorphic `subject`) when a task was reported against one, showing its resource type, label, and a deep link when available — the same information already displayed in the task view. `FinisterreTask::subjectReportLink()` now resolves the Filament resource defensively so it renders safely inside queued notifications where no panel is bootstrapped.
@@ -53,9 +59,9 @@ a shared `SettingsConfig::defaults()` now also used by the migration, so the two
 the board-slug prompt fires again and picks a free path when the default (`tasks`) collides with an existing host route.
 
 The `finisterre:uninstall` command now runs the final cleanup itself instead of printing instructions: it executes
-`composer remove buzkall/finisterre` and then `npm run build` (stopping with a hint to run the command manually if
+`composer remove arzcode/finisterre` and then `npm run build` (stopping with a hint to run the command manually if
 either fails). It also now deletes the published assets that `php artisan filament:assets` copied into the host's
-`public/` folder (`public/css/buzkall/finisterre`, `public/js/relaticle/flowforge`, `public/css/relaticle/flowforge`),
+`public/` folder (`public/css/arzcode/finisterre`, `public/js/relaticle/flowforge`, `public/css/relaticle/flowforge`),
 and matches all eight published migration files by their known base names instead of a `*finisterre*` glob — the
 previous glob missed `add_task_changes_table`, which has no "finisterre" in its file name.
 
@@ -554,7 +560,7 @@ First approach to notifications
 
 ## 1.1.0 - 2024-11-18
 
-**Full Changelog**: https://github.com/buzkall/finisterre/compare/1.0.0...1.1.0
+**Full Changelog**: https://github.com/arzcode/finisterre/compare/1.0.0...1.1.0
 
 ## 1.0.0 - 2024-11-18
 

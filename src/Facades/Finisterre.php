@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Facades;
+namespace Arzcode\Finisterre\Facades;
 
-use Buzkall\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\FinisterrePlugin;
 use Illuminate\Support\Facades\Facade;
 
 /**

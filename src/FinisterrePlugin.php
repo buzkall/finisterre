@@ -1,11 +1,11 @@
 <?php
 
-namespace Buzkall\Finisterre;
+namespace Arzcode\Finisterre;
 
-use Buzkall\Finisterre\Filament\Pages\ManageFinisterreSettings;
-use Buzkall\Finisterre\Filament\Pages\TasksKanbanBoard;
-use Buzkall\Finisterre\Filament\Resources\FinisterreTaskResource;
-use Buzkall\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Filament\Pages\ManageFinisterreSettings;
+use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
+use Arzcode\Finisterre\Support\SettingsConfig;
 use Closure;
 use Filament\Contracts\Plugin;
 use Filament\Facades\Filament;

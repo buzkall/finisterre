@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Traits;
+namespace Arzcode\Finisterre\Traits;
 
-use Buzkall\Finisterre\Contracts\FinisterreReportable;
+use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Filament\Facades\Filament;
 use Throwable;
 

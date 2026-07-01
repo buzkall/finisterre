@@ -1,8 +1,8 @@
 <?php
 
-namespace Buzkall\Finisterre\Commands;
+namespace Arzcode\Finisterre\Commands;
 
-use Buzkall\Finisterre\FinisterreServiceProvider;
+use Arzcode\Finisterre\FinisterreServiceProvider;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
@@ -73,7 +73,7 @@ class UninstallCommand extends Command
             }
 
             $patched = $this->removeLinesContaining($contents, 'FinisterrePlugin::make()');
-            $patched = $this->removeUseImport($patched, 'Buzkall\Finisterre\FinisterrePlugin');
+            $patched = $this->removeUseImport($patched, 'Arzcode\Finisterre\FinisterrePlugin');
 
             file_put_contents($file, $patched);
             $this->info(sprintf('Removed FinisterrePlugin from %s.', $relative));
@@ -100,7 +100,7 @@ class UninstallCommand extends Command
         }
 
         $patched = preg_replace('/^[ \t]*use\s+FinisterreUserTrait\s*;[ \t]*\r?\n/m', '', $contents) ?? $contents;
-        $patched = $this->removeUseImport($patched, 'Buzkall\Finisterre\Traits\FinisterreUserTrait');
+        $patched = $this->removeUseImport($patched, 'Arzcode\Finisterre\Traits\FinisterreUserTrait');
 
         if (str_contains($patched, 'FinisterreUserTrait')) {
             $this->warn(sprintf('FinisterreUserTrait still referenced in %s — remove it manually (it may be grouped with other traits).', $relative));
@@ -121,7 +121,7 @@ class UninstallCommand extends Command
         }
 
         $markers = [
-            'buzkall/finisterre/resources/views',
+            'arzcode/finisterre/resources/views',
             'relaticle/flowforge/resources/views',
         ];
 
@@ -129,7 +129,7 @@ class UninstallCommand extends Command
             $contents = (string)file_get_contents($file);
             $relative = $this->relativePath($file);
 
-            if (! str_contains($contents, 'buzkall/finisterre/resources/views') && ! str_contains($contents, 'relaticle/flowforge/resources/views')) {
+            if (! str_contains($contents, 'arzcode/finisterre/resources/views') && ! str_contains($contents, 'relaticle/flowforge/resources/views')) {
                 $this->line(sprintf('No Finisterre @source in %s — skipping.', $relative));
 
                 continue;
@@ -252,8 +252,8 @@ class UninstallCommand extends Command
         // public/ folder, named after the owning package. Removing the package
         // won't clean these, so delete them explicitly.
         $dirs = [
-            public_path('css/buzkall/finisterre'),
-            public_path('js/buzkall/finisterre'),
+            public_path('css/arzcode/finisterre'),
+            public_path('js/arzcode/finisterre'),
             public_path('js/relaticle/flowforge'),
             public_path('css/relaticle/flowforge'),
         ];
@@ -308,7 +308,7 @@ class UninstallCommand extends Command
     protected function runFinalSteps(): void
     {
         $commands = [
-            'composer remove buzkall/finisterre' => 'Removing the buzkall/finisterre package…',
+            'composer remove arzcode/finisterre' => 'Removing the arzcode/finisterre package…',
             'npm run build'                      => 'Recompiling your Filament theme without Finisterre…',
         ];
 

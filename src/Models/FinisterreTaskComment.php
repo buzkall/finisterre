@@ -1,11 +1,11 @@
 <?php
 
-namespace Buzkall\Finisterre\Models;
+namespace Arzcode\Finisterre\Models;
 
-use Buzkall\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
-use Buzkall\Finisterre\Notifications\ScheduledCommentSentNotification;
-use Buzkall\Finisterre\Notifications\TaskCommentNotification;
-use Buzkall\Finisterre\Observers\FinisterreTaskCommentObserver;
+use Arzcode\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
+use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
+use Arzcode\Finisterre\Notifications\TaskCommentNotification;
+use Arzcode\Finisterre\Observers\FinisterreTaskCommentObserver;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;

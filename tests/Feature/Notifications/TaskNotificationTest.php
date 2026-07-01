@@ -1,8 +1,8 @@
 <?php
 
-use Buzkall\Finisterre\Enums\TaskPriorityEnum;
-use Buzkall\Finisterre\Models\FinisterreTask;
-use Buzkall\Finisterre\Notifications\TaskNotification;
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Notifications\TaskNotification;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\Messages\MailMessage;
