@@ -2,12 +2,12 @@
 
 namespace Arzcode\Finisterre\Filament\Pages;
 
-use BackedEnum;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Traits\HasIconOptions;
+use BackedEnum;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
