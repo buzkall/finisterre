@@ -146,8 +146,14 @@ class FinisterreTask extends Model implements HasMedia
             return null;
         }
 
-        /** @var class-string<\Filament\Resources\Resource>|null $resource */
-        $resource = Filament::getModelResource($subject);
+        // Resolve the resource label defensively: this method is also rendered inside queued
+        // notifications, where no Filament panel is bootstrapped and getModelResource() would throw.
+        try {
+            /** @var class-string<\Filament\Resources\Resource>|null $resource */
+            $resource = Filament::getModelResource($subject);
+        } catch (\Throwable) {
+            $resource = null;
+        }
         $type = e(Str::headline($resource ? $resource::getModelLabel() : class_basename($subject)));
         $label = e($subject->getFinisterreReportLabel());
         $url = $subject->getFinisterreReportUrl();

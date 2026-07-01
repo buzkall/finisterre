@@ -2,6 +2,15 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 3.3.0 - 2026-07-01
+
+Task notification emails now include the related record (the polymorphic `subject`) when a task was reported against one, showing its resource type, label, and a deep link when available — the same information already displayed in the task view. `FinisterreTask::subjectReportLink()` now resolves the Filament resource defensively so it renders safely inside queued notifications where no panel is bootstrapped.
+
+Fix two CI failures:
+
+- **PHPStan**: `Call to an undefined method Illuminate\Database\Eloquent\Model::notify()` on `FinisterreTaskComment::deliver()`. The `creator()` relation targets the configurable `finisterre.authenticatable` model, which PHPStan resolves to the base `Eloquent\Model` (the `notify()` method comes from the app user's `Notifiable` trait). Added the same `@phpstan-ignore-line method.notFound` annotation already used in `FinisterreTaskObserver`.
+- **run-tests**: dependency install failed on the Windows + Laravel 13 + `prefer-stable` job. The Windows runner stripped the `^` from the `pestphp/pest*` version constraints passed to `composer require`, turning `^4.0` into `4.0` (i.e. `4.0.*`) and pinning `pest-plugin-laravel` to `4.0.0`, which has no Laravel 13 support. Since these constraints are identical across the whole matrix and already declared in `composer.json` `require-dev`, removed them from the CI `composer require` line (and the matrix `include`) so `composer update` resolves them from `composer.json` instead.
+
 ## 3.2.1 - 2026-06-22
 
 Fix the **"Asignada a" (assignee)** select showing no options when the assignable-users filter value was configured with more than one value through the settings page. The settings page stores `authenticatable_filter_value` as a comma-separated string (e.g. `super_admin,admin_l1`), but `AuthenticatableFilter::values()` wrapped the whole string in a single-element array, producing `whereIn('role', ['super_admin,admin_l1'])` which matched zero rows. It now splits comma-separated strings into individual, trimmed values. Added a helper text to the settings field documenting the comma-separated format.

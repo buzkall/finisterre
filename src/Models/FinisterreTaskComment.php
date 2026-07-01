@@ -115,7 +115,7 @@ class FinisterreTaskComment extends Model implements HasMedia
         $this->forceFill(['sent_at' => now()])->save();
 
         if ($wasScheduled) {
-            $this->creator?->notify(new ScheduledCommentSentNotification($this));
+            $this->creator?->notify(new ScheduledCommentSentNotification($this)); // @phpstan-ignore-line method.notFound
         }
 
         return $notified;

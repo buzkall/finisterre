@@ -27,15 +27,9 @@ jobs:
           - laravel: 13.*
             testbench: 11.*
             carbon: ^3.0
-            pest: ^4.0
-            pest-plugin-arch: ^4.0
-            pest-plugin-laravel: ^4.0
           - laravel: 12.*
             testbench: 10.*
             carbon: ^3.0
-            pest: ^4.0
-            pest-plugin-arch: ^4.0
-            pest-plugin-laravel: ^4.0
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
@@ -57,7 +51,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.os == 'windows-latest' && '^^^' || '' }}${{ matrix.carbon }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-arch:${{ matrix.pest-plugin-arch }}" "pestphp/pest-plugin-laravel:${{ matrix.pest-plugin-laravel }}" --dev --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.os == 'windows-latest' && '^^^' || '' }}${{ matrix.carbon }}" --dev --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: List Installed Dependencies

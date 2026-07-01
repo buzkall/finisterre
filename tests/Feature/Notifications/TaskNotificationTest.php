@@ -26,6 +26,12 @@ beforeEach(function() {
         'media-library.media_model'             => Media::class,
     ]);
 
+    if (! Schema::hasColumn('finisterre_tasks', 'subject_id')) {
+        Schema::table('finisterre_tasks', function(Blueprint $table) {
+            $table->nullableMorphs('subject');
+        });
+    }
+
     if (! Schema::hasTable('finisterre_task_changes')) {
         Schema::create('finisterre_task_changes', function(Blueprint $table) {
             $table->id();
@@ -133,6 +139,30 @@ it('can build mail message for new task', function() {
     $mailMessage = $notification->toMail($user);
 
     expect($mailMessage)->toBeInstanceOf(MailMessage::class);
+});
+
+it('includes the related record in the mail when the task has a reportable subject', function() {
+    $subject = User::factory()->create();
+    $task = FinisterreTask::factory()->create();
+    $task->subject()->associate($subject)->save();
+
+    $notification = new TaskNotification($task);
+    $mailMessage = $notification->toMail(User::factory()->create());
+
+    $body = collect($mailMessage->introLines)->map(fn($line) => (string)$line)->implode("\n");
+
+    expect($body)->toContain($subject->getFinisterreReportLabel());
+});
+
+it('omits the related record line when the task has no subject', function() {
+    $task = FinisterreTask::factory()->create();
+
+    $notification = new TaskNotification($task);
+    $mailMessage = $notification->toMail(User::factory()->create());
+
+    $body = collect($mailMessage->introLines)->map(fn($line) => (string)$line)->implode("\n");
+
+    expect($body)->not->toContain(' (#');
 });
 
 it('can build mail message for updated task', function() {

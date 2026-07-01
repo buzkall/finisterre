@@ -32,6 +32,8 @@ class TaskNotification extends Notification implements ShouldQueue
     {
         $visibleComments = $this->task->comments->reject(fn($comment) => $comment->isPending());
 
+        $relatedRecord = $this->task->subjectReportLink();
+
         $mail = (new MailMessage)
             ->theme('finisterre::themes.finisterre')
             ->subject(__(
@@ -45,6 +47,7 @@ class TaskNotification extends Notification implements ShouldQueue
             )
             ->line(new HtmlString('<style>img {height: auto !important}</style>'))
             ->line(__('finisterre::finisterre.created_by') . ': ' . $this->task->creatorName())
+            ->when($relatedRecord, fn(MailMessage $mail) => $mail->line($relatedRecord))
             ->when(
                 empty($this->taskChanges),
                 fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description))),
