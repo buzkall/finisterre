@@ -4,6 +4,10 @@ A Filament plugin that adds a full task-management system to your panel: a Kanba
 threaded and schedulable comments, email and SMS notifications, issue reporting from any of your own models, and an
 in-app settings page. Works with Filament v4/v5 — for Filament 3, use the [v1 branch](#quick-install-recommended).
 
+<p align="center">
+  <img src="art/logo.png" alt="Finisterre" width="300">
+</p>
+
 ## Installation
 
 ### Quick install (recommended)
@@ -258,7 +262,7 @@ public function getFinisterreReportUrl(): ?string
 ```
 
 Then add `ReportIssueAction` wherever the record is available (a resource page, table row, infolist, etc.). It opens a
-modal asking for a title, description and attachments (images, PDF and videos up to 3&nbsp;MB), and associates the
+modal asking for a title, description and attachments (images, PDF, and videos up to 3&nbsp;MB), and associates the
 created task with the record:
 
 ```php
