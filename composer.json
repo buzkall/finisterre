@@ -1,6 +1,6 @@
 {
     "name": "arzcode/finisterre",
-    "description": "Helper package",
+    "description": "A Filament plugin that adds a full task-management system to your panel",
     "keywords": [
         "arzcode",
         "laravel",
@@ -11,7 +11,7 @@
     "authors": [
         {
             "name": "arzcode",
-            "email": "arzcode@arzcode.com",
+            "email": "git@arzcode.com",
             "role": "Developer"
         }
     ],
