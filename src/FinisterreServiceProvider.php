@@ -16,6 +16,7 @@ use Arzcode\Finisterre\Support\SettingsConfig;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -71,6 +72,64 @@ class FinisterreServiceProvider extends PackageServiceProvider
                         $step();
                     }
                 }));
+    }
+
+    /**
+     * Register the package config with a recursive merge so a host app only
+     * needs to declare the keys it overrides, including nested ones.
+     *
+     * Overrides spatie/laravel-package-tools' default merge (Laravel's shallow
+     * `mergeConfigFrom()`) so this runs once instead of layering a recursive
+     * pass on top of the shallow one. We can't reuse Laravel's
+     * `replaceConfigRecursivelyFrom()` either, because it merges list arrays by
+     * index — a shorter published list would keep the package's trailing
+     * entries. `deepMergeConfig()` replaces lists wholesale instead.
+     *
+     * Config publishing is handled separately by `bootPackageConfigs()`, so it
+     * is unaffected by this override.
+     */
+    public function registerPackageConfigs(): self
+    {
+        if ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached()) {
+            return $this;
+        }
+
+        $config = $this->app['config'];
+
+        $config->set('finisterre', $this->deepMergeConfig(
+            require __DIR__ . '/../config/finisterre.php',
+            $config->get('finisterre', []),
+        ));
+
+        return $this;
+    }
+
+    /**
+     * Recursively merge published config values over the package defaults.
+     *
+     * Associative arrays are merged key-by-key so a host app can override a
+     * single nested key without redeclaring its siblings. List arrays and
+     * scalars are replaced wholesale — otherwise a shorter published list would
+     * inherit the package's trailing entries via index-based merging.
+     *
+     * @param  array<string, mixed>  $defaults
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    protected function deepMergeConfig(array $defaults, array $overrides): array
+    {
+        foreach ($overrides as $key => $value) {
+            if (
+                is_array($value) && ! array_is_list($value)
+                && isset($defaults[$key]) && is_array($defaults[$key]) && ! array_is_list($defaults[$key])
+            ) {
+                $defaults[$key] = $this->deepMergeConfig($defaults[$key], $value);
+            } else {
+                $defaults[$key] = $value;
+            }
+        }
+
+        return $defaults;
     }
 
     /**
