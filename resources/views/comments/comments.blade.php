@@ -3,6 +3,11 @@
 
     @if (auth()->user()->can('create', \Arzcode\Finisterre\Models\FinisterreTaskComment::class))
         <div class="space-y-4">
+            {{-- Hidden shortcut (alt+y): postpone notification to later today --}}
+            <div class="hidden">
+                {{ $this->postponeCommentAction }}
+            </div>
+
             {{ $this->form }}
 
             <div class="w-full flex justify-end">

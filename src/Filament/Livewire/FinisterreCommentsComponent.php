@@ -2,6 +2,8 @@
 
 namespace Arzcode\Finisterre\Filament\Livewire;
 
+use Arzcode\Finisterre\Filament\Actions\EditCommentAction;
+use Arzcode\Finisterre\Filament\Actions\PostponeCommentAction;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
@@ -187,51 +189,14 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         $this->dispatch('commentCreated')->to(TasksKanbanBoard::class);
     }
 
+    public function postponeCommentAction(): Action
+    {
+        return PostponeCommentAction::make();
+    }
+
     public function editCommentAction(): Action
     {
-        return Action::make('editComment')
-            ->iconButton()
-            ->icon('heroicon-s-pencil')
-            ->color('warning')
-            ->modalHeading(__('finisterre::finisterre.comments.edit_heading'))
-            ->fillForm(function(array $arguments): array {
-                $comment = FinisterreTaskComment::find($arguments['comment_id']);
-
-                return [
-                    'comment'       => $comment?->comment,
-                    'scheduled_for' => $comment?->scheduled_for,
-                ];
-            })
-            ->schema([
-                Forms\Components\RichEditor::make('comment')
-                    ->hiddenLabel()
-                    ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
-                    ->extraInputAttributes(['style' => 'min-height: 6rem'])
-                    ->required(),
-
-                Forms\Components\DateTimePicker::make('scheduled_for')
-                    ->visible(fn() => FinisterrePlugin::get()->canScheduleComments())
-                    ->label(__('finisterre::finisterre.comments.scheduled_for'))
-                    ->seconds(false)
-                    ->minDate(today()),
-            ])
-            ->action(function(array $arguments, array $data) {
-                $comment = FinisterreTaskComment::find($arguments['comment_id']);
-
-                if (! $comment || ! auth()->user()->can('update', $comment)) {
-                    return;
-                }
-
-                $comment->update([
-                    'comment'       => $data['comment'],
-                    'scheduled_for' => $data['scheduled_for'],
-                ]);
-
-                Notification::make()
-                    ->title(__('finisterre::finisterre.comments.notifications.updated'))
-                    ->success()
-                    ->send();
-            });
+        return EditCommentAction::make();
     }
 
     public function delete(int $id): void
