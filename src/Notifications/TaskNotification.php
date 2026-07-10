@@ -50,7 +50,10 @@ class TaskNotification extends Notification implements ShouldQueue
             ->when($relatedRecord, fn(MailMessage $mail) => $mail->line($relatedRecord))
             ->when(
                 empty($this->taskChanges),
-                fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description))),
+                fn(MailMessage $mail) => $mail->when(
+                    filled($this->task->description),
+                    fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description)))
+                ),
                 function(MailMessage $mail) {
                     $mail->line(__('finisterre::finisterre.notification.changes'));
                     $mail->line(new HtmlString('<ul>' . collect($this->taskChanges)

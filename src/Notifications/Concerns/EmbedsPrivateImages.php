@@ -10,8 +10,12 @@ trait EmbedsPrivateImages
 {
     protected array $inlineImages = [];
 
-    protected function embedImages(string $html): string
+    protected function embedImages(?string $html): string
     {
+        if (blank($html)) {
+            return '';
+        }
+
         $disk = config('finisterre.attachments_disk') ?? 'public';
 
         return preg_replace_callback(

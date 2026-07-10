@@ -141,6 +141,18 @@ it('can build mail message for new task', function() {
     expect($mailMessage)->toBeInstanceOf(MailMessage::class);
 });
 
+it('builds the mail message for a new task without a description', function() {
+    $task = FinisterreTask::factory()->create(['description' => null]);
+    $task->wasRecentlyCreated = true;
+
+    $mailMessage = (new TaskNotification($task))->toMail(User::factory()->create());
+
+    $body = collect($mailMessage->introLines)->map(fn($line) => (string)$line)->implode("\n");
+
+    expect($mailMessage)->toBeInstanceOf(MailMessage::class)
+        ->and($body)->toContain(__('finisterre::finisterre.created_by'));
+});
+
 it('includes the related record in the mail when the task has a reportable subject', function() {
     $subject = User::factory()->create();
     $task = FinisterreTask::factory()->create();

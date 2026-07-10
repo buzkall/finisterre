@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.0.1 - 2026-07-10
+
+Fix the "task created" notification email never arriving for tasks saved without a description. `toMail()` only renders the description on creation (an update renders the changes list instead), and it passed the nullable `description` straight into `embedImages()`, which was typed `string` — so the queued notification died with a `TypeError` and landed in `failed_jobs`. `embedImages()` now accepts `?string` and returns an empty string for blank input, and `toMail()` omits the description line entirely when there is no description.
+
 ## 4.0.0 - 2026-07-01
 
 **Breaking:** Renamed the package from `buzkall/finisterre` to `arzcode/finisterre` and the PHP namespace from `Buzkall\Finisterre` to `Arzcode\Finisterre`. Consumers must update their `composer require` to `arzcode/finisterre` and replace any `use Buzkall\Finisterre\…` imports (plugin, traits, contracts, policies, actions) with `Arzcode\Finisterre\…`. Also update the Tailwind `@source` line to `vendor/arzcode/finisterre/resources/views`. All other references (homepage, author, published asset paths under `public/css|js/arzcode/finisterre`) were updated to match.
