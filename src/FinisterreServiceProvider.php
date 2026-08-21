@@ -5,6 +5,8 @@ namespace Arzcode\Finisterre;
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
 use Arzcode\Finisterre\Commands\ResetSequencesCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
+use Arzcode\Finisterre\Controllers\EventPageController;
+use Arzcode\Finisterre\Filament\Livewire\AvailabilityPicker;
 use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Models\FinisterreEvent;
@@ -21,6 +23,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
@@ -687,7 +690,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
         if (class_exists(Livewire::class)) {
             Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
             Livewire::component('filter-tasks', FilterTasks::class);
+            Livewire::component('finisterre-availability-picker', AvailabilityPicker::class);
         }
+
+        $this->registerEventRoutes();
 
         if (config('finisterre.active', false)) {
             $this->callAfterResolving(Schedule::class, function(Schedule $schedule) {
@@ -713,5 +719,22 @@ class FinisterreServiceProvider extends PackageServiceProvider
         }
 
         // remember to run php artisan filament:assets after changing assets in the site
+    }
+
+    /**
+     * The public event pages served outside Filament. Always registered so the
+     * URLs never 500 when referenced; the controller gates on the `active`
+     * flag at request time (matching how the panel resources are gated).
+     */
+    protected function registerEventRoutes(): void
+    {
+        Route::middleware('web')
+            ->prefix(config('finisterre.events.route_prefix', 'events'))
+            ->name('finisterre.events.')
+            ->group(function(): void {
+                Route::get('{slug}', [EventPageController::class, 'show'])->name('show');
+                Route::post('{slug}/register', [EventPageController::class, 'register'])->name('register');
+                Route::get('{slug}/a/{token}', [EventPageController::class, 'attendee'])->name('attendee');
+            });
     }
 }

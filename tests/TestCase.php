@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Tests;
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Livewire\Livewire;
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\LaravelSettings\LaravelSettingsServiceProvider;
 use Workbench\App\Models\User;
@@ -32,7 +33,8 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            // FinisterreServiceProvider::class,
+            LivewireServiceProvider::class,
+            FinisterreServiceProvider::class,
             LaravelSettingsServiceProvider::class,
         ];
     }
@@ -47,9 +49,17 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+        // The web middleware (event frontend routes) needs an encryption key.
+        config()->set('app.key', 'base64:' . base64_encode(str_repeat('a', 32)));
 
         // Set up the finisterre config for testing
         config()->set('finisterre.authenticatable', User::class);
+
+        // The base spatie/laravel-settings table, needed by the package's
+        // settings migration (registered by the provider and picked up by any
+        // test running `migrate`, e.g. through RefreshDatabase).
+        $settingsMigration = include __DIR__ . '/../vendor/spatie/laravel-settings/database/migrations/create_settings_table.php.stub';
+        $settingsMigration->up();
 
         // Run your package migrations
         $migration = include __DIR__ . '/../database/migrations/create_finisterre_tables.php.stub';

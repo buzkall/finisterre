@@ -151,6 +151,14 @@ class FinisterreEvent extends Model
         return $this->scheduled_end_at !== null && $this->scheduled_end_at->isPast();
     }
 
+    /** The call opens shortly before the scheduled start and closes at the end. */
+    public function videoCallIsOpen(): bool
+    {
+        return $this->scheduled_start_at !== null
+            && $this->scheduled_end_at !== null
+            && now()->between($this->scheduled_start_at->copy()->subMinutes(30), $this->scheduled_end_at);
+    }
+
     /**
      * Reminder offsets (minutes before the scheduled start) for this event,
      * falling back to the configured default.
