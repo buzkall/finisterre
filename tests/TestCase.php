@@ -55,6 +55,9 @@ class TestCase extends Orchestra
         $migration = include __DIR__ . '/../database/migrations/create_finisterre_tables.php.stub';
         $migration->up();
 
+        $eventsMigration = include __DIR__ . '/../database/migrations/create_finisterre_events_tables.php.stub';
+        $eventsMigration->up();
+
         // Run users migration for testing
         $usersMigration = include __DIR__ . '/../workbench/database/migrations/create_users_table.php';
         $usersMigration->up();

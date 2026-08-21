@@ -1,0 +1,88 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('finisterre_events', function(Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->longText('description')->nullable();
+            $table->longText('public_agenda')->nullable();
+            $table->longText('private_agenda')->nullable();
+            $table->string('status');
+            $table->unsignedInteger('duration_minutes');
+            $table->boolean('requires_confirmation')->default(false);
+            $table->boolean('open_registration')->default(false);
+            $table->dateTime('scheduled_start_at')->nullable();
+            $table->dateTime('scheduled_end_at')->nullable();
+            $table->string('video_call_url')->nullable();
+            $table->string('whereby_meeting_id')->nullable();
+            $table->json('reminder_offsets')->nullable();
+            $table->json('reminders_sent')->nullable();
+            $table->foreignId('creator_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->nullOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create('finisterre_event_windows', function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained('finisterre_events')->cascadeOnDelete();
+            $table->dateTime('starts_at');
+            $table->dateTime('ends_at');
+            $table->timestamps();
+        });
+
+        Schema::create('finisterre_event_attendees', function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained('finisterre_events')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->cascadeOnDelete();
+            $table->string('guest_name')->nullable();
+            $table->string('guest_email')->nullable();
+            $table->string('token', 64)->unique();
+            $table->dateTime('invited_at')->nullable();
+            $table->dateTime('availability_submitted_at')->nullable();
+            $table->timestamps();
+            $table->unique(['event_id', 'user_id']);
+            $table->unique(['event_id', 'guest_email']);
+        });
+
+        Schema::create('finisterre_event_slot_picks', function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained('finisterre_events')->cascadeOnDelete();
+            $table->foreignId('attendee_id')->constrained('finisterre_event_attendees')->cascadeOnDelete();
+            $table->dateTime('starts_at');
+            $table->timestamps();
+            $table->unique(['attendee_id', 'starts_at']);
+        });
+
+        Schema::create('finisterre_event_tasks', function(Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained('finisterre_events')->cascadeOnDelete();
+            $table->string('title');
+            $table->boolean('completed')->default(false);
+            $table->foreignId('creator_id')->nullable()
+                ->constrained(config('finisterre.authenticatable_table_name', 'users'))
+                ->nullOnDelete();
+            $table->unsignedInteger('order_column')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('finisterre_event_tasks');
+        Schema::dropIfExists('finisterre_event_slot_picks');
+        Schema::dropIfExists('finisterre_event_attendees');
+        Schema::dropIfExists('finisterre_event_windows');
+        Schema::dropIfExists('finisterre_events');
+    }
+};

@@ -7,8 +7,10 @@ use Arzcode\Finisterre\Commands\ResetSequencesCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
+use Arzcode\Finisterre\Models\FinisterreEvent;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Policies\FinisterreEventPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
@@ -152,6 +154,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             'convert_order_column_to_integer_in_finisterre_tasks',
             'add_subject_to_finisterre_tasks',
             'normalize_finisterre_table_names',
+            'create_finisterre_events_tables',
         ];
     }
 
@@ -696,6 +699,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
+        Gate::policy(FinisterreEvent::class, config('finisterre.events.model_policy', FinisterreEventPolicy::class));
 
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang');
 
