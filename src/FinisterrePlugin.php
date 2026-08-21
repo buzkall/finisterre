@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre;
 
 use Arzcode\Finisterre\Filament\Pages\ManageFinisterreSettings;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Arzcode\Finisterre\Filament\Resources\FinisterreEventResource;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\Support\SettingsConfig;
 use Closure;
@@ -99,6 +100,7 @@ class FinisterrePlugin implements Plugin
         $panel
             ->resources([
                 FinisterreTaskResource::class,
+                FinisterreEventResource::class,
             ])
             ->pages([
                 TasksKanbanBoard::class,
