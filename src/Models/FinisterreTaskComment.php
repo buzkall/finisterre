@@ -43,7 +43,7 @@ class FinisterreTaskComment extends Model implements HasMedia
 
     public function getTable(): string
     {
-        return config('finisterre.comments.table_name', 'finisterre_task_comments');
+        return 'finisterre_task_comments';
     }
 
     protected static function newFactory(): FinisterreTaskCommentFactory

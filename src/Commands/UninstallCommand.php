@@ -197,9 +197,14 @@ class UninstallCommand extends Command
         }
 
         $tables = [
-            config('finisterre.task_changes_table_name', 'finisterre_task_changes'),
-            config('finisterre.comments.table_name', 'finisterre_task_comments'),
-            config('finisterre.table_name', 'finisterre_tasks'),
+            'finisterre_event_slot_picks',
+            'finisterre_event_tasks',
+            'finisterre_event_attendees',
+            'finisterre_event_windows',
+            'finisterre_events',
+            'finisterre_task_changes',
+            'finisterre_task_comments',
+            'finisterre_tasks',
         ];
 
         foreach ($tables as $table) {

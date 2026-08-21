@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $table = config('finisterre.table_name', 'finisterre_tasks');
+        $table = 'finisterre_tasks';
 
         // Renumber each status column sequentially (10, 20, 30, …) while the column is still
         // decimal, so the values are already clean integers before we change the column type.
@@ -31,7 +31,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::table('finisterre_tasks', function(Blueprint $table) {
             $table->decimal('order_column', 20, 10)->nullable()->change();
         });
     }

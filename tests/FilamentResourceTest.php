@@ -9,8 +9,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function() {
     config([
-        'finisterre.active'                  => false,
-        'finisterre.task_changes_table_name' => 'finisterre_task_changes',
+        'finisterre.active' => false,
     ]);
 
     if (! Schema::hasTable('finisterre_task_changes')) {

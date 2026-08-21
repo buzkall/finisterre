@@ -17,17 +17,16 @@ function mergePublishedConfig(array $published): void
 
 it('falls back to vendor defaults for top-level keys the app omits', function() {
     mergePublishedConfig([
-        'table_name' => 'tasks',
+        'panel_slug' => 'app',
     ]);
 
     expect(config('finisterre.slug'))->toBe('tasks')
-        ->and(config('finisterre.table_name'))->toBe('tasks');
+        ->and(config('finisterre.panel_slug'))->toBe('app');
 });
 
 it('deep-merges nested arrays instead of replacing them wholesale', function() {
     mergePublishedConfig([
         'comments' => [
-            'table_name'   => 'task_comments',
             'model_policy' => 'HostPolicy',
         ],
     ]);
@@ -36,8 +35,7 @@ it('deep-merges nested arrays instead of replacing them wholesale', function() {
     expect(config('finisterre.comments.display_avatars'))->toBeTrue()
         ->and(config('finisterre.comments.icons.action'))->toBe('heroicon-o-chat-bubble-left-right')
         // ...while the app's nested overrides are preserved.
-        ->and(config('finisterre.comments.model_policy'))->toBe('HostPolicy')
-        ->and(config('finisterre.comments.table_name'))->toBe('task_comments');
+        ->and(config('finisterre.comments.model_policy'))->toBe('HostPolicy');
 });
 
 it('replaces a list-style key wholesale when the app defines a shorter list', function() {
@@ -66,7 +64,7 @@ it('replaces a nested list-style key wholesale', function() {
 
 it('keeps a list-style key from the vendor defaults when the app omits it', function() {
     mergePublishedConfig([
-        'table_name' => 'tasks',
+        'panel_slug' => 'app',
     ]);
 
     expect(config('finisterre.locales'))->toBe(['es', 'ca'])

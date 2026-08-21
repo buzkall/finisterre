@@ -211,10 +211,10 @@ class TasksKanbanBoard extends BoardPage
                 'taskChanges as has_changes' => fn($q) => $q->where('user_id', auth()->id()),
             ])
             ->addSelect([
-                config('finisterre.table_name') . '.*',
+                'finisterre_tasks.*',
                 'assignee_name' => $userModel->newQuery()
                     ->select($userModel::getUserNameSelectExpression())
-                    ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.assignee_id')
+                    ->whereColumn($userModel->getTable() . '.id', 'finisterre_tasks.assignee_id')
                     ->limit(1),
             ])
             ->when(

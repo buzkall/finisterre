@@ -16,8 +16,6 @@ beforeEach(function() {
 
     config([
         'finisterre.active'                     => false,
-        'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
-        'finisterre.table_name'                 => 'finisterre_tasks',
         'finisterre.authenticatable_table_name' => 'users',
         'media-library.media_model'             => Media::class,
     ]);

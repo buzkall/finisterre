@@ -15,8 +15,6 @@ uses(RefreshDatabase::class);
 beforeEach(function() {
     config([
         'finisterre.active'                     => false,
-        'finisterre.table_name'                 => 'finisterre_tasks',
-        'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
         'finisterre.authenticatable'            => User::class,
         'finisterre.authenticatable_table_name' => 'users',
         'finisterre.fallback_notifiable_id'     => null,
@@ -182,8 +180,7 @@ it('returns N/A when creator is missing', function() {
     expect($task->creatorName())->toBe('N/A');
 });
 
-it('uses configured table name', function() {
-    config(['finisterre.table_name' => 'finisterre_tasks']);
+it('uses the canonical finisterre_tasks table name', function() {
     expect((new FinisterreTask)->getTable())->toBe('finisterre_tasks');
 });
 

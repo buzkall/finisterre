@@ -151,6 +151,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             'add_scheduling_to_finisterre_task_comments',
             'convert_order_column_to_integer_in_finisterre_tasks',
             'add_subject_to_finisterre_tasks',
+            'normalize_finisterre_table_names',
         ];
     }
 

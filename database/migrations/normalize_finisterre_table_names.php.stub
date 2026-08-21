@@ -1,0 +1,42 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Since 5.0 the package tables are no longer configurable and always use the
+ * finisterre_ prefix. Installs that renamed them through the old
+ * `table_name` / `comments.table_name` / `task_changes_table_name` config keys
+ * (which may still be present in the host's published config file) get their
+ * existing tables renamed back to the canonical names, keeping all data.
+ */
+return new class extends Migration
+{
+    /** Old config key => canonical table name. */
+    protected array $tables = [
+        'finisterre.table_name'              => 'finisterre_tasks',
+        'finisterre.comments.table_name'     => 'finisterre_task_comments',
+        'finisterre.task_changes_table_name' => 'finisterre_task_changes',
+    ];
+
+    public function up(): void
+    {
+        foreach ($this->tables as $configKey => $canonical) {
+            $configured = config($configKey);
+
+            if (! is_string($configured) || $configured === '' || $configured === $canonical) {
+                continue;
+            }
+
+            if (Schema::hasTable($configured) && ! Schema::hasTable($canonical)) {
+                Schema::rename($configured, $canonical);
+            }
+        }
+    }
+
+    public function down(): void
+    {
+        // Renaming back would resurrect the removed config keys; the canonical
+        // names are valid for every prior version, so there is nothing to undo.
+    }
+};

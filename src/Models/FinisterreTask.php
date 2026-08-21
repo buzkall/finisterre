@@ -80,7 +80,7 @@ class FinisterreTask extends Model implements HasMedia
 
     public function getTable()
     {
-        return config('finisterre.table_name');
+        return 'finisterre_tasks';
     }
 
     public function scopeNotArchived(Builder $query): Builder

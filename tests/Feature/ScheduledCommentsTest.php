@@ -18,9 +18,6 @@ uses(RefreshDatabase::class);
 beforeEach(function() {
     config([
         'finisterre.active'                     => false,
-        'finisterre.table_name'                 => 'finisterre_tasks',
-        'finisterre.comments.table_name'        => 'finisterre_task_comments',
-        'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
         'finisterre.authenticatable'            => User::class,
         'finisterre.authenticatable_table_name' => 'users',
         'finisterre.authenticatable_attribute'  => 'name',

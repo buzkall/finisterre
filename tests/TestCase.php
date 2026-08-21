@@ -50,7 +50,6 @@ class TestCase extends Orchestra
 
         // Set up the finisterre config for testing
         config()->set('finisterre.authenticatable', User::class);
-        config()->set('finisterre.table_name', 'finisterre_tasks');
 
         // Run your package migrations
         $migration = include __DIR__ . '/../database/migrations/create_finisterre_tables.php.stub';

@@ -13,7 +13,6 @@ return [
     // Environments where Finisterre is active (comma-separated, e.g. "local,production").
     // Empty = active in every environment. Editable from the settings page.
     'environments' => env('FINISTERRE_ENVIRONMENTS', ''),
-    'table_name'   => 'finisterre_tasks',
     'panel_slug'   => 'admin',
     'slug'         => 'tasks',
 
@@ -50,10 +49,13 @@ return [
     //       }
     'attachments_disk' => 'public', // finisterre
 
-    'task_changes_table_name' => 'finisterre_task_changes',
+    // Table names are no longer configurable: every package table uses the
+    // canonical finisterre_ prefix (finisterre_tasks, finisterre_task_comments,
+    // finisterre_task_changes, finisterre_events, …). Installs that renamed
+    // them through the old *_table_name keys are migrated back by the
+    // normalize_finisterre_table_names migration.
 
     'comments' => [
-        'table_name'      => 'finisterre_task_comments',
         'model_policy'    => FinisterreTaskCommentPolicy::class,
         'display_avatars' => true,
 

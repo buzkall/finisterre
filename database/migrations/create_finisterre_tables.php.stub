@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::create('finisterre_tasks', function(Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->longText('description')->nullable();
@@ -26,9 +26,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+        Schema::create('finisterre_task_comments', function(Blueprint $table) {
             $table->id();
-            $table->foreignId('task_id')->nullable()->constrained(config('finisterre.table_name'))->cascadeOnDelete();
+            $table->foreignId('task_id')->nullable()->constrained('finisterre_tasks')->cascadeOnDelete();
             $table->longText('comment');
             $table->foreignId('creator_id')->nullable()
                 ->constrained(config('finisterre.authenticatable_table_name', 'users'))
@@ -39,7 +39,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('finisterre.comments.table_name', 'finisterre_task_comments'));
-        Schema::dropIfExists(config('finisterre.table_name', 'finisterre_tasks'));
+        Schema::dropIfExists('finisterre_task_comments');
+        Schema::dropIfExists('finisterre_tasks');
     }
 };

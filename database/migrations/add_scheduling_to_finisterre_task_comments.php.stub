@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+        Schema::table('finisterre_task_comments', function(Blueprint $table) {
             $table->dateTime('scheduled_for')->nullable()->after('comment');
             $table->dateTime('sent_at')->nullable()->after('scheduled_for');
             $table->json('notify_user_ids')->nullable()->after('sent_at');
@@ -17,7 +17,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+        Schema::table('finisterre_task_comments', function(Blueprint $table) {
             $table->dropColumn(['scheduled_for', 'sent_at', 'notify_user_ids']);
         });
     }

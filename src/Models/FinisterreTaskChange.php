@@ -11,7 +11,7 @@ class FinisterreTaskChange extends Model
 
     public function getTable()
     {
-        return config('finisterre.task_changes_table_name');
+        return 'finisterre_task_changes';
     }
 
     public function task(): BelongsTo

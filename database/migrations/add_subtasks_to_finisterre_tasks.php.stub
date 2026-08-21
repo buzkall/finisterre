@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::table('finisterre_tasks', function(Blueprint $table) {
             $table->json('subtasks')->nullable()->after('priority');
         });
     }
 
     public function down(): void
     {
-        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::table('finisterre_tasks', function(Blueprint $table) {
             $table->dropColumn('subtasks');
         });
     }

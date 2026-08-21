@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::table('finisterre_tasks', function(Blueprint $table) {
             $table->decimal('order_column', 20, 10)->nullable()->change();
         });
     }
 
     public function down(): void
     {
-        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::table('finisterre_tasks', function(Blueprint $table) {
             $table->unsignedInteger('order_column')->nullable()->change();
         });
     }
