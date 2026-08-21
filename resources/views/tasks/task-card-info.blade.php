@@ -36,6 +36,13 @@
                 {{ $commentsCount }}
             </span>
 
+            @if($subtasksCount)
+                <span class="inline-flex items-center gap-1">
+                    <x-filament::icon icon="heroicon-o-check-circle" class="h-3 w-3"/>
+                    {{ $subtasksDone }}/{{ $subtasksCount }}
+                </span>
+            @endif
+
             @if($hasChanges)
                 <span class="h-2.5 w-2.5 bg-blue-500 rounded-full shadow-lg shadow-blue-500/50 animate-pulse"></span>
             @endif

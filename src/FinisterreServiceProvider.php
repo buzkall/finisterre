@@ -7,6 +7,7 @@ use Arzcode\Finisterre\Commands\ResetSequencesCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
+use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
@@ -151,6 +152,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             'add_scheduling_to_finisterre_task_comments',
             'convert_order_column_to_integer_in_finisterre_tasks',
             'add_subject_to_finisterre_tasks',
+            'create_finisterre_subtasks_table',
         ];
     }
 
@@ -683,6 +685,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         if (class_exists(Livewire::class)) {
             Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
             Livewire::component('filter-tasks', FilterTasks::class);
+            Livewire::component('finisterre-subtasks', FinisterreSubtasksComponent::class);
         }
 
         if (config('finisterre.active', false)) {

@@ -1,0 +1,84 @@
+name: Manage tag
+
+# Create or delete a tag from the GitHub UI, so release chores don't need a
+# local push. Works from mobile web: Actions -> Manage tag -> Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: What to do
+        required: true
+        type: choice
+        options:
+          - create
+          - delete
+      tag:
+        description: 'Tag name, e.g. v4.0.4'
+        required: true
+        type: string
+      sha:
+        description: Commit SHA to tag (create only)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  manage-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create tag
+        if: inputs.operation == 'create'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$SHA" ]; then
+            echo "::error::A commit SHA is required to create a tag."
+            exit 1
+          fi
+
+          # Reject the shapes Packagist silently ignores, such as "v.4.0.4".
+          if ! printf '%s' "$TAG" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$TAG' is not a version Composer can read. Use 4.1.0 or v4.1.0."
+            exit 1
+          fi
+
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag '$TAG' already exists. Delete it first if you meant to move it."
+            exit 1
+          fi
+
+          # Fails on its own if the SHA does not resolve to a commit in this repo.
+          gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f "ref=refs/tags/$TAG" \
+            -f "sha=$SHA"
+
+          echo "Created $TAG at $SHA"
+
+      - name: Delete tag
+        if: inputs.operation == 'delete'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag '$TAG' does not exist."
+            exit 1
+          fi
+
+          # A tag backing a release cannot be removed silently — say so instead.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::'$TAG' has a GitHub release attached. Delete the release first."
+            exit 1
+          fi
+
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG"
+
+          echo "Deleted $TAG"

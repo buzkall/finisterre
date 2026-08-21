@@ -2,9 +2,42 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
-## 4.0.1 - 2026-07-10
+## 4.1.0 - 2026-08-21
+
+Subtasks moved from a `subtasks` json column on `finisterre_tasks` to their own `finisterre_subtasks` table, exposed as a `FinisterreSubtask` model and a `subtasks()` HasMany relation on `FinisterreTask`. They remain one level deep — a subtask has no children of its own.
+
+- The custom `SubtasksField` form component and its Alpine view are gone, replaced by a dedicated `FinisterreSubtasksComponent` Livewire panel embedded in the task form. Every change — adding, ticking, renaming, deleting and drag-reordering — is written to the database immediately, so subtasks no longer depend on saving the task. The old field entangled the whole array and mutated it in place, which could silently drop edits, and it persisted a blank row for every "add" click that was never filled in; blank titles are now rejected outright.
+- A completed subtask's title is struck through as soon as the box is ticked.
+- The subtasks panel lives in its own collapsible "Subtasks" section, folded shut when the task has none and open when it does. Its header carries a done/total badge — hidden while there are no subtasks — that keeps counting along as boxes are ticked, without reopening the task.
+- The subtasks panel is hidden while creating a task, since there is no task yet to attach them to; it appears once the task is saved.
+- The kanban card shows a done/total counter beside the attachment and comment counters, and nothing at all when a task has no subtasks.
+- New `finisterre.subtasks.table_name` config key.
+
+Upgrading: run `php artisan vendor:publish --tag=finisterre-migrations` and `php artisan migrate`. The new migration copies every existing json subtask into the new table (skipping blank ones) before dropping the column, and its `down()` reverses both.
+
+Note for anyone reading or writing subtasks outside the task form: `$task->subtasks` now returns a `Collection` of `FinisterreSubtask` models instead of a plain array, and `subtasks` is no longer fillable or cast on `FinisterreTask`.
+
+## 4.0.5 - 2026-07-10
 
 Fix the "task created" notification email never arriving for tasks saved without a description. `toMail()` only renders the description on creation (an update renders the changes list instead), and it passed the nullable `description` straight into `embedImages()`, which was typed `string` — so the queued notification died with a `TypeError` and landed in `failed_jobs`. `embedImages()` now accepts `?string` and returns an empty string for blank input, and `toMail()` omits the description line entirely when there is no description.
+
+## 4.0.4 - 2026-07-08
+
+Extracted the comment actions out of `FinisterreCommentsComponent` into their own classes, `Filament\Actions\EditCommentAction` and `Filament\Actions\PostponeCommentAction`.
+
+Added a hidden `alt+y` shortcut on the comment composer that postpones the comment's notification to a random minute 4-5 hours out, clamped to working hours: past 21:00 it rolls to 07:00 the next morning, before 07:00 it starts from 07:00 the same day, and it never lands exactly on the hour.
+
+## 4.0.3 - 2026-07-06
+
+Config published by a host app is now merged recursively over the package defaults, so an app only has to declare the keys it actually overrides — including nested ones such as `finisterre.comments.icons.delete` — instead of redeclaring every sibling. `FinisterreServiceProvider::registerPackageConfigs()` overrides spatie/laravel-package-tools' shallow merge for this. List arrays and scalars are still replaced wholesale, so a shorter published list no longer inherits the package's trailing entries the way Laravel's own `replaceConfigRecursivelyFrom()` would.
+
+## 4.0.2 - 2026-07-05
+
+Replaced the `composer.json` placeholder description ("Helper package") with a real one, and corrected the author email.
+
+## 4.0.1 - 2026-07-04
+
+Added the package logo and displayed it in the README.
 
 ## 4.0.0 - 2026-07-01
 
@@ -12,7 +45,7 @@ Fix the "task created" notification email never arriving for tasks saved without
 
 Documentation: replaced the placeholder tagline with a real package description, added a **Settings page** section documenting the in-app configuration page (and the `userCanConfigureFinisterre()` gate), and trimmed duplicated `filament:assets` / config-publish instructions from the README.
 
-## 3.3.0 - 2026-07-01
+## 3.2.2 - 2026-07-01
 
 Task notification emails now include the related record (the polymorphic `subject`) when a task was reported against one, showing its resource type, label, and a deep link when available — the same information already displayed in the task view. `FinisterreTask::subjectReportLink()` now resolves the Filament resource defensively so it renders safely inside queued notifications where no panel is bootstrapped.
 

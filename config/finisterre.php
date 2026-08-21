@@ -52,6 +52,10 @@ return [
 
     'task_changes_table_name' => 'finisterre_task_changes',
 
+    'subtasks' => [
+        'table_name' => 'finisterre_subtasks',
+    ],
+
     'comments' => [
         'table_name'      => 'finisterre_task_comments',
         'model_policy'    => FinisterreTaskCommentPolicy::class,

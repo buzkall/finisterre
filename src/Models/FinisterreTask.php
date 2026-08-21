@@ -35,7 +35,7 @@ use Spatie\Tags\HasTags;
  * @property TaskStatusEnum $status
  * @property bool $archived
  * @property TaskPriorityEnum $priority
- * @property array $subtasks
+ * @property Collection $subtasks
  * @property Carbon $due_at
  * @property ?Carbon $completed_at
  * @property int $creator_id
@@ -50,13 +50,12 @@ class FinisterreTask extends Model implements HasMedia
 {
     use HasFactory, HasTags, InteractsWithMedia;
 
-    public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'subtasks', 'due_at', 'completed_at',
+    public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'due_at', 'completed_at',
         'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id'];
     protected $casts = [
         'status'       => TaskStatusEnum::class,
         'archived'     => 'boolean',
         'priority'     => TaskPriorityEnum::class,
-        'subtasks'     => 'array',
         'due_at'       => 'datetime',
         'completed_at' => 'datetime',
         'order_column' => 'integer',
@@ -97,6 +96,12 @@ class FinisterreTask extends Model implements HasMedia
     public function comments(): HasMany
     {
         return $this->hasMany(FinisterreTaskComment::class, 'task_id');
+    }
+
+    /** @return HasMany<FinisterreSubtask, $this> */
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(FinisterreSubtask::class, 'task_id')->orderBy('order_column');
     }
 
     public function taskChanges(): HasMany

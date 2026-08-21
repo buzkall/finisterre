@@ -1,0 +1,104 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        $tasksTable = config('finisterre.table_name', 'finisterre_tasks');
+        $subtasksTable = config('finisterre.subtasks.table_name', 'finisterre_subtasks');
+
+        Schema::create($subtasksTable, function(Blueprint $table) use ($tasksTable) {
+            $table->id();
+            $table->foreignId('task_id')->constrained($tasksTable)->cascadeOnDelete();
+            $table->string('title');
+            $table->boolean('completed')->default(false);
+            $table->unsignedInteger('order_column')->nullable();
+            $table->timestamps();
+        });
+
+        // Nothing to migrate on a fresh install where the json column never existed.
+        if (! Schema::hasColumn($tasksTable, 'subtasks')) {
+            return;
+        }
+
+        DB::table($tasksTable)
+            ->select('id', 'subtasks')
+            ->whereNotNull('subtasks')
+            ->orderBy('id')
+            ->chunk(200, function($tasks) use ($subtasksTable) {
+                $rows = [];
+                $now = now();
+
+                foreach ($tasks as $task) {
+                    $subtasks = json_decode((string)$task->subtasks, true);
+
+                    if (! is_array($subtasks)) {
+                        continue;
+                    }
+
+                    $position = 0;
+
+                    foreach ($subtasks as $subtask) {
+                        $title = trim((string)($subtask['title'] ?? ''));
+
+                        // The old Alpine editor persisted a blank row for every
+                        // "+ Add subtask" click that was never filled in.
+                        if ($title === '') {
+                            continue;
+                        }
+
+                        $rows[] = [
+                            'task_id'      => $task->id,
+                            'title'        => mb_substr($title, 0, 255),
+                            'completed'    => (bool)($subtask['completed'] ?? false),
+                            'order_column' => ++$position * 10,
+                            'created_at'   => $now,
+                            'updated_at'   => $now,
+                        ];
+                    }
+                }
+
+                if ($rows !== []) {
+                    DB::table($subtasksTable)->insert($rows);
+                }
+            });
+
+        Schema::table($tasksTable, function(Blueprint $table) {
+            $table->dropColumn('subtasks');
+        });
+    }
+
+    public function down(): void
+    {
+        $tasksTable = config('finisterre.table_name', 'finisterre_tasks');
+        $subtasksTable = config('finisterre.subtasks.table_name', 'finisterre_subtasks');
+
+        if (! Schema::hasColumn($tasksTable, 'subtasks')) {
+            Schema::table($tasksTable, function(Blueprint $table) {
+                $table->json('subtasks')->nullable()->after('priority');
+            });
+        }
+
+        DB::table($subtasksTable)
+            ->orderBy('task_id')
+            ->orderBy('order_column')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('task_id')
+            ->each(function($subtasks, $taskId) use ($tasksTable) {
+                DB::table($tasksTable)->where('id', $taskId)->update([
+                    'subtasks' => json_encode($subtasks->map(fn($subtask) => [
+                        'title'     => $subtask->title,
+                        'completed' => (bool)$subtask->completed,
+                    ])->all()),
+                ]);
+            });
+
+        Schema::dropIfExists($subtasksTable);
+    }
+};

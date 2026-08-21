@@ -5,7 +5,7 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
-use Arzcode\Finisterre\Filament\Forms\Components\SubtasksField;
+use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
@@ -17,6 +17,8 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 
@@ -120,10 +122,25 @@ class Form
                     ->createOptionAction(fn(Action $action) => $action->extraModalFooterActions([]))
                     ->columnSpan(1),
 
-                SubtasksField::make('subtasks')
-                    ->label(__('finisterre::finisterre.subtasks.label'))
-                    ->columnSpanFull()
-                    ->hidden(fn() => $userIsReporterOnly),
+                Section::make(__('finisterre::finisterre.subtasks.label'))
+                    ->icon('heroicon-o-check-circle')
+                    ->collapsible()
+                    // Open when there is something to see, folded away otherwise.
+                    ->collapsed(fn(?FinisterreTask $record) => $record?->subtasks->isEmpty() ?? true)
+                    ->afterHeader(fn(?FinisterreTask $record): HtmlString => new HtmlString(
+                        view('finisterre::subtasks.counter-badge', [
+                            'done'  => $record?->subtasks->where('completed', true)->count() ?? 0,
+                            'total' => $record?->subtasks->count() ?? 0,
+                        ])->render()
+                    ))
+                    ->schema([
+                        Livewire::make(FinisterreSubtasksComponent::class),
+                    ])
+                    // Subtasks persist on their own, so there is nothing to
+                    // attach them to until the task exists.
+                    ->hiddenOn('create')
+                    ->hidden(fn() => $userIsReporterOnly)
+                    ->columnSpanFull(),
 
                 TextEntry::make('subject')
                     ->label(__('finisterre::finisterre.related_record'))

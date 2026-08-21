@@ -116,6 +116,8 @@ class TasksKanbanBoard extends BoardPage
                                 'tagNames'         => $record->tags->pluck('name'),
                                 'mediaCount'       => $record->media_count ?? 0,
                                 'commentsCount'    => $record->comments_count ?? 0,
+                                'subtasksCount'    => $record->subtasks_count ?? 0,
+                                'subtasksDone'     => $record->completed_subtasks_count ?? 0,
                                 'editUrl'          => FinisterreTaskResource::getUrl('edit', ['record' => $record->id]),
                                 'updatedAt'        => $record->updated_at->diffForHumans(),
                                 'hasChanges'       => (bool)$record->has_changes,
@@ -208,7 +210,9 @@ class TasksKanbanBoard extends BoardPage
             ->withCount([
                 'comments' => fn($q) => $q->where(fn($q) => $q->whereNull('scheduled_for')->orWhereNotNull('sent_at')),
                 'media',
-                'taskChanges as has_changes' => fn($q) => $q->where('user_id', auth()->id()),
+                'subtasks',
+                'subtasks as completed_subtasks_count' => fn($q) => $q->where('completed', true),
+                'taskChanges as has_changes'           => fn($q) => $q->where('user_id', auth()->id()),
             ])
             ->addSelect([
                 config('finisterre.table_name') . '.*',
