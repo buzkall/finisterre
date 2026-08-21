@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre;
 
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
 use Arzcode\Finisterre\Commands\ResetSequencesCommand;
+use Arzcode\Finisterre\Commands\SendEventRemindersCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Controllers\EventPageController;
 use Arzcode\Finisterre\Filament\Livewire\AvailabilityPicker;
@@ -51,6 +52,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasMigrations(self::migrationNames())
             ->hasCommands([
                 DispatchScheduledCommentsCommand::class,
+                SendEventRemindersCommand::class,
                 ResetSequencesCommand::class,
                 UninstallCommand::class,
             ])
@@ -698,6 +700,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
         if (config('finisterre.active', false)) {
             $this->callAfterResolving(Schedule::class, function(Schedule $schedule) {
                 $schedule->command('finisterre:dispatch-scheduled-comments')
+                    ->everyMinute()
+                    ->withoutOverlapping();
+
+                $schedule->command('finisterre:send-event-reminders')
                     ->everyMinute()
                     ->withoutOverlapping();
             });

@@ -222,6 +222,57 @@ FINISTERRE_SMS_SENDER=CHANGE
 FINISTERRE_SMS_NOTIFY_TO=CHANGE
 ```
 
+## Events
+
+Since 5.0 Finisterre also manages **events**: meetings with their own entity (not a task type),
+scheduled by collecting the attendees' availability.
+
+An event has:
+
+- a **public agenda** (shown on its public page) and a **private agenda** (shown only to logged-in users),
+- an **estimated duration**, and a set of **suggested day/time windows** proposed by the creator,
+- **attendees** that can be panel users or external **guests** (name + email); each attendee receives a
+  personal tokenized link by email,
+- optional **open registration**, so anyone with the public link can sign up as a guest,
+- configurable **reminder emails** (minutes before the start),
+- a **video call** link, and lightweight **event tasks** (action items) jotted down while it runs.
+
+### Scheduling flow
+
+1. Create the event (it starts as a draft), add windows and attendees, then use **Open scheduling**:
+   every attendee gets an email with their personal link.
+2. On that page (mobile-first) each attendee taps the time frames — of the event's duration, generated
+   every `slot_step_minutes` inside the windows — that suit them.
+3. When everyone has answered, the earliest frame accepted by all wins. With **Confirm final time**
+   enabled, the creator confirms it first (the confirm action also resolves ties or lets you pick
+   manually when no frame suits everyone). Everyone is notified of the final time.
+
+### Public pages
+
+Events are served outside Filament under `/{events.route_prefix}` (default `events`):
+
+- `/events/{slug}` — public page: agenda, status/date and the registration form when open registration
+  is enabled.
+- `/events/{slug}/a/{token}` — each attendee's personal page with the availability picker.
+
+### Video calls (Whereby)
+
+With a [Whereby Embedded](https://whereby.com/information/embedded/) API key in
+`FINISTERRE_WHEREBY_API_KEY`, a room is created per event when it is scheduled and embedded in the
+event page while the call is open. Without an API key, set `FINISTERRE_WHEREBY_ROOM_URL` (or paste a
+URL per event) and attendees get a join button instead.
+
+### Reminders
+
+Schedule reminders run through `finisterre:send-event-reminders` (registered automatically in the
+scheduler). The offsets come from `events.default_reminder_offsets` in the config and can be
+overridden per event.
+
+### Follow-up task
+
+Once the event is over, the **Create follow-up task** action turns the event's action items into a
+regular Finisterre task with those items as subtasks.
+
 ## Reporting issues from your own models
 
 Any model in your app can let users open a Finisterre task against a specific record. The task stores a polymorphic

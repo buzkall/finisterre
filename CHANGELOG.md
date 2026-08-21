@@ -2,6 +2,19 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 5.0.0 - 2026-08-21
+
+**Events.** Finisterre now manages events as their own entity (`FinisterreEvent`), scheduled by collecting the attendees' availability:
+
+- Events carry a public and a private agenda, an estimated duration, creator-suggested day/time windows, configurable reminder emails and a video call link. Attendees can be panel users or external guests (name + email), each reachable through a personal tokenized link; open registration optionally lets anyone with the public link sign up as a guest.
+- Candidate time frames (of the event's duration, one every `events.slot_step_minutes` inside the windows) are picked by each attendee on a mobile-first public page served outside Filament (`/events/{slug}` and `/events/{slug}/a/{token}`). When everyone has answered, the earliest frame accepted by all is locked in — directly, or after the creator confirms it when the event requires confirmation (the confirm action also resolves ties and the no-common-slot case). Invitations, the final time, and the reminders (`finisterre:send-event-reminders`, scheduled automatically) are emailed to users and guests alike.
+- Video calls default to Whereby: with a Whereby Embedded API key a room is created per event and embedded in the event page while the call is open; otherwise a configured fallback room URL gets a join button.
+- Action items jotted down during the event can be turned into a regular Finisterre task with them as subtasks (**Create follow-up task**).
+
+**Breaking:** package table names are no longer configurable. The `table_name`, `comments.table_name` and `task_changes_table_name` config keys are removed and every table uses its canonical `finisterre_`-prefixed name so they stay grouped together. Installs that had customized the names are migrated automatically: the new `normalize_finisterre_table_names` migration renames the existing tables back to the canonical names, keeping all data (publish the new migrations with `php artisan vendor:publish --tag="finisterre-migrations"` and run `php artisan migrate`).
+
+The test suite now boots the package service provider (with Livewire and the spatie settings table), exercising routes, views and observers the way a host app runs them.
+
 ## 4.0.1 - 2026-07-10
 
 Fix the "task created" notification email never arriving for tasks saved without a description. `toMail()` only renders the description on creation (an update renders the changes list instead), and it passed the nullable `description` straight into `embedImages()`, which was typed `string` — so the queued notification died with a `TypeError` and landed in `failed_jobs`. `embedImages()` now accepts `?string` and returns an empty string for blank input, and `toMail()` omits the description line entirely when there is no description.
