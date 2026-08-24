@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.2.0 - 2026-08-24
+
+- New `php artisan finisterre:update` command for upgrades: it tables every migration the package ships against the file you published for it and whether it has run, then offers to publish the missing ones, run them, seed settings added by the new version, re-publish the Filament assets and rebuild the theme. It also reports added/dropped config keys and theme files missing their `@source` lines. `--check` reports without changing anything and exits non-zero when something is outstanding.
+- The `finisterre:install` and `finisterre:uninstall` commands now use Laravel Prompts for every question and message.
+
 ## 4.1.1 - 2026-08-24
 
 - Fixed a parse error in `tests/Feature/ConfigDeepMergeTest.php` that broke the test suite on PHP 8.3; parenthesisless `new` chaining is PHP 8.4 only.

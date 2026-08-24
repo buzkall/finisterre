@@ -3,10 +3,19 @@
 namespace Arzcode\Finisterre\Commands;
 
 use Arzcode\Finisterre\FinisterreServiceProvider;
+use Arzcode\Finisterre\Support\PackageMigrations;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Schema;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\intro;
+use function Laravel\Prompts\note;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\warning;
 
 class UninstallCommand extends Command
 {
@@ -15,10 +24,12 @@ class UninstallCommand extends Command
 
     public function handle(): int
     {
-        $this->warn('This will remove Finisterre from your application.');
+        intro('Uninstalling Finisterre');
 
-        if (! $this->confirm('Do you want to continue?', false)) {
-            $this->line('Aborted.');
+        warning('This will remove Finisterre from your application.');
+
+        if (! confirm(label: 'Do you want to continue?', default: false)) {
+            note('Aborted.');
 
             return self::SUCCESS;
         }
@@ -49,7 +60,7 @@ class UninstallCommand extends Command
         $dir = app_path('Providers/Filament');
 
         if (! is_dir($dir)) {
-            $this->warn('No app/Providers/Filament directory — nothing to clean.');
+            warning('No app/Providers/Filament directory — nothing to clean.');
 
             return;
         }
@@ -57,7 +68,7 @@ class UninstallCommand extends Command
         $files = glob($dir . '/*PanelProvider.php') ?: [];
 
         if ($files === []) {
-            $this->warn('No *PanelProvider.php found — nothing to clean.');
+            warning('No *PanelProvider.php found — nothing to clean.');
 
             return;
         }
@@ -67,7 +78,7 @@ class UninstallCommand extends Command
             $relative = $this->relativePath($file);
 
             if (! str_contains($contents, 'FinisterrePlugin')) {
-                $this->line(sprintf('FinisterrePlugin not present in %s — skipping.', $relative));
+                note(sprintf('FinisterrePlugin not present in %s — skipping.', $relative));
 
                 continue;
             }
@@ -76,7 +87,7 @@ class UninstallCommand extends Command
             $patched = $this->removeUseImport($patched, 'Arzcode\Finisterre\FinisterrePlugin');
 
             file_put_contents($file, $patched);
-            $this->info(sprintf('Removed FinisterrePlugin from %s.', $relative));
+            info(sprintf('Removed FinisterrePlugin from %s.', $relative));
         }
     }
 
@@ -86,7 +97,7 @@ class UninstallCommand extends Command
         $relative = $this->relativePath($path);
 
         if (! file_exists($path)) {
-            $this->warn(sprintf('%s not found — nothing to clean.', $relative));
+            warning(sprintf('%s not found — nothing to clean.', $relative));
 
             return;
         }
@@ -94,7 +105,7 @@ class UninstallCommand extends Command
         $contents = (string)file_get_contents($path);
 
         if (! str_contains($contents, 'FinisterreUserTrait')) {
-            $this->line(sprintf('FinisterreUserTrait not present in %s — skipping.', $relative));
+            note(sprintf('FinisterreUserTrait not present in %s — skipping.', $relative));
 
             return;
         }
@@ -103,11 +114,11 @@ class UninstallCommand extends Command
         $patched = $this->removeUseImport($patched, 'Arzcode\Finisterre\Traits\FinisterreUserTrait');
 
         if (str_contains($patched, 'FinisterreUserTrait')) {
-            $this->warn(sprintf('FinisterreUserTrait still referenced in %s — remove it manually (it may be grouped with other traits).', $relative));
+            warning(sprintf('FinisterreUserTrait still referenced in %s — remove it manually (it may be grouped with other traits).', $relative));
         }
 
         file_put_contents($path, $patched);
-        $this->info(sprintf('Removed FinisterreUserTrait from %s.', $relative));
+        info(sprintf('Removed FinisterreUserTrait from %s.', $relative));
     }
 
     protected function unpatchFilamentThemes(): void
@@ -115,7 +126,7 @@ class UninstallCommand extends Command
         $files = glob(resource_path('css/filament/*/theme.css')) ?: [];
 
         if ($files === []) {
-            $this->warn('No theme.css under resources/css/filament/*/theme.css — nothing to clean.');
+            warning('No theme.css under resources/css/filament/*/theme.css — nothing to clean.');
 
             return;
         }
@@ -130,7 +141,7 @@ class UninstallCommand extends Command
             $relative = $this->relativePath($file);
 
             if (! str_contains($contents, 'arzcode/finisterre/resources/views') && ! str_contains($contents, 'relaticle/flowforge/resources/views')) {
-                $this->line(sprintf('No Finisterre @source in %s — skipping.', $relative));
+                note(sprintf('No Finisterre @source in %s — skipping.', $relative));
 
                 continue;
             }
@@ -141,7 +152,7 @@ class UninstallCommand extends Command
             }
 
             file_put_contents($file, rtrim($patched, "\n") . "\n");
-            $this->info(sprintf('Removed Finisterre @source from %s.', $relative));
+            info(sprintf('Removed Finisterre @source from %s.', $relative));
         }
     }
 
@@ -150,7 +161,7 @@ class UninstallCommand extends Command
         $envPath = base_path('.env');
 
         if (! file_exists($envPath)) {
-            $this->warn('No .env file found — nothing to clean.');
+            warning('No .env file found — nothing to clean.');
 
             return;
         }
@@ -159,20 +170,20 @@ class UninstallCommand extends Command
 
         // FINISTERRE_ACTIVE is the legacy on/off flag; FINISTERRE_ENVIRONMENTS replaced it.
         if (! preg_match('/^FINISTERRE_(ACTIVE|ENVIRONMENTS)=/m', $contents)) {
-            $this->line('No Finisterre .env entries present — skipping.');
+            note('No Finisterre .env entries present — skipping.');
 
             return;
         }
 
         $patched = preg_replace('/^FINISTERRE_(ACTIVE|ENVIRONMENTS)=.*\r?\n?/m', '', $contents) ?? $contents;
         file_put_contents($envPath, $patched);
-        $this->info('Removed Finisterre entries from .env');
+        info('Removed Finisterre entries from .env');
     }
 
     protected function deleteSettings(): void
     {
         if (! Schema::hasTable('settings')) {
-            $this->line('No settings table found — skipping.');
+            note('No settings table found — skipping.');
 
             return;
         }
@@ -180,18 +191,22 @@ class UninstallCommand extends Command
         $deleted = DB::table('settings')->where('group', 'finisterre')->delete();
 
         if ($deleted === 0) {
-            $this->line('No Finisterre settings stored — skipping.');
+            note('No Finisterre settings stored — skipping.');
 
             return;
         }
 
-        $this->info(sprintf('Removed %d Finisterre setting(s) from the settings table.', $deleted));
+        info(sprintf('Removed %d Finisterre setting(s) from the settings table.', $deleted));
     }
 
     protected function dropTables(): void
     {
-        if (! $this->confirm('Would you like to drop the Finisterre database tables? This permanently deletes all task data.', false)) {
-            $this->line('Skipped — Finisterre tables left in place.');
+        if (! confirm(
+            label: 'Would you like to drop the Finisterre database tables?',
+            default: false,
+            hint: 'This permanently deletes all task data.',
+        )) {
+            note('Skipped — Finisterre tables left in place.');
 
             return;
         }
@@ -204,11 +219,11 @@ class UninstallCommand extends Command
 
         foreach ($tables as $table) {
             Schema::dropIfExists($table);
-            $this->line("Dropped {$table}");
+            note("Dropped {$table}");
         }
 
-        $this->info('Finisterre tables dropped.');
-        $this->warn('Their rows remain in the `migrations` table; remove them manually if you also delete the migration files.');
+        info('Finisterre tables dropped.');
+        warning('Their rows remain in the `migrations` table; remove them manually if you also delete the migration files.');
     }
 
     protected function deletePublishedMigrations(): void
@@ -216,34 +231,28 @@ class UninstallCommand extends Command
         // The published migrations carry a timestamp prefix and not all of them
         // contain "finisterre" in the file name (e.g. add_task_changes_table),
         // so match every known migration base name instead of a single glob.
-        $names = [...FinisterreServiceProvider::migrationNames(), 'create_finisterre_settings'];
-
-        $files = [];
-        foreach ($names as $name) {
-            foreach (glob(database_path('migrations/*' . $name . '.php')) ?: [] as $file) {
-                $files[$file] = $file;
-            }
-        }
-        $files = array_values($files);
+        $files = PackageMigrations::publishedFiles(
+            [...FinisterreServiceProvider::migrationNames(), 'create_finisterre_settings']
+        );
 
         if ($files === []) {
-            $this->line('No published Finisterre migrations found — skipping.');
+            note('No published Finisterre migrations found — skipping.');
 
             return;
         }
 
-        if (! $this->confirm(sprintf('Delete %d published Finisterre migration file(s)?', count($files)), false)) {
-            $this->line('Skipped — published migrations left in place.');
+        if (! confirm(label: sprintf('Delete %d published Finisterre migration file(s)?', count($files)), default: false)) {
+            note('Skipped — published migrations left in place.');
 
             return;
         }
 
         foreach ($files as $file) {
             @unlink($file);
-            $this->line('Deleted ' . $this->relativePath($file));
+            note('Deleted ' . $this->relativePath($file));
         }
 
-        $this->info('Published migrations deleted.');
+        info('Published migrations deleted.');
     }
 
     protected function deletePublishedAssets(): void
@@ -261,17 +270,17 @@ class UninstallCommand extends Command
         $existing = array_values(array_filter($dirs, 'is_dir'));
 
         if ($existing === []) {
-            $this->line('No published Finisterre assets found — skipping.');
+            note('No published Finisterre assets found — skipping.');
 
             return;
         }
 
         foreach ($existing as $dir) {
             $this->deleteDirectory($dir);
-            $this->line('Deleted ' . $this->relativePath($dir));
+            note('Deleted ' . $this->relativePath($dir));
         }
 
-        $this->info('Published assets deleted.');
+        info('Published assets deleted.');
     }
 
     protected function deleteDirectory(string $dir): void
@@ -290,19 +299,19 @@ class UninstallCommand extends Command
         $path = config_path('finisterre.php');
 
         if (! file_exists($path)) {
-            $this->line('No published config file found — skipping.');
+            note('No published config file found — skipping.');
 
             return;
         }
 
-        if (! $this->confirm('Delete the published config/finisterre.php file?', false)) {
-            $this->line('Skipped — config file left in place.');
+        if (! confirm(label: 'Delete the published config/finisterre.php file?', default: false)) {
+            note('Skipped — config file left in place.');
 
             return;
         }
 
         @unlink($path);
-        $this->info('Deleted config/finisterre.php');
+        info('Deleted config/finisterre.php');
     }
 
     protected function runFinalSteps(): void
@@ -313,7 +322,7 @@ class UninstallCommand extends Command
         ];
 
         foreach ($commands as $command => $message) {
-            $this->info($message);
+            info($message);
 
             $result = Process::path(base_path())
                 ->forever()
@@ -322,13 +331,13 @@ class UninstallCommand extends Command
                 });
 
             if (! $result->successful()) {
-                $this->error(sprintf('`%s` failed — run it manually to finish the uninstall.', $command));
+                error(sprintf('`%s` failed — run it manually to finish the uninstall.', $command));
 
                 return;
             }
         }
 
-        $this->info('Finisterre uninstall complete.');
+        outro('Finisterre uninstall complete.');
     }
 
     protected function removeLinesContaining(string $contents, string $needle): string

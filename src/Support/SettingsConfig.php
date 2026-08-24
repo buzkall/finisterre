@@ -43,6 +43,24 @@ class SettingsConfig
     }
 
     /**
+     * Settings properties that have no stored row yet.
+     *
+     * Either the settings were never seeded, or — after upgrading the package —
+     * this version declares settings the stored ones predate.
+     *
+     * @return list<string>
+     */
+    public static function missing(): array
+    {
+        $migrator = app(SettingsMigrator::class);
+
+        return array_values(array_filter(
+            array_keys(self::defaults()),
+            fn(string $property): bool => ! $migrator->exists($property)
+        ));
+    }
+
+    /**
      * Create any missing finisterre settings rows from the config defaults.
      *
      * The settings migration normally seeds these, but it only runs once: if the
@@ -55,14 +73,13 @@ class SettingsConfig
     public static function seedMissing(): int
     {
         $migrator = app(SettingsMigrator::class);
+        $defaults = self::defaults();
 
         $created = 0;
 
-        foreach (self::defaults() as $property => $value) {
-            if (! $migrator->exists($property)) {
-                $migrator->add($property, $value);
-                $created++;
-            }
+        foreach (self::missing() as $property) {
+            $migrator->add($property, $defaults[$property]);
+            $created++;
         }
 
         if ($created > 0) {

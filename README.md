@@ -101,6 +101,40 @@ Optionally, you can publish the views using
 php artisan vendor:publish --tag="finisterre-views"
 ```
 
+### Upgrading
+
+After `composer update arzcode/finisterre`, run:
+
+```bash
+php artisan finisterre:update
+```
+
+It lists every migration the package ships next to the file you published for it and whether that migration has run, so
+you can see at a glance what a new version added. Then it offers, one confirmation at a time, to publish the missing
+migrations, run them, seed the settings this version added, re-publish the Filament assets and run `npm run build`. It
+also reports config keys that were added or dropped (your published `config/finisterre.php` is deep-merged over the
+package defaults, so copying new keys over is optional) and warns when a theme file lost its `@source` lines.
+
+Nothing is written without your confirmation, and publishing is idempotent — an already-published migration keeps the
+file name it got the first time instead of being copied again under a new timestamp.
+
+To only report what is outstanding — useful in CI, where it exits with a non-zero status when anything is pending:
+
+```bash
+php artisan finisterre:update --check
+```
+
+### Uninstalling
+
+```bash
+php artisan finisterre:uninstall
+```
+
+It reverses the install: removes `FinisterrePlugin::make()` from your panel providers, `use FinisterreUserTrait;` from
+`app/Models/User.php`, the `@source` lines from your theme files, the Finisterre entries from `.env` and the settings
+rows, and then asks separately before dropping the database tables, deleting the published migrations and deleting
+`config/finisterre.php`. It finishes by running `composer remove arzcode/finisterre` and `npm run build`.
+
 ## Filament Theme CSS
 
 > **Required.** Following Filament v5 guidance, this package ships **raw CSS only** — it no longer compiles a Tailwind

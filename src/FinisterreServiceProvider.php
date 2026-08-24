@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre;
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
 use Arzcode\Finisterre\Commands\ResetSequencesCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
+use Arzcode\Finisterre\Commands\UpdateCommand;
 use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
@@ -26,6 +27,14 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Symfony\Component\Process\Process;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\intro;
+use function Laravel\Prompts\note;
+use function Laravel\Prompts\outro;
+use function Laravel\Prompts\text;
+use function Laravel\Prompts\warning;
 
 class FinisterreServiceProvider extends PackageServiceProvider
 {
@@ -49,23 +58,24 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 DispatchScheduledCommentsCommand::class,
                 ResetSequencesCommand::class,
                 UninstallCommand::class,
+                UpdateCommand::class,
             ])
             ->hasInstallCommand(fn(InstallCommand $command) => $command
-                ->startWith(fn(InstallCommand $cmd) => $cmd->info('Installing Finisterre…'))
+                ->startWith(fn(InstallCommand $cmd) => intro('Installing Finisterre'))
                 ->publishMigrations()
                 ->endWith(function(InstallCommand $cmd): void {
                     $steps = [
                         fn() => $this->publishConfigFile($cmd),
                         fn() => $this->publishSettingsMigration($cmd),
                         fn() => $this->runMigrations($cmd),
-                        fn() => $this->activateViaSettings($cmd),
-                        fn() => $this->configureBoardSlug($cmd),
+                        fn() => $this->activateViaSettings(),
+                        fn() => $this->configureBoardSlug(),
                         fn() => $this->publishFilamentAssets($cmd),
-                        fn() => $this->patchPanelProviders($cmd),
-                        fn() => $this->patchUserModel($cmd),
-                        fn() => $this->patchFilamentThemes($cmd),
+                        fn() => $this->patchPanelProviders(),
+                        fn() => $this->patchUserModel(),
+                        fn() => $this->patchFilamentThemes(),
                         fn() => $this->runNpmBuild($cmd),
-                        fn() => $this->printFinalSteps($cmd),
+                        fn() => $this->printFinalSteps(),
                     ];
 
                     foreach ($steps as $step) {
@@ -158,22 +168,22 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     protected function publishConfigFile(InstallCommand $command): void
     {
-        if (! $command->confirm('Would you like to publish the config file?', true)) {
+        if (! confirm(label: 'Would you like to publish the config file?', default: true)) {
             return;
         }
 
-        $command->comment('Publishing config…');
         $command->callSilently('vendor:publish', ['--tag' => 'finisterre-config']);
-        $command->info('Config file published.');
+        info('Config file published.');
     }
 
     protected function runMigrations(InstallCommand $command): void
     {
-        if (! $command->confirm('Would you like to run the migrations now?', true)) {
+        if (! confirm(label: 'Would you like to run the migrations now?', default: true)) {
+            note('Skipped — run `php artisan migrate` when you are ready.');
+
             return;
         }
 
-        $command->comment('Running migrations…');
         $command->call('migrate');
     }
 
@@ -183,20 +193,19 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // table). Only publish the base migration when the table is missing,
         // otherwise `migrate` would try to recreate an existing table.
         if (Schema::hasTable('settings')) {
-            $command->line('A settings table already exists — skipping the settings migration.');
+            note('A settings table already exists — skipping the settings migration.');
 
             return;
         }
 
-        $command->comment('Publishing the settings table migration…');
         $command->callSilently('vendor:publish', [
             '--provider' => 'Spatie\LaravelSettings\LaravelSettingsServiceProvider',
             '--tag'      => 'migrations',
         ]);
-        $command->info('Settings table migration published.');
+        info('Settings table migration published.');
     }
 
-    protected function activateViaSettings(InstallCommand $command): void
+    protected function activateViaSettings(): void
     {
         try {
             // The settings migration seeds these rows, but only the first time it
@@ -206,15 +215,15 @@ class FinisterreServiceProvider extends PackageServiceProvider
             // a clean install where the migration already seeded everything.
             $created = SettingsConfig::seedMissing();
 
-            $command->info($created > 0
+            info($created > 0
                 ? sprintf('Finisterre settings seeded (%d created) — active in all environments by default. Manage it from the settings page.', $created)
                 : 'Finisterre installed — active in all environments by default. Manage it from the settings page.');
         } catch (\Throwable) {
-            $command->warn('Could not seed Finisterre settings automatically — run the migrations, then configure it from the settings page.');
+            warning('Could not seed Finisterre settings automatically — run the migrations, then configure it from the settings page.');
         }
     }
 
-    protected function configureBoardSlug(InstallCommand $command): void
+    protected function configureBoardSlug(): void
     {
         try {
             $settings = app(FinisterreSettings::class);
@@ -231,7 +240,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             $default = $panelSlug . '/' . $suggested;
 
             if ($suggested !== self::DEFAULT_BOARD_SLUG) {
-                $command->warn(sprintf(
+                warning(sprintf(
                     '/%s/%s is already taken by another route in this panel — suggesting /%s/%s instead.',
                     $panelSlug,
                     self::DEFAULT_BOARD_SLUG,
@@ -240,11 +249,15 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 ));
             }
 
-            $command->line(sprintf('The task board will live at /%s/%s.', $panelSlug, $suggested));
+            note(sprintf('The task board will live at /%s/%s.', $panelSlug, $suggested));
 
             // Re-prompt while the chosen path collides with an existing route.
             do {
-                $answer = (string)$command->ask('URL path for the Finisterre task board', $default);
+                $answer = (string)text(
+                    label: 'URL path for the Finisterre task board',
+                    default: $default,
+                    hint: 'Only the last segment is used — the panel slug is fixed by config.',
+                );
                 // Only the board segment is configurable; the panel slug is fixed by config.
                 $slug = (string)str($answer)->trim()->trim('/')->afterLast('/');
 
@@ -256,16 +269,16 @@ class FinisterreServiceProvider extends PackageServiceProvider
                     break;
                 }
 
-                $command->warn(sprintf('/%s/%s is already registered by another route in this panel.', $panelSlug, $slug));
-            } while (! $command->confirm('Use it anyway?', false));
+                warning(sprintf('/%s/%s is already registered by another route in this panel.', $panelSlug, $slug));
+            } while (! confirm(label: 'Use it anyway?', default: false));
 
             if ($slug !== $stored) {
                 $settings->slug = $slug;
                 $settings->save();
-                $command->info(sprintf("Board slug set to '%s'.", $slug));
+                info(sprintf("Board slug set to '%s'.", $slug));
             }
         } catch (\Throwable) {
-            $command->warn('Could not set the board slug — change it later from the settings page.');
+            warning('Could not set the board slug — change it later from the settings page.');
         }
     }
 
@@ -321,16 +334,16 @@ class FinisterreServiceProvider extends PackageServiceProvider
             return;
         }
 
-        $command->info('Publishing Filament assets…');
+        info('Publishing Filament assets…');
         Artisan::call('filament:assets', [], $command->getOutput());
     }
 
-    protected function patchPanelProviders(InstallCommand $command): void
+    protected function patchPanelProviders(): void
     {
         $dir = app_path('Providers/Filament');
 
         if (! is_dir($dir)) {
-            $command->warn('No app/Providers/Filament directory — register FinisterrePlugin manually in your panel provider.');
+            warning('No app/Providers/Filament directory — register FinisterrePlugin manually in your panel provider.');
 
             return;
         }
@@ -338,7 +351,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         $files = glob($dir . '/*PanelProvider.php') ?: [];
 
         if ($files === []) {
-            $command->warn('No *PanelProvider.php found — register FinisterrePlugin manually in your panel provider.');
+            warning('No *PanelProvider.php found — register FinisterrePlugin manually in your panel provider.');
 
             return;
         }
@@ -348,7 +361,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             $relative = $this->relativePath($file);
 
             if (str_contains($contents, 'FinisterrePlugin')) {
-                $command->line(sprintf('FinisterrePlugin already present in %s — leaving as-is.', $relative));
+                note(sprintf('FinisterrePlugin already present in %s — leaving as-is.', $relative));
 
                 continue;
             }
@@ -361,23 +374,23 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 ?? $this->addPluginsArray($withImport);
 
             if ($patched === null) {
-                $command->warn(sprintf('Could not patch %s — add ->plugins([FinisterrePlugin::make()]) manually.', $relative));
+                warning(sprintf('Could not patch %s — add ->plugins([FinisterrePlugin::make()]) manually.', $relative));
 
                 continue;
             }
 
             file_put_contents($file, $patched);
-            $command->info(sprintf('Patched %s to register FinisterrePlugin.', $relative));
+            info(sprintf('Patched %s to register FinisterrePlugin.', $relative));
         }
     }
 
-    protected function patchUserModel(InstallCommand $command): void
+    protected function patchUserModel(): void
     {
         $path = app_path('Models/User.php');
         $relative = $this->relativePath($path);
 
         if (! file_exists($path)) {
-            $command->warn(sprintf('%s not found — add FinisterreUserTrait to your User model manually.', $relative));
+            warning(sprintf('%s not found — add FinisterreUserTrait to your User model manually.', $relative));
 
             return;
         }
@@ -385,7 +398,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         $contents = (string)file_get_contents($path);
 
         if (str_contains($contents, 'FinisterreUserTrait')) {
-            $command->line(sprintf('FinisterreUserTrait already present in %s — leaving as-is.', $relative));
+            note(sprintf('FinisterreUserTrait already present in %s — leaving as-is.', $relative));
 
             return;
         }
@@ -394,21 +407,21 @@ class FinisterreServiceProvider extends PackageServiceProvider
         $patched = $this->addTraitInsideClass($patched, 'FinisterreUserTrait');
 
         if ($patched === null) {
-            $command->warn(sprintf('Could not patch %s — add `use FinisterreUserTrait;` manually.', $relative));
+            warning(sprintf('Could not patch %s — add `use FinisterreUserTrait;` manually.', $relative));
 
             return;
         }
 
         file_put_contents($path, $patched);
-        $command->info(sprintf('Patched %s to use FinisterreUserTrait.', $relative));
+        info(sprintf('Patched %s to use FinisterreUserTrait.', $relative));
     }
 
-    protected function patchFilamentThemes(InstallCommand $command): void
+    protected function patchFilamentThemes(): void
     {
         $files = glob(resource_path('css/filament/*/theme.css')) ?: [];
 
         if ($files === []) {
-            $command->warn('No theme.css under resources/css/filament/*/theme.css — add the Finisterre @source line manually.');
+            warning('No theme.css under resources/css/filament/*/theme.css — add the Finisterre @source line manually.');
 
             return;
         }
@@ -436,25 +449,23 @@ class FinisterreServiceProvider extends PackageServiceProvider
             }
 
             if ($added === []) {
-                $command->line(sprintf('@source lines already present in %s — leaving as-is.', $relative));
+                note(sprintf('@source lines already present in %s — leaving as-is.', $relative));
 
                 continue;
             }
 
             file_put_contents($file, $contents);
-            $command->info(sprintf('Patched %s with @source for Finisterre and Flowforge views.', $relative));
+            info(sprintf('Patched %s with @source for Finisterre and Flowforge views.', $relative));
         }
     }
 
     protected function runNpmBuild(InstallCommand $command): void
     {
-        if (! $command->confirm('Would you like to run `npm run build` now?', true)) {
-            $command->line('Skipped — run `npm run build` manually to compile the Filament theme.');
+        if (! confirm(label: 'Would you like to run `npm run build` now?', default: true)) {
+            note('Skipped — run `npm run build` manually to compile the Filament theme.');
 
             return;
         }
-
-        $command->comment('Running npm run build…');
 
         $process = Process::fromShellCommandline('npm run build', base_path());
         $process->setTimeout(null);
@@ -463,13 +474,13 @@ class FinisterreServiceProvider extends PackageServiceProvider
         });
 
         if (! $process->isSuccessful()) {
-            $command->warn('npm run build failed — see the output above.');
+            warning('npm run build failed — see the output above.');
         }
     }
 
-    protected function printFinalSteps(InstallCommand $command): void
+    protected function printFinalSteps(): void
     {
-        $command->info('Finisterre install complete. Reload your Filament panel.');
+        outro('Finisterre install complete. Reload your Filament panel.');
     }
 
     protected function addUseImport(string $contents, string $fqcn): string
