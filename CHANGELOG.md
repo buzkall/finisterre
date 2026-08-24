@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.1.1 - 2026-08-24
+
+- Fixed a parse error in `tests/Feature/ConfigDeepMergeTest.php` that broke the test suite on PHP 8.3; parenthesisless `new` chaining is PHP 8.4 only.
+
 ## 4.1.0 - 2026-08-21
 
 Subtasks moved from a `subtasks` json column on `finisterre_tasks` to their own `finisterre_subtasks` table, exposed as a `FinisterreSubtask` model and a `subtasks()` HasMany relation on `FinisterreTask`. They remain one level deep — a subtask has no children of its own.

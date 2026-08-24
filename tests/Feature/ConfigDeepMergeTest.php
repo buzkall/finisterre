@@ -12,7 +12,7 @@ function mergePublishedConfig(array $published): void
 {
     config()->set('finisterre', $published);
 
-    new FinisterreServiceProvider(app())->registerPackageConfigs();
+    (new FinisterreServiceProvider(app()))->registerPackageConfigs();
 }
 
 it('falls back to vendor defaults for top-level keys the app omits', function() {
