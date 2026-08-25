@@ -138,8 +138,7 @@ class Form
                     ])
                     // Subtasks persist on their own, so there is nothing to
                     // attach them to until the task exists.
-                    ->hiddenOn('create')
-                    ->hidden(fn() => $userIsReporterOnly)
+                    ->hidden(fn(string $operation) => $operation === 'create' || $userIsReporterOnly)
                     ->columnSpanFull(),
 
                 TextEntry::make('subject')

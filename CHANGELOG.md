@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.2.1 - 2026-08-25
+
+- Fixed the subtasks section showing up on the task create form: its `->hidden()` call was overwriting the preceding `->hiddenOn('create')`, so both conditions now live in a single callback.
+
 ## 4.2.0 - 2026-08-24
 
 - New `php artisan finisterre:update` command for upgrades: it tables every migration the package ships against the file you published for it and whether it has run, then offers to publish the missing ones, run them, seed settings added by the new version, re-publish the Filament assets and rebuild the theme. It also reports added/dropped config keys and theme files missing their `@source` lines. `--check` reports without changing anything and exits non-zero when something is outstanding.
