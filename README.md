@@ -197,8 +197,48 @@ without a deploy. The page covers:
 - **General** — active environments and the Filament panel slug.
 - **Tasks** — statuses to hide from the board, and the fallback user notified when a task has no assignee.
 - **Assignable users filter** — column/value used to limit who can be assigned tasks (e.g. `role` = `admin`).
+- **Subtasks** — whether to notify the assignee of checklist changes, and how long to group them for.
 - **Comments** — whether to show avatars, and the heroicons used for the comment actions.
 - **SMS** — enable/disable and credentials for SMS notifications (see [SMS notifications](#sms-notifications)).
+
+## Subtask notifications
+
+When somebody other than the assignee adds, renames, ticks or deletes one of a task's
+subtasks, the assignee gets an email and an in-app notification. Edits are **grouped**: the
+first change starts a five-minute window, and everything done inside it arrives as a single
+digest rather than one message per subtask.
+
+The digest reports the **net change** over the window, not each keystroke, because it works
+by diffing a snapshot taken when the window opened against the checklist as it stands when
+the digest is built. So a subtask that was added and then deleted, a tick that was undone,
+and a rename that was reverted are all simply absent — there is nothing to report.
+
+Both settings live on the settings page, and in `config/finisterre.php`:
+
+```php
+'subtasks' => [
+    'notify'                     => true,
+    'notification_delay_minutes' => 5,
+],
+```
+
+No extra tables are involved: the snapshot rides along in the queued job's payload.
+
+**Grouping needs a queue worker and a shared, lock-capable cache store.** The window is held
+open by a unique-job lock on the default cache store, and the digest itself is a delayed job:
+
+| Host setup | Result |
+|---|---|
+| `redis`, `memcached`, `database` or `dynamodb` cache, plus `queue:work` | Grouping works as described |
+| `file` cache on a single server | Works; on a multi-server deploy each server keeps its own window |
+| `CACHE_STORE=array` | The lock is per-PHP-process, so grouping silently does nothing |
+| `QUEUE_CONNECTION=sync` | The delay is ignored and the job runs inline — one email per change |
+
+Two things worth knowing. Only a non-assignee edit *opens* a window; once one is open, the
+diff covers the whole checklist, so an edit the assignee makes themselves during that window
+is reported to them along with the rest. And seeders or bulk imports that create subtasks
+would otherwise trigger digests — set `finisterre.subtasks.notify` to `false`, or wrap the
+import in `FinisterreSubtask::withoutEvents(fn () => ...)`.
 
 ## Displaying a user's full name
 

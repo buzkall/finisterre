@@ -59,22 +59,24 @@ class ManageFinisterreSettings extends Page
         $settings = app(FinisterreSettings::class);
 
         $this->form->fill([
-            'environments'                  => $settings->environments,
-            'slug'                          => $settings->slug,
-            'hidden_statuses'               => $settings->hidden_statuses,
-            'fallback_notifiable_id'        => $settings->fallback_notifiable_id,
-            'authenticatable_filter_column' => $settings->authenticatable_filter_column,
-            'authenticatable_filter_value'  => $settings->authenticatable_filter_value,
-            'comments_display_avatars'      => $settings->comments_display_avatars,
-            'comments_icon_action'          => $settings->comments_icon_action,
-            'comments_icon_delete'          => $settings->comments_icon_delete,
-            'comments_icon_empty'           => $settings->comments_icon_empty,
-            'sms_enabled'                   => $settings->sms_enabled,
-            'sms_url'                       => $settings->sms_url,
-            'sms_auth_key'                  => $settings->sms_auth_key,
-            'sms_sender'                    => $settings->sms_sender,
-            'sms_notify_to'                 => $settings->sms_notify_to,
-            'sms_notify_priorities'         => $settings->sms_notify_priorities,
+            'environments'                        => $settings->environments,
+            'slug'                                => $settings->slug,
+            'hidden_statuses'                     => $settings->hidden_statuses,
+            'fallback_notifiable_id'              => $settings->fallback_notifiable_id,
+            'authenticatable_filter_column'       => $settings->authenticatable_filter_column,
+            'authenticatable_filter_value'        => $settings->authenticatable_filter_value,
+            'subtasks_notify'                     => $settings->subtasks_notify,
+            'subtasks_notification_delay_minutes' => $settings->subtasks_notification_delay_minutes,
+            'comments_display_avatars'            => $settings->comments_display_avatars,
+            'comments_icon_action'                => $settings->comments_icon_action,
+            'comments_icon_delete'                => $settings->comments_icon_delete,
+            'comments_icon_empty'                 => $settings->comments_icon_empty,
+            'sms_enabled'                         => $settings->sms_enabled,
+            'sms_url'                             => $settings->sms_url,
+            'sms_auth_key'                        => $settings->sms_auth_key,
+            'sms_sender'                          => $settings->sms_sender,
+            'sms_notify_to'                       => $settings->sms_notify_to,
+            'sms_notify_priorities'               => $settings->sms_notify_priorities,
         ]);
     }
 
@@ -128,6 +130,25 @@ class ManageFinisterreSettings extends Page
                             ->helperText(__('finisterre::finisterre.settings.authenticatable_filter_value_help')),
                     ])
                     ->columns(2),
+
+                Section::make(__('finisterre::finisterre.settings.section_subtasks'))
+                    ->schema([
+                        Toggle::make('subtasks_notify')
+                            ->label(__('finisterre::finisterre.settings.subtasks_notify'))
+                            ->helperText(__('finisterre::finisterre.settings.subtasks_notify_help'))
+                            ->live()
+                            ->columnSpanFull(),
+
+                        TextInput::make('subtasks_notification_delay_minutes')
+                            ->label(__('finisterre::finisterre.settings.subtasks_notification_delay_minutes'))
+                            ->helperText(__('finisterre::finisterre.settings.subtasks_notification_delay_minutes_help'))
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(1440)
+                            ->required()
+                            ->visible(fn(Get $get): bool => (bool)$get('subtasks_notify'))
+                            ->columnSpanFull(),
+                    ]),
 
                 Section::make(__('finisterre::finisterre.settings.section_comments'))
                     ->schema([
@@ -195,6 +216,8 @@ class ManageFinisterreSettings extends Page
         $settings->fallback_notifiable_id = (int)$data['fallback_notifiable_id'];
         $settings->authenticatable_filter_column = (string)$data['authenticatable_filter_column'];
         $settings->authenticatable_filter_value = (string)$data['authenticatable_filter_value'];
+        $settings->subtasks_notify = (bool)$data['subtasks_notify'];
+        $settings->subtasks_notification_delay_minutes = (int)$data['subtasks_notification_delay_minutes'];
         $settings->comments_display_avatars = (bool)$data['comments_display_avatars'];
         $settings->comments_icon_action = $data['comments_icon_action'];
         $settings->comments_icon_delete = $data['comments_icon_delete'];

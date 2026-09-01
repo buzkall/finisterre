@@ -3,6 +3,8 @@
 namespace Arzcode\Finisterre\Models;
 
 use Arzcode\Finisterre\Database\Factories\FinisterreSubtaskFactory;
+use Arzcode\Finisterre\Observers\FinisterreSubtaskObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $task_id
  * @property FinisterreTask $task
  */
+#[ObservedBy(FinisterreSubtaskObserver::class)]
 class FinisterreSubtask extends Model
 {
     use HasFactory;

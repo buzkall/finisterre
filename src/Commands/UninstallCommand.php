@@ -211,7 +211,9 @@ class UninstallCommand extends Command
             return;
         }
 
+        // Children first: every one of these has a cascading FK to the tasks table.
         $tables = [
+            config('finisterre.subtasks.table_name', 'finisterre_subtasks'),
             config('finisterre.task_changes_table_name', 'finisterre_task_changes'),
             config('finisterre.comments.table_name', 'finisterre_task_comments'),
             config('finisterre.table_name', 'finisterre_tasks'),

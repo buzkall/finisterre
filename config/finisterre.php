@@ -54,6 +54,18 @@ return [
 
     'subtasks' => [
         'table_name' => 'finisterre_subtasks',
+
+        // Email the assignee when somebody else changes their checklist. The
+        // first change opens a window of this many minutes, and the digest
+        // reports how the checklist looks at the end of it against how it
+        // looked at the start. Both are editable from the settings page.
+        //
+        // Grouping needs a queue worker and a shared, lock-capable cache store
+        // (redis, memcached, database, or file on a single server). Under
+        // QUEUE_CONNECTION=sync the delay is ignored and every change sends its
+        // own email; see the README.
+        'notify'                     => true,
+        'notification_delay_minutes' => 5,
     ],
 
     'comments' => [

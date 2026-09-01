@@ -20,22 +20,24 @@ class SettingsConfig
     public static function defaults(): array
     {
         return [
-            'finisterre.environments'                  => (string)config('finisterre.environments', ''),
-            'finisterre.slug'                          => config('finisterre.slug', 'tasks'),
-            'finisterre.hidden_statuses'               => config('finisterre.hidden_statuses', []),
-            'finisterre.fallback_notifiable_id'        => (int)config('finisterre.fallback_notifiable_id', 1),
-            'finisterre.authenticatable_filter_column' => config('finisterre.authenticatable_filter_column', ''),
-            'finisterre.authenticatable_filter_value'  => config('finisterre.authenticatable_filter_value', ''),
-            'finisterre.comments_display_avatars'      => (bool)config('finisterre.comments.display_avatars', true),
-            'finisterre.comments_icon_action'          => config('finisterre.comments.icons.action', 'heroicon-o-chat-bubble-left-right'),
-            'finisterre.comments_icon_delete'          => config('finisterre.comments.icons.delete', 'heroicon-o-trash'),
-            'finisterre.comments_icon_empty'           => config('finisterre.comments.icons.empty', 'heroicon-o-chat-bubble-left-right'),
-            'finisterre.sms_enabled'                   => (bool)config('finisterre.sms_notification.enabled', false),
-            'finisterre.sms_url'                       => config('finisterre.sms_notification.url', 'https://api.smsarena.es/http/sms.php'),
-            'finisterre.sms_auth_key'                  => config('finisterre.sms_notification.auth_key'),
-            'finisterre.sms_sender'                    => config('finisterre.sms_notification.sender'),
-            'finisterre.sms_notify_to'                 => config('finisterre.sms_notification.notify_to'),
-            'finisterre.sms_notify_priorities'         => collect(config('finisterre.sms_notification.notify_priorities', [TaskPriorityEnum::Urgent]))
+            'finisterre.environments'                        => (string)config('finisterre.environments', ''),
+            'finisterre.slug'                                => config('finisterre.slug', 'tasks'),
+            'finisterre.hidden_statuses'                     => config('finisterre.hidden_statuses', []),
+            'finisterre.fallback_notifiable_id'              => (int)config('finisterre.fallback_notifiable_id', 1),
+            'finisterre.authenticatable_filter_column'       => config('finisterre.authenticatable_filter_column', ''),
+            'finisterre.authenticatable_filter_value'        => config('finisterre.authenticatable_filter_value', ''),
+            'finisterre.subtasks_notify'                     => (bool)config('finisterre.subtasks.notify', true),
+            'finisterre.subtasks_notification_delay_minutes' => (int)config('finisterre.subtasks.notification_delay_minutes', 5),
+            'finisterre.comments_display_avatars'            => (bool)config('finisterre.comments.display_avatars', true),
+            'finisterre.comments_icon_action'                => config('finisterre.comments.icons.action', 'heroicon-o-chat-bubble-left-right'),
+            'finisterre.comments_icon_delete'                => config('finisterre.comments.icons.delete', 'heroicon-o-trash'),
+            'finisterre.comments_icon_empty'                 => config('finisterre.comments.icons.empty', 'heroicon-o-chat-bubble-left-right'),
+            'finisterre.sms_enabled'                         => (bool)config('finisterre.sms_notification.enabled', false),
+            'finisterre.sms_url'                             => config('finisterre.sms_notification.url', 'https://api.smsarena.es/http/sms.php'),
+            'finisterre.sms_auth_key'                        => config('finisterre.sms_notification.auth_key'),
+            'finisterre.sms_sender'                          => config('finisterre.sms_notification.sender'),
+            'finisterre.sms_notify_to'                       => config('finisterre.sms_notification.notify_to'),
+            'finisterre.sms_notify_priorities'               => collect(config('finisterre.sms_notification.notify_priorities', [TaskPriorityEnum::Urgent]))
                 ->map(fn($priority) => $priority instanceof TaskPriorityEnum ? $priority->value : $priority)
                 ->values()
                 ->all(),
@@ -103,23 +105,25 @@ class SettingsConfig
             $settings = app(FinisterreSettings::class);
 
             config([
-                'finisterre.environments'                       => $settings->environments,
-                'finisterre.active'                             => self::isActiveForEnvironments($settings->environments),
-                'finisterre.slug'                               => $settings->slug,
-                'finisterre.hidden_statuses'                    => $settings->hidden_statuses,
-                'finisterre.fallback_notifiable_id'             => $settings->fallback_notifiable_id,
-                'finisterre.authenticatable_filter_column'      => $settings->authenticatable_filter_column,
-                'finisterre.authenticatable_filter_value'       => $settings->authenticatable_filter_value,
-                'finisterre.comments.display_avatars'           => $settings->comments_display_avatars,
-                'finisterre.comments.icons.action'              => $settings->comments_icon_action,
-                'finisterre.comments.icons.delete'              => $settings->comments_icon_delete,
-                'finisterre.comments.icons.empty'               => $settings->comments_icon_empty,
-                'finisterre.sms_notification.enabled'           => $settings->sms_enabled,
-                'finisterre.sms_notification.url'               => $settings->sms_url,
-                'finisterre.sms_notification.auth_key'          => $settings->sms_auth_key,
-                'finisterre.sms_notification.sender'            => $settings->sms_sender,
-                'finisterre.sms_notification.notify_to'         => $settings->sms_notify_to,
-                'finisterre.sms_notification.notify_priorities' => collect($settings->sms_notify_priorities)
+                'finisterre.environments'                        => $settings->environments,
+                'finisterre.active'                              => self::isActiveForEnvironments($settings->environments),
+                'finisterre.slug'                                => $settings->slug,
+                'finisterre.hidden_statuses'                     => $settings->hidden_statuses,
+                'finisterre.fallback_notifiable_id'              => $settings->fallback_notifiable_id,
+                'finisterre.authenticatable_filter_column'       => $settings->authenticatable_filter_column,
+                'finisterre.authenticatable_filter_value'        => $settings->authenticatable_filter_value,
+                'finisterre.subtasks.notify'                     => $settings->subtasks_notify,
+                'finisterre.subtasks.notification_delay_minutes' => $settings->subtasks_notification_delay_minutes,
+                'finisterre.comments.display_avatars'            => $settings->comments_display_avatars,
+                'finisterre.comments.icons.action'               => $settings->comments_icon_action,
+                'finisterre.comments.icons.delete'               => $settings->comments_icon_delete,
+                'finisterre.comments.icons.empty'                => $settings->comments_icon_empty,
+                'finisterre.sms_notification.enabled'            => $settings->sms_enabled,
+                'finisterre.sms_notification.url'                => $settings->sms_url,
+                'finisterre.sms_notification.auth_key'           => $settings->sms_auth_key,
+                'finisterre.sms_notification.sender'             => $settings->sms_sender,
+                'finisterre.sms_notification.notify_to'          => $settings->sms_notify_to,
+                'finisterre.sms_notification.notify_priorities'  => collect($settings->sms_notify_priorities)
                     ->map(fn($value) => TaskPriorityEnum::tryFrom($value))
                     ->filter()
                     ->values()

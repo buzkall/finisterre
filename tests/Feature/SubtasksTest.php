@@ -14,9 +14,11 @@ beforeEach(function() {
     Schema::getConnection()->statement('PRAGMA foreign_keys = ON');
 
     config([
-        'finisterre.active'                     => false,
-        'finisterre.table_name'                 => 'finisterre_tasks',
-        'finisterre.subtasks.table_name'        => 'finisterre_subtasks',
+        'finisterre.active'              => false,
+        'finisterre.table_name'          => 'finisterre_tasks',
+        'finisterre.subtasks.table_name' => 'finisterre_subtasks',
+        // This suite covers the model itself; the digest has its own.
+        'finisterre.subtasks.notify'            => false,
         'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
         'finisterre.authenticatable_table_name' => 'users',
         'media-library.media_model'             => Media::class,
