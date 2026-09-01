@@ -186,15 +186,26 @@ class TasksKanbanBoard extends BoardPage
 
             // Renumber the column 10, 20, 30, … Sibling rows are rewritten too; the
             // FinisterreTask::saved() guard ignores order_column-only changes, so the
-            // renumber never triggers assignee notifications.
+            // renumber never triggers assignee notifications. Timestamps are disabled
+            // while renumbering: a position-only write is not a change to the task, and
+            // bumping updated_at would make every card in the target column look edited.
             foreach ($ordered as $index => $item) {
                 $position = ($index + 1) * 10;
 
                 if ((string)$item->getKey() === (string)$card->getKey()) {
-                    $card->update([$columnField => $columnValue, $positionField => $position]);
+                    $card->fill([$columnField => $columnValue, $positionField => $position]);
+
+                    // Only a real column change is worth a new updated_at; a drag inside
+                    // the same column moves nothing but the position.
+                    $card->timestamps = $card->isDirty($columnField);
+                    $card->save();
+                    $card->timestamps = true;
+
                     $newPosition = (string)$position;
                 } elseif ((int)$item->getAttribute($positionField) !== $position) {
+                    $item->timestamps = false;
                     $item->update([$positionField => $position]);
+                    $item->timestamps = true;
                 }
             }
         });

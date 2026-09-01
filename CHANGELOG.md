@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.3.0 - 2026-09-01
+
+- Subtask changes now notify the task's assignee when somebody else makes them. Edits are grouped: the first change opens a five-minute window (configurable, and editable from the settings page) and everything done inside it arrives as one digest instead of one email per subtask. Additions, renames, ticks and deletions are all covered. The digest reports the net change over the window — a subtask added and deleted, a tick undone, or a rename reverted is never mentioned — because it diffs a snapshot carried in the queued job against the live checklist, so no extra table is involved. Grouping requires a queue worker and a shared, lock-capable cache store; see the README.
+- Fixed `add_task_changes_table.php.stub` starting with a stray `The mi` before its opening PHP tag, which every host that published it emitted as inline output.
+- `finisterre:uninstall` now also drops the `finisterre_subtasks` table, which it had never included.
+
 ## 4.2.1 - 2026-08-25
 
 - Fixed the subtasks section showing up on the task create form: its `->hidden()` call was overwriting the preceding `->hiddenOn('create')`, so both conditions now live in a single callback.
