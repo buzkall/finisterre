@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Tests;
 
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Encryption\Encrypter;
 use Livewire\Livewire;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\LaravelSettings\LaravelSettingsServiceProvider;
@@ -47,6 +48,15 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+
+        // Rendering any Blade view boots Laravel's encrypter, which refuses to
+        // start without a key. Testbench only ships one in a skeleton .env that
+        // `package:purge-skeleton` deletes on every install, so generate one per
+        // run: nothing encrypted here outlives the process, so the key never has
+        // to be reproducible — and none has to be committed.
+        config()->set('app.key', 'base64:' . base64_encode(
+            Encrypter::generateKey(config('app.cipher', 'AES-256-CBC'))
+        ));
 
         // Set up the finisterre config for testing
         config()->set('finisterre.authenticatable', User::class);
