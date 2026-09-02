@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+#
+# Runs the same checks CI runs, before every push.
+# Bypass for a genuine emergency with: git push --no-verify
+
+set -e
+
+# A Git GUI (Fork, Tower, an IDE) starts the hook from its own process, which
+# never reads your shell profile, so php and composer may not be on its PATH.
+# Add the usual install locations before looking for them.
+PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/Library/Application Support/Herd/bin:$PATH"
+export PATH
+
+if ! command -v composer > /dev/null 2>&1; then
+    printf '\033[31mPush aborted: composer was not found on PATH.\033[0m\n'
+    printf 'Pushing from a Git GUI? Add its location to the PATH line in .githooks/pre-push.\n'
+    printf 'To bypass: git push --no-verify\n'
+    exit 1
+fi
+
+printf '\033[33mRunning composer ci:check before push...\033[0m\n'
+
+if ! composer ci:check; then
+    printf '\033[31m\nPush aborted: composer ci:check failed.\033[0m\n'
+    printf 'Fix it, commit, and push again. Styling alone: composer format\n'
+    printf 'To bypass: git push --no-verify\n'
+    exit 1
+fi
+
+printf '\033[32mAll checks passed. Pushing...\033[0m\n'

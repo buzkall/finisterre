@@ -7,13 +7,13 @@ use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ViewFinisterreTask;
-use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
@@ -227,20 +227,43 @@ class Infolist
                     fn() => TagsSelect::persist($record, $data['tags'] ?? [])
                 )),
 
-            // Uploads stay on the edit form; this badge just counts and links there.
             Action::make('quick_attachments')
                 ->badge()
                 ->color('gray')
                 ->icon(Heroicon::OutlinedPaperClip)
                 ->label(fn(FinisterreTask $record) => (string)$record->getMedia('tasks')->count())
                 ->tooltip(__('finisterre::finisterre.attachments'))
-                ->url(fn(FinisterreTask $record) => FinisterreTaskResource::getUrl('edit', ['record' => $record])),
+                ->modalHeading(__('finisterre::finisterre.attachments'))
+                ->modalWidth(Width::Large)
+                ->modalSubmitActionLabel(__('finisterre::finisterre.save'))
+                // Filling the schema with an array — even an empty one — is what makes
+                // Filament load the record's existing media into the field. Mounted
+                // unfilled, the field would come up empty and its own save step would
+                // then treat every attachment already on the task as removed.
+                ->fillForm(fn(): array => [])
+                ->schema([
+                    SpatieMediaLibraryFileUpload::make('attachments')
+                        ->hiddenLabel()
+                        ->multiple()
+                        ->disk(config('finisterre.attachments_disk') ?? 'public')
+                        ->collection('tasks')
+                        ->openable()
+                        ->downloadable(),
+                ])
+                // The upload field writes the media itself while the modal is
+                // submitted, so there is nothing left to persist here: this only
+                // reloads what the page shows.
+                ->action(fn(ViewFinisterreTask $livewire) => self::apply($livewire)),
         ];
     }
 
-    protected static function apply(ViewFinisterreTask $livewire, Closure $persist): void
+    protected static function apply(ViewFinisterreTask $livewire, ?Closure $persist = null): void
     {
-        $persist();
+        // Actions whose field persists on its own (the attachments upload) pass
+        // nothing and only need the refresh below.
+        if ($persist) {
+            $persist();
+        }
 
         $livewire->refreshRecord();
 

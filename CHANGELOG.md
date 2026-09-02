@@ -5,11 +5,12 @@ All notable changes to `finisterre` will be documented in this file.
 ## 4.4.0 - 2026-09-02
 
 - Clicking a task now opens a **task page** instead of the edit form: the board card, the list row, the redirect after creating or saving a task and every notification link land there. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel, and the comments right below with the full width.
-- Each badge on the task page is a quick action: status, priority and assignee change with one click from a dropdown, tags and due date open a small one-field modal (tags can still be created on the spot). They persist exactly like the form did (observer, `updated_at`, notifications), so the board reflects the change on the next load. Users without `update` rights, or reporters looking at their own issues, see the same strip without the actions.
+- Each badge on the task page is a quick action: status, priority and assignee change with one click from a dropdown, while tags, due date and attachments open a small modal (tags can still be created on the spot, and the attachments modal both uploads new files and removes existing ones). They persist exactly like the form did (observer, `updated_at`, notifications), and the page updates in place, so the board reflects the change on the next load. Users without `update` rights, or reporters looking at their own issues, see the same strip without the actions.
 - Image attachments are shown as thumbnails on the task page and open in a lightbox built on Filament's own modal; other files keep their open and download links.
 - The edit form is trimmed to title, description and attachments; everything else lives on the task page. Saving returns to the task page. Archive and unarchive moved to the task page header next to Edit and Delete.
 - The package's notification links now target the `...resources.finisterre-tasks.view` route. The edit route still exists, so hosts that linked to it directly keep working.
 - Added the `edit_task` translation the edit page breadcrumb already referenced, plus the new labels, in English, Spanish and Catalan.
+- Development: a tracked `.githooks/pre-push` now runs the new `composer ci:check` (Pint in check mode, PHPStan, the test suite) before every push, so a push that CI would reject stops locally. `composer install` wires the clone up to it; `git push --no-verify` skips it.
 
 ## 4.3.0 - 2026-09-01
 

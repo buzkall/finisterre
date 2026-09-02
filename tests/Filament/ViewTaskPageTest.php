@@ -10,8 +10,10 @@ use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Filament\Actions\Testing\TestAction;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
 
@@ -151,6 +153,27 @@ it('syncs the tags from the modal and touches the task', function() {
 
     expect($task->refresh()->tags->pluck('id')->all())->toBe([$tag->getKey()])
         ->and($task->updated_at->isToday())->toBeTrue();
+});
+
+it('uploads an attachment from the modal and keeps the ones already there', function() {
+    Storage::fake('public');
+    $task = pageTask();
+    $task->addMediaFromString('first')->usingFileName('first.png')->toMediaCollection('tasks');
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->callAction(quickAction('quick_attachments'), [
+            'attachments' => [UploadedFile::fake()->image('second.png')],
+        ])
+        ->assertHasNoFormErrors()
+        ->assertNotified();
+
+    $media = $task->refresh()->getMedia('tasks');
+
+    // Livewire renames the temporary upload, so assert on the count and on the
+    // attachment that was already there: mounting the field unfilled would have
+    // wiped it.
+    expect($media)->toHaveCount(2)
+        ->and($media->pluck('file_name'))->toContain('first.png');
 });
 
 it('shows a read-only strip to users who may not update', function() {

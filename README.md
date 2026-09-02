@@ -189,7 +189,7 @@ FinisterrePlugin::make()
 
 Clicking a card on the board (or a row in the task list) opens the task page rather than a form. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel and the comments below.
 
-Every badge is a quick action for users allowed to update the task: status, priority and assignee change with one click from a dropdown; tags and due date open a small modal (new tags can be created on the spot). Image attachments open in a lightbox; other files open in a new tab or download. The **Edit** button leads to the form, which only keeps the long-form fields: title, description and attachments.
+Every badge is a quick action for users allowed to update the task: status, priority and assignee change with one click from a dropdown; tags, due date and attachments open a small modal (new tags can be created on the spot, and the attachments modal uploads new files and removes existing ones). The page updates in place after each change. Image attachments open in a lightbox; other files open in a new tab or download. The **Edit** button leads to the form, which only keeps the long-form fields: title, description and attachments.
 
 ## Settings page
 
@@ -366,3 +366,19 @@ by the host application's theme via the `@source` lines above. There is no JavaS
 ```bash
 composer test
 ```
+
+### Pre-push hook
+
+`composer ci:check` runs everything CI runs: Pint in check mode, PHPStan and the test suite. A tracked
+`.githooks/pre-push` runs it before every push so a red build never leaves your machine, and `composer install`
+points this clone at it (`core.hooksPath` is per clone and cannot be committed, so it is set from
+`.githooks/install.php`).
+
+```bash
+composer ci:check                  # run the checks yourself
+git config --get core.hooksPath    # should print .githooks
+git push --no-verify               # skip the hook in an emergency
+```
+
+Pushing from a Git GUI rather than a terminal? It starts the hook without your shell profile, so if `composer`
+is somewhere unusual, add that location to the `PATH` line at the top of `.githooks/pre-push`.

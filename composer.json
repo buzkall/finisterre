@@ -60,7 +60,8 @@
         "post-autoload-dump": [
             "@clear",
             "@prepare",
-            "@composer run prepare"
+            "@composer run prepare",
+            "@php .githooks/install.php"
         ],
         "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
@@ -78,6 +79,11 @@
             "Composer\\Config::disableProcessTimeout",
             "@build",
             "@php vendor/bin/testbench serve --ansi"
+        ],
+        "ci:check": [
+            "@php vendor/bin/pint --test --ansi",
+            "@php vendor/bin/phpstan analyse --ansi",
+            "@php vendor/bin/pest --ci"
         ],
         "lint": [
             "@php vendor/bin/pint --ansi",
