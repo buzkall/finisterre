@@ -5,19 +5,24 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 
 /**
- * The create form carries every field. On edit only the long-form ones
- * (title, description, attachments) remain: status, priority, assignee,
- * tags and due date are changed from the task page, right next to their
- * values, and subtasks live there too.
+ * The create form is laid out like the task page it leads to: the title as
+ * heading, a row of coloured selectors for priority, assignee and tags
+ * where the page shows its badges, then the description and attachments.
+ *
+ * On edit only the long-form fields (title, description, attachments) remain:
+ * the strip's values are changed from the task page, right next to the badges
+ * that show them, and the due date and subtasks live there too.
  */
 class Form
 {
@@ -30,40 +35,24 @@ class Form
                 ->label(__('finisterre::finisterre.title'))
                 ->required()
                 ->maxLength(255)
+                ->autofocus()
                 ->columnSpanFull(),
 
-            RichEditor::make('description')
-                ->label(__('finisterre::finisterre.description'))
-                ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
-                ->columnSpanFull(),
-
+            // The badge strip of the task page, as selectors: one row, one
+            // column per field. Hidden whole on edit, so none of its fields
+            // needs to hide itself.
             Group::make([
-                Select::make('priority')
+                ToggleButtons::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
-                    ->hiddenOn('edit')
                     ->options(TaskPriorityEnum::class)
+                    ->inline()
                     ->default(fn() => $userIsReporterOnly ? TaskPriorityEnum::Urgent : TaskPriorityEnum::Low)
                     ->required()
-                    ->helperText(fn() => $userIsReporterOnly ? __('finisterre::finisterre.priority_help') : '')
-                    ->columnSpan(1),
-
-                DatePicker::make('due_at')
-                    ->label(__('finisterre::finisterre.due_at'))
-                    // A later ->hidden() would overwrite ->hiddenOn(), so keep both conditions together.
-                    ->hidden(fn(string $operation) => $operation === 'edit' || $userIsReporterOnly)
-                    ->columnSpan(1),
-
-                SpatieMediaLibraryFileUpload::make('attachments')
-                    ->label(__('finisterre::finisterre.attachments'))
-                    ->multiple()
-                    ->disk(config('finisterre.attachments_disk') ?? 'public')
-                    ->collection('tasks')
-                    ->openable()
-                    ->downloadable()
-                    ->columnSpan(fn(string $operation) => $operation === 'edit' ? 'full' : 1),
+                    ->helperText(fn() => $userIsReporterOnly ? __('finisterre::finisterre.priority_help') : ''),
 
                 Select::make('assignee_id')
                     ->label(__('finisterre::finisterre.assignee_id'))
+                    ->prefixIcon(Heroicon::OutlinedUser)
                     ->required()
                     ->relationship(
                         'assignee',
@@ -73,23 +62,47 @@ class Form
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->getUserDisplayName())
                     ->searchable((array)config('finisterre.authenticatable_attribute', 'name'))
                     ->preload()
-                    ->hidden(fn(string $operation) => $operation === 'edit' || $userIsReporterOnly)
                     ->default(config('finisterre.fallback_notifiable_id'))
-                    ->columnSpan(1),
+                    // Reporters could never assign their own issues.
+                    ->hidden($userIsReporterOnly),
 
                 TagsSelect::make()
-                    ->hiddenOn('edit')
-                    ->afterStateHydrated(function(Select $component, ?FinisterreTask $record): void {
-                        if ($record) {
-                            $component->state($record->tags->pluck('id')->all());
-                        }
-                    })
+                    ->prefixIcon(Heroicon::OutlinedTag)
+                    ->placeholder(__('finisterre::finisterre.no_tags'))
                     ->dehydrated(false)
                     ->saveRelationshipsUsing(function(FinisterreTask $record, $state): void {
                         $record->tags()->sync($state ?? []);
-                    })
-                    ->columnSpan(1),
-            ])->columns(3)->columnSpanFull(),
+                    }),
+            ])
+                // Two columns for a reporter, whose row has no assignee in it.
+                ->columns($userIsReporterOnly ? 2 : 3)
+                ->columnSpanFull()
+                ->hiddenOn('edit'),
+
+            // Same pairing as the task page: the description with its attachments.
+            Section::make()
+                ->compact()
+                ->schema([
+                    RichEditor::make('description')
+                        ->label(__('finisterre::finisterre.description'))
+                        ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                        // The editor ships a 3rem body, barely one line. Its content
+                        // area is flex-1 inside this wrapper, so growing the wrapper
+                        // is what gives the field room to write in; an inline style
+                        // keeps it working in host apps that never compile our CSS.
+                        ->extraInputAttributes(['style' => 'min-height: 12rem'])
+                        ->columnSpanFull(),
+
+                    SpatieMediaLibraryFileUpload::make('attachments')
+                        ->label(__('finisterre::finisterre.attachments'))
+                        ->multiple()
+                        ->disk(config('finisterre.attachments_disk') ?? 'public')
+                        ->collection('tasks')
+                        ->openable()
+                        ->downloadable()
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
         ]);
     }
 }

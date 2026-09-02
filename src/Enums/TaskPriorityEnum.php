@@ -3,9 +3,10 @@
 namespace Arzcode\Finisterre\Enums;
 
 use Arzcode\Finisterre\Traits\HasEnumFunctions;
+use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
 
-enum TaskPriorityEnum: string implements HasLabel
+enum TaskPriorityEnum: string implements HasColor, HasLabel
 {
     use HasEnumFunctions;
 

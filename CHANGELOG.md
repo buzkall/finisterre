@@ -5,6 +5,10 @@ All notable changes to `finisterre` will be documented in this file.
 ## 4.5.0 - 2026-09-02
 
 - Board cards now show **who created the task**, not just who it is assigned to: the assignee's circle leads the stack and a smaller, dimmed one for the creator tucks in behind its right edge. It only appears when the two are different people, so a self-assigned task's card looks exactly as it did before, and a task nobody is assigned to now shows its creator instead of no avatar at all. Both circles carry a labelled tooltip ("Created by: …" / "Assigned to: …") where the assignee used to show a bare name. The creator's name comes from a second correlated subselect in the board query, next to the existing one for the assignee, so the board still loads the whole column in one query.
+- The **create form now reads like the task page** it leads to: the title on top, then a row of three selectors where the page shows its badges (priority as inline coloured buttons in the same colours as its badge, assignee and tags with the same icons), and below them the description and attachments paired in one card, as on the task page. Priority is no longer a dropdown, so the four levels are one click away and the chosen one is coloured. Reporters, who may not assign, get that row in two columns so it still fills the width.
+- The description editor is no longer a one-line box: it opens about eight lines tall on both the create and the edit form, so there is room to write without dragging it open first.
+- The due date is gone from the create form: like the status, it is set from the task page, on the badge that shows it. New tasks are created without one.
+- The status and priority enums now declare their colour to Filament, so the badges in the tasks table are coloured like the ones on the task page and the board instead of all grey.
 
 ## 4.4.2 - 2026-09-02
 
