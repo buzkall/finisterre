@@ -252,3 +252,20 @@ it('includes the task creator in the sms text', function() {
             && str_contains($request['text'], $task->title);
     });
 });
+
+it('sends the sms only once when the request succeeds', function() {
+    Http::fake();
+
+    config([
+        'finisterre.sms_notification.enabled'           => true,
+        'finisterre.sms_notification.notify_priorities' => [TaskPriorityEnum::Urgent],
+        'finisterre.sms_notification.url'               => 'https://api.smsarena.es/http/sms.php',
+    ]);
+
+    $task = FinisterreTask::factory()->create(['priority' => TaskPriorityEnum::Urgent]);
+    $task->wasRecentlyCreated = true;
+
+    (new TaskNotification($task))->toSms(User::factory()->create());
+
+    Http::assertSentCount(1);
+});

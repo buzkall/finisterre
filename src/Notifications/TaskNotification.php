@@ -119,6 +119,7 @@ class TaskNotification extends Notification implements ShouldQueue
                         ]
                     )]);
 
+                return;
             } catch (Exception $e) {
                 if (str_contains($e->getMessage(), 'Could not resolve host') &&
                     $attempt < $maxRetries) {
