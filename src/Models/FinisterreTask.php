@@ -36,7 +36,7 @@ use Spatie\Tags\HasTags;
  * @property bool $archived
  * @property TaskPriorityEnum $priority
  * @property Collection $subtasks
- * @property Carbon $due_at
+ * @property ?Carbon $due_at
  * @property ?Carbon $completed_at
  * @property int $creator_id
  * @property ?int $assignee_id
@@ -123,6 +123,17 @@ class FinisterreTask extends Model implements HasMedia
 
         /** @var Authenticatable $creator */
         return $creator->getUserDisplayName();
+    }
+
+    public function assigneeName(): ?string
+    {
+        $assignee = $this->assignee;
+        if (! $assignee) {
+            return null;
+        }
+
+        /** @var Authenticatable $assignee */
+        return $assignee->getUserDisplayName();
     }
 
     public function assignee(): BelongsTo

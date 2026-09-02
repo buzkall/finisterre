@@ -42,7 +42,7 @@ class SubtaskChangesNotification extends Notification implements ShouldQueue
             ->action(
                 __('finisterre::finisterre.subtask_changes.cta'),
                 route(
-                    'filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit',
+                    'filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view',
                     $this->task
                 )
             )

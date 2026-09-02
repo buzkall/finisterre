@@ -75,7 +75,7 @@ class TaskNotification extends Notification implements ShouldQueue
             })
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $this->task)
+                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $this->task)
             )
             ->salutation(' ');
 

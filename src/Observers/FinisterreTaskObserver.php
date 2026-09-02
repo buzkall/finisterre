@@ -67,7 +67,7 @@ class FinisterreTaskObserver
                         Action::make('view')
                             ->label(__('finisterre::finisterre.comment_notification.cta'))
                             ->button()
-                            ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)),
+                            ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $task)),
                     ])->sendToDatabase($assignee);
             }
         });

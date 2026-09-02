@@ -118,7 +118,7 @@ class TasksKanbanBoard extends BoardPage
                                 'commentsCount'    => $record->comments_count ?? 0,
                                 'subtasksCount'    => $record->subtasks_count ?? 0,
                                 'subtasksDone'     => $record->completed_subtasks_count ?? 0,
-                                'editUrl'          => FinisterreTaskResource::getUrl('edit', ['record' => $record->id]),
+                                'viewUrl'          => FinisterreTaskResource::getUrl('view', ['record' => $record->id]),
                                 'updatedAt'        => $record->updated_at->diffForHumans(),
                                 'hasChanges'       => (bool)$record->has_changes,
                             ]),

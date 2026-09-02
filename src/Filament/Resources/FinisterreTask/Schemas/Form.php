@@ -2,26 +2,23 @@
 
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
-use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
-use Arzcode\Finisterre\Enums\TaskStatusEnum;
-use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\FinisterrePlugin;
-use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
-use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Livewire;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
 
+/**
+ * The create form carries every field. On edit only the long-form ones
+ * (title, description, attachments) remain: status, priority, assignee,
+ * tags and due date are changed from the task page, right next to their
+ * values, and subtasks live there too.
+ */
 class Form
 {
     public static function configure(Schema $schema): Schema
@@ -41,16 +38,9 @@ class Form
                 ->columnSpanFull(),
 
             Group::make([
-                Select::make('status')
-                    ->label(__('finisterre::finisterre.status'))
-                    ->hiddenOn('create')
-                    ->options(TaskStatusEnum::options())
-                    ->default(TaskStatusEnum::Open)
-                    ->required()
-                    ->columnSpan(1),
-
                 Select::make('priority')
                     ->label(__('finisterre::finisterre.priority'))
+                    ->hiddenOn('edit')
                     ->options(TaskPriorityEnum::class)
                     ->default(fn() => $userIsReporterOnly ? TaskPriorityEnum::Urgent : TaskPriorityEnum::Low)
                     ->required()
@@ -59,13 +49,8 @@ class Form
 
                 DatePicker::make('due_at')
                     ->label(__('finisterre::finisterre.due_at'))
-                    ->hidden(fn() => $userIsReporterOnly)
-                    ->columnSpan(1),
-
-                DatePicker::make('completed_at')
-                    ->label(__('finisterre::finisterre.completed_at'))
-                    ->hiddenOn('create')
-                    ->disabled()
+                    // A later ->hidden() would overwrite ->hiddenOn(), so keep both conditions together.
+                    ->hidden(fn(string $operation) => $operation === 'edit' || $userIsReporterOnly)
                     ->columnSpan(1),
 
                 SpatieMediaLibraryFileUpload::make('attachments')
@@ -75,7 +60,7 @@ class Form
                     ->collection('tasks')
                     ->openable()
                     ->downloadable()
-                    ->columnSpan(1),
+                    ->columnSpan(fn(string $operation) => $operation === 'edit' ? 'full' : 1),
 
                 Select::make('assignee_id')
                     ->label(__('finisterre::finisterre.assignee_id'))
@@ -88,20 +73,12 @@ class Form
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->getUserDisplayName())
                     ->searchable((array)config('finisterre.authenticatable_attribute', 'name'))
                     ->preload()
-                    ->hidden(fn($operation) => $userIsReporterOnly && $operation == 'create')
-                    ->disabled(fn() => $userIsReporterOnly)
+                    ->hidden(fn(string $operation) => $operation === 'edit' || $userIsReporterOnly)
                     ->default(config('finisterre.fallback_notifiable_id'))
                     ->columnSpan(1),
 
-                Select::make('tags')
-                    ->label(__('finisterre::finisterre.tags'))
-                    ->multiple()
-                    // Avoid ->relationship() here: on PostgreSQL it triggers
-                    // `select distinct "tags".*` through the MorphToMany pivot,
-                    // which fails on the json `name`/`slug` columns (no equality operator).
-                    ->options(fn() => FinisterreTag::withType('tasks')->get()->pluck('name', 'id'))
-                    ->searchable()
-                    ->preload()
+                TagsSelect::make()
+                    ->hiddenOn('edit')
                     ->afterStateHydrated(function(Select $component, ?FinisterreTask $record): void {
                         if ($record) {
                             $component->state($record->tags->pluck('id')->all());
@@ -111,58 +88,8 @@ class Form
                     ->saveRelationshipsUsing(function(FinisterreTask $record, $state): void {
                         $record->tags()->sync($state ?? []);
                     })
-                    ->createOptionForm([
-                        TextInput::make('name')
-                            ->label(__('finisterre::finisterre.tags'))
-                            ->required(),
-                    ])
-                    ->createOptionUsing(
-                        fn(array $data) => FinisterreTag::findOrCreateFromString($data['name'], 'tasks')->getKey()
-                    )
-                    ->createOptionAction(fn(Action $action) => $action->extraModalFooterActions([]))
                     ->columnSpan(1),
-
-                Section::make(__('finisterre::finisterre.subtasks.label'))
-                    ->icon('heroicon-o-check-circle')
-                    ->collapsible()
-                    // Open when there is something to see, folded away otherwise.
-                    ->collapsed(fn(?FinisterreTask $record) => $record?->subtasks->isEmpty() ?? true)
-                    ->afterHeader(fn(?FinisterreTask $record): HtmlString => new HtmlString(
-                        view('finisterre::subtasks.counter-badge', [
-                            'done'  => $record?->subtasks->where('completed', true)->count() ?? 0,
-                            'total' => $record?->subtasks->count() ?? 0,
-                        ])->render()
-                    ))
-                    ->schema([
-                        Livewire::make(FinisterreSubtasksComponent::class),
-                    ])
-                    // Subtasks persist on their own, so there is nothing to
-                    // attach them to until the task exists.
-                    ->hidden(fn(string $operation) => $operation === 'create' || $userIsReporterOnly)
-                    ->columnSpanFull(),
-
-                TextEntry::make('subject')
-                    ->label(__('finisterre::finisterre.related_record'))
-                    ->hiddenOn('create')
-                    ->visible(fn(?FinisterreTask $record) => $record?->subject instanceof FinisterreReportable)
-                    ->state(fn(?FinisterreTask $record): ?HtmlString => $record?->subjectReportLink()),
-
-                TextEntry::make('dates')
-                    ->hiddenLabel()
-                    ->hiddenOn('create')
-                    ->hintIcon('heroicon-o-clock')
-                    ->hint(fn($record) => new HtmlString(
-                        __('finisterre::finisterre.created_by') . ': ' .
-                        '&nbsp;&nbsp;&nbsp;&nbsp;' .
-                        $record?->creatorName() .
-                        '<br />' .
-                        __('finisterre::finisterre.created_at') . ': ' .
-                        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' .
-                        $record?->created_at->format('d/m/y H:i:s') .
-                        '<br />' .
-                        __('finisterre::finisterre.updated_at') . ': ' . $record?->updated_at->format('d/m/y H:i:s')
-                    ))->alignEnd()->columnStart(3),
-            ])->columns(3)->columnSpanFull()
+            ])->columns(3)->columnSpanFull(),
         ]);
     }
 }

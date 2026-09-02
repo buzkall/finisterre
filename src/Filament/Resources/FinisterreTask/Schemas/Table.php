@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table as FilamentTable;
 
@@ -33,6 +34,7 @@ class Table
             ->defaultSort('created_at', 'desc')
             ->filters([])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([]);

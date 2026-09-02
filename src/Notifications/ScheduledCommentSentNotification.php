@@ -36,7 +36,7 @@ class ScheduledCommentSentNotification extends Notification implements ShouldQue
             ->line(new HtmlString($this->embedImages($this->comment->comment)))
             ->action(
                 __('finisterre::finisterre.scheduled_comment_sent.cta'),
-                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)
+                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $task)
             )
             ->salutation(' ');
 

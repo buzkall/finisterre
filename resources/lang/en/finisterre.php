@@ -40,7 +40,18 @@ return [
     'archive_heading'   => 'Archive task to hide it from the main list',
     'unarchive'         => 'Unarchive',
     'unarchive_heading' => 'Unarchive task to show it in the main list',
-    'comments'          => [
+    'edit'              => 'Edit',
+    'edit_task'         => 'Edit task',
+    'view_task'         => 'Task',
+    'no_description'    => 'No description',
+    'no_due_date'       => 'No due date',
+    'no_tags'           => 'No tags',
+    'unassigned'        => 'Unassigned',
+    'download'          => 'Download',
+    'quick_update'      => [
+        'saved' => 'Task updated',
+    ],
+    'comments' => [
         'title'              => 'Comments',
         'placeholder'        => 'Write a comment...',
         'add'                => 'Add comment',

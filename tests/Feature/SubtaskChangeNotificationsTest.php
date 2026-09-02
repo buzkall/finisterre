@@ -40,7 +40,7 @@ beforeEach(function() {
     app('translator')->addNamespace('finisterre', __DIR__ . '/../../resources/lang');
 
     Route::get('/__test/tasks/{task}', fn() => 'ok')
-        ->name('filament.admin.resources.finisterre-tasks.edit');
+        ->name('filament.admin.resources.finisterre-tasks.view');
 
     DbSchema::create('finisterre_subtasks', function(Blueprint $table) {
         $table->id();

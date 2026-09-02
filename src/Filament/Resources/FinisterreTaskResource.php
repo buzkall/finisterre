@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Filament\Resources;
 
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Form as TaskForm;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Infolist as TaskInfolist;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTable;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
@@ -18,6 +19,7 @@ class FinisterreTaskResource extends Resource
     protected static ?string $model = FinisterreTask::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected static bool $hasTitleCaseModelLabel = false;
+    protected static ?string $recordTitleAttribute = 'title';
 
     public static function canAccess(): bool
     {
@@ -53,11 +55,17 @@ class FinisterreTaskResource extends Resource
         return TaskTable::configure($table);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return TaskInfolist::configure($schema);
+    }
+
     public static function getPages(): array
     {
         return [
             'index'  => Pages\ListFinisterreTasks::route('/'),
             'create' => Pages\CreateFinisterreTask::route('/create'),
+            'view'   => Pages\ViewFinisterreTask::route('/{record}'),
             'edit'   => Pages\EditFinisterreTask::route('/{record}/edit'),
         ];
     }

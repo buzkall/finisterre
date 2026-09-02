@@ -42,7 +42,7 @@ beforeEach(function() {
     }
 
     Route::get('/__test/tasks/{task}', fn() => 'ok')
-        ->name('filament.admin.resources.finisterre-tasks.edit');
+        ->name('filament.admin.resources.finisterre-tasks.view');
 
     // Create comments table
     if (! Schema::hasTable('finisterre_task_comments')) {

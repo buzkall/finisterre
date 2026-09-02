@@ -1,4 +1,4 @@
-<a href="{{ $editUrl }}" class="block hover:bg-gray-50 dark:hover:bg-white/5 -m-2 p-2 rounded-lg transition space-y-2">
+<a href="{{ $viewUrl }}" class="block hover:bg-gray-50 dark:hover:bg-white/5 -m-2 p-2 rounded-lg transition space-y-2">
     <div class="flex flex-wrap justify-between items-center gap-2">
         <div class="flex flex-wrap items-center gap-2">
             @if($priority)

@@ -39,7 +39,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
             })
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.edit', $task)
+                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $task)
             )
             ->salutation(' ');
 

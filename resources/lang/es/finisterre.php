@@ -40,7 +40,18 @@ return [
     'archive_heading'   => 'Archivar tarea para ocultarla del listado general',
     'unarchive'         => 'Desarchivar',
     'unarchive_heading' => 'Desarchivar tarea para mostrarla en el listado general',
-    'comments'          => [
+    'edit'              => 'Editar',
+    'edit_task'         => 'Editar tarea',
+    'view_task'         => 'Tarea',
+    'no_description'    => 'Sin descripción',
+    'no_due_date'       => 'Sin fecha límite',
+    'no_tags'           => 'Sin etiquetas',
+    'unassigned'        => 'Sin asignar',
+    'download'          => 'Descargar',
+    'quick_update'      => [
+        'saved' => 'Tarea actualizada',
+    ],
+    'comments' => [
         'title'              => 'Comentarios',
         'placeholder'        => 'Escribe un comentario...',
         'add'                => 'Añadir comentario',

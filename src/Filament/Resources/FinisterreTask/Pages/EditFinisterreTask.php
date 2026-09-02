@@ -2,21 +2,21 @@
 
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
 
-use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns\InteractsWithTaskPage;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
-use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
-use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
-use Filament\Facades\Filament;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\Route;
 
 /**
+ * Full editing of the long-form fields (title, description, attachments).
+ * Everything else is changed from the task page.
+ *
  * @property FinisterreTask $record
  */
 class EditFinisterreTask extends EditRecord
 {
+    use InteractsWithTaskPage;
+
     protected static string $resource = FinisterreTaskResource::class;
     protected string $view = 'finisterre::tasks.edit';
 
@@ -29,75 +29,27 @@ class EditFinisterreTask extends EditRecord
     {
         parent::mount($record);
 
-        // Remove task change indicator when user views the task
-        $this->record->taskChanges()->where('user_id', auth()->id())->delete();
+        $this->clearTaskChangeIndicator();
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('archive')
-                ->label(__('finisterre::finisterre.archive'))
-                ->color('gray')
-                ->requiresConfirmation()
-                ->modalHeading(__('finisterre::finisterre.archive_heading'))
-                ->action(fn() => $this->record->update(['archived' => true]))
-                ->visible(fn() => FinisterrePlugin::get()->getAuthUser()?->canArchiveTasks() ?? false)
-                ->hidden(fn() => $this->record->archived),
-
-            Action::make('unarchive')
-                ->label(__('finisterre::finisterre.unarchive'))
-                ->color('gray')
-                ->requiresConfirmation()
-                ->modalHeading(__('finisterre::finisterre.unarchive_heading'))
-                ->action(fn() => $this->record->update(['archived' => false]))
-                ->visible(fn() => FinisterrePlugin::get()->getAuthUser()?->canArchiveTasks() && $this->record->archived),
-
-            DeleteAction::make()
-                ->modalHeading(__('finisterre::finisterre.delete'))
-                ->failureRedirectUrl(fn() => $this->getKanbanBoardUrl())
-                ->successRedirectUrl(fn() => $this->getKanbanBoardUrl()),
+            $this->getDeleteAction(),
         ];
     }
 
-    public function getBreadcrumbs(): array
+    protected function getBreadcrumbFallback(): string
     {
-        if (FinisterrePlugin::get()->canViewAllTasks()) {
-            $url = $this->getKanbanBoardUrl();
-
-            return [
-                $url => __('finisterre::finisterre.tasks'),
-                ''   => $this->record->title ?: __('finisterre::finisterre.edit_task'),
-            ];
-        }
-
-        return parent::getBreadcrumbs();
+        return __('finisterre::finisterre.edit_task');
     }
 
-    protected function getKanbanBoardUrl(): string
+    /**
+     * Filament stays on the edit page after saving while the user may still
+     * edit; the task page is the landing page, so go back there instead.
+     */
+    protected function getRedirectUrl(): string
     {
-        if (! FinisterrePlugin::get()->canViewAllTasks()) {
-            return FinisterreTaskResource::getUrl();
-        }
-
-        try {
-            $panel = Filament::getCurrentOrDefaultPanel();
-            $routeName = 'filament.' . $panel->getId() . '.pages.' . TasksKanbanBoard::getSlug($panel);
-
-            if (Route::has($routeName)) {
-                return TasksKanbanBoard::getUrl();
-            }
-        } catch (\Throwable) {
-            // Fall through to default
-        }
-
-        return FinisterreTaskResource::getUrl();
-    }
-
-    protected function getViewData(): array
-    {
-        return [
-            'record' => $this->record,
-        ];
+        return FinisterreTaskResource::getUrl('view', ['record' => $this->record]);
     }
 }

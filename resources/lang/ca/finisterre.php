@@ -40,7 +40,18 @@ return [
     'archive_heading'   => 'Arxivar tasca per ocultar-la del llistat general',
     'unarchive'         => 'Desarxivar',
     'unarchive_heading' => 'Desarxivar tasca per mostrar-la al llistat general',
-    'comments'          => [
+    'edit'              => 'Editar',
+    'edit_task'         => 'Editar tasca',
+    'view_task'         => 'Tasca',
+    'no_description'    => 'Sense descripció',
+    'no_due_date'       => 'Sense data límit',
+    'no_tags'           => 'Sense etiquetes',
+    'unassigned'        => 'Sense assignar',
+    'download'          => 'Descarregar',
+    'quick_update'      => [
+        'saved' => 'Tasca actualitzada',
+    ],
+    'comments' => [
         'title'              => 'Comentaris',
         'placeholder'        => 'Escriu un comentari...',
         'add'                => 'Afegir comentari',

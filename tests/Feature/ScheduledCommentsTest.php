@@ -75,7 +75,7 @@ beforeEach(function() {
         ->registerCommand(new DispatchScheduledCommentsCommand);
 
     Route::get('/__test/tasks/{task}', fn() => 'ok')
-        ->name('filament.admin.resources.finisterre-tasks.edit');
+        ->name('filament.admin.resources.finisterre-tasks.view');
 
     if (! Schema::hasTable('media')) {
         Schema::create('media', function(Blueprint $table) {

@@ -185,6 +185,12 @@ FinisterrePlugin::make()
     ->userCanConfigureFinisterre(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
 ```
 
+## The task page
+
+Clicking a card on the board (or a row in the task list) opens the task page rather than a form. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel and the comments below.
+
+Every badge is a quick action for users allowed to update the task: status, priority and assignee change with one click from a dropdown; tags and due date open a small modal (new tags can be created on the spot). Image attachments open in a lightbox; other files open in a new tab or download. The **Edit** button leads to the form, which only keeps the long-form fields: title, description and attachments.
+
 ## Settings page
 
 Most configuration can be managed at runtime from an in-app **settings page** instead of editing the config file. It is
