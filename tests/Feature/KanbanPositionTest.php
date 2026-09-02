@@ -99,3 +99,74 @@ it('does not touch updated_at when a task is only reordered inside its column', 
         ->and($first->refresh()->order_column)->toBe(20)
         ->and($first->updated_at->toDateTimeString())->toBe('2020-01-01 00:00:00');
 });
+
+it('moves a task to the top of the done column when it is set to done outside the board', function() {
+    $first = makeTask(TaskStatusEnum::Done, 10, '2020-01-01 00:00:00');
+    $second = makeTask(TaskStatusEnum::Done, 20, '2020-01-02 00:00:00');
+    $moved = makeTask(TaskStatusEnum::Doing, 30, '2020-01-03 00:00:00');
+
+    $moved->update(['status' => TaskStatusEnum::Done]);
+
+    // Slotted in above the first card; the rest of the column did not move.
+    expect($moved->order_column)->toBe(9)
+        ->and($moved->refresh()->order_column)->toBe(9)
+        ->and($first->refresh()->order_column)->toBe(10)
+        ->and($first->updated_at->toDateTimeString())->toBe('2020-01-01 00:00:00')
+        ->and($second->refresh()->order_column)->toBe(20)
+        ->and($second->updated_at->toDateTimeString())->toBe('2020-01-02 00:00:00');
+});
+
+it('is the first task of an empty done column', function() {
+    $moved = makeTask(TaskStatusEnum::Doing, 30, '2020-01-01 00:00:00');
+
+    $moved->update(['status' => TaskStatusEnum::Done]);
+
+    expect($moved->refresh()->order_column)->toBe(10);
+});
+
+it('renumbers the done column when there is no room above its first task', function() {
+    $first = makeTask(TaskStatusEnum::Done, 0, '2020-01-01 00:00:00');
+    $second = makeTask(TaskStatusEnum::Done, 20, '2020-01-02 00:00:00');
+    $moved = makeTask(TaskStatusEnum::Doing, 30, '2020-01-03 00:00:00');
+
+    $moved->update(['status' => TaskStatusEnum::Done]);
+
+    expect($moved->refresh()->order_column)->toBe(10)
+        ->and($first->refresh()->order_column)->toBe(20)
+        ->and($first->updated_at->toDateTimeString())->toBe('2020-01-01 00:00:00')
+        ->and($second->refresh()->order_column)->toBe(30)
+        ->and($second->updated_at->toDateTimeString())->toBe('2020-01-02 00:00:00');
+});
+
+it('renumbers the done column when its first task has no position at all', function() {
+    $first = makeTask(TaskStatusEnum::Done, 20, '2020-01-01 00:00:00');
+    FinisterreTask::withoutTimestamps(fn() => $first->forceFill(['order_column' => null])->save());
+    $moved = makeTask(TaskStatusEnum::Doing, 30, '2020-01-02 00:00:00');
+
+    $moved->update(['status' => TaskStatusEnum::Done]);
+
+    expect($moved->refresh()->order_column)->toBe(10)
+        ->and($first->refresh()->order_column)->toBe(20);
+});
+
+it('keeps the drop position when a task is dragged into the done column', function() {
+    $first = makeTask(TaskStatusEnum::Done, 10, '2020-01-01 00:00:00');
+    $second = makeTask(TaskStatusEnum::Done, 20, '2020-01-02 00:00:00');
+    $moved = makeTask(TaskStatusEnum::Doing, 20, '2020-01-03 00:00:00');
+
+    moveCard($moved, TaskStatusEnum::Done->value, (string)$first->getKey(), (string)$second->getKey());
+
+    expect($moved->refresh()->order_column)->toBe(20)
+        ->and($first->refresh()->order_column)->toBe(10)
+        ->and($second->refresh()->order_column)->toBe(30);
+});
+
+it('leaves the position alone when a task is set to a status other than done', function() {
+    $first = makeTask(TaskStatusEnum::Doing, 10, '2020-01-01 00:00:00');
+    $moved = makeTask(TaskStatusEnum::Open, 30, '2020-01-02 00:00:00');
+
+    $moved->update(['status' => TaskStatusEnum::Doing]);
+
+    expect($moved->refresh()->order_column)->toBe(30)
+        ->and($first->refresh()->order_column)->toBe(10);
+});

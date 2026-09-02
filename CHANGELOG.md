@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.4.1 - 2026-09-02
+
+- A task set to done outside the board (the status quick action on the task page, or the host application) now jumps to the top of the done column instead of keeping the position it had in its previous column: the most recently finished task is the first one you see. Dragging a card into the done column still leaves it exactly where it was dropped.
+- Fixed a 500 (`trim(): Argument #1 ($string) must be of type string, array given`) when going back to the board from a task with the browser's back gesture. The board page kept its filters in a public `filters` property, and Filament forwards a page property with exactly that name to every widget as a `pageFilters` mount param; the filter widget has no such property, so on the fresh page load the array ended up as an HTML attribute of the widget's lazy-loading placeholder. The property is now `taskFilters`, which also keeps it clear of the `filters` query-string key flowforge's board already uses for its own table filters. Bookmarked board URLs carrying the old `filters[...]` parameter still open, they just start with no filters applied.
+- Going back to the board no longer unhides the archived tasks: the show-archived toggle arrives from the query string as the string `"false"`, which was read as truthy.
+
 ## 4.4.0 - 2026-09-02
 
 - Clicking a task now opens a **task page** instead of the edit form: the board card, the list row, the redirect after creating or saving a task and every notification link land there. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel, and the comments right below with the full width.

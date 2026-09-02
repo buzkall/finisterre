@@ -8,6 +8,7 @@ use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
@@ -26,8 +27,18 @@ use Relaticle\Flowforge\Column;
 
 class TasksKanbanBoard extends BoardPage
 {
+    /**
+     * Deliberately not named `filters`: Filament's Page passes a page property
+     * called `filters` to every widget as an extra `pageFilters` mount param
+     * (Filament\Pages\Page::getWidgetsSchemaComponents()). FilterTasksWidget has
+     * no such property, so on a fresh page load — coming back to the board with
+     * the filters still in the URL — the array ended up as an HTML attribute of
+     * the widget's lazy-loading placeholder and blew up with "trim(): Argument
+     * #1 ($string) must be of type string, array given". The name also has to
+     * stay clear of flowforge's `#[Url(as: 'filters')] $tableFilters`.
+     */
     #[Url]
-    public ?array $filters = null;
+    public ?array $taskFilters = null;
 
     protected static string|null|\BackedEnum $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected $listeners = [
@@ -92,7 +103,7 @@ class TasksKanbanBoard extends BoardPage
     #[On('filtersUpdated')]
     public function updateFilters(array $filters): void
     {
-        $this->filters = $filters;
+        $this->taskFilters = $filters;
     }
 
     public function board(Board $board): Board
@@ -148,66 +159,70 @@ class TasksKanbanBoard extends BoardPage
     ): string {
         $newPosition = '';
 
-        DB::transaction(function() use ($card, $targetColumnId, $afterCardId, $beforeCardId, &$newPosition) {
-            $board = $this->getBoard();
-            $query = $board->getQuery();
-            $positionField = $board->getPositionIdentifierAttribute();
-            $columnField = $board->getColumnIdentifierAttribute();
-            $keyName = $query->getModel()->getKeyName();
+        // The board decides where a dragged card lands, so the observer's "a task set
+        // to done goes first" rule must not override the position of the drop.
+        FinisterreTaskObserver::withoutRepositioning(function() use ($card, $targetColumnId, $afterCardId, $beforeCardId, &$newPosition) {
+            DB::transaction(function() use ($card, $targetColumnId, $afterCardId, $beforeCardId, &$newPosition) {
+                $board = $this->getBoard();
+                $query = $board->getQuery();
+                $positionField = $board->getPositionIdentifierAttribute();
+                $columnField = $board->getColumnIdentifierAttribute();
+                $keyName = $query->getModel()->getKeyName();
 
-            // Lock every card in the target column so concurrent moves can't race.
-            $columnCards = (clone $query)
-                ->where($columnField, $targetColumnId)
-                ->lockForUpdate()
-                ->orderBy($positionField)
-                ->orderBy($keyName)
-                ->get();
+                // Lock every card in the target column so concurrent moves can't race.
+                $columnCards = (clone $query)
+                    ->where($columnField, $targetColumnId)
+                    ->lockForUpdate()
+                    ->orderBy($positionField)
+                    ->orderBy($keyName)
+                    ->get();
 
-            // Drop the moved card from the list (on a cross-column move it lives elsewhere).
-            $others = $columnCards
-                ->reject(fn($item) => (string)$item->getKey() === (string)$card->getKey())
-                ->values();
+                // Drop the moved card from the list (on a cross-column move it lives elsewhere).
+                $others = $columnCards
+                    ->reject(fn($item) => (string)$item->getKey() === (string)$card->getKey())
+                    ->values();
 
-            // Resolve where the moved card lands from its new neighbours.
-            $insertIndex = match (true) {
-                $afterCardId === null  => 0,
-                $beforeCardId === null => $others->count(),
-                default                => ($afterIndex = $others->search(
-                    fn($item) => (string)$item->getKey() === $afterCardId
-                )) === false ? $others->count() : $afterIndex + 1,
-            };
+                // Resolve where the moved card lands from its new neighbours.
+                $insertIndex = match (true) {
+                    $afterCardId === null  => 0,
+                    $beforeCardId === null => $others->count(),
+                    default                => ($afterIndex = $others->search(
+                        fn($item) => (string)$item->getKey() === $afterCardId
+                    )) === false ? $others->count() : $afterIndex + 1,
+                };
 
-            $ordered = $others->slice(0, $insertIndex)
-                ->push($card)
-                ->concat($others->slice($insertIndex))
-                ->values();
+                $ordered = $others->slice(0, $insertIndex)
+                    ->push($card)
+                    ->concat($others->slice($insertIndex))
+                    ->values();
 
-            $columnValue = $this->resolveStatusValue($card, $columnField, $targetColumnId);
+                $columnValue = $this->resolveStatusValue($card, $columnField, $targetColumnId);
 
-            // Renumber the column 10, 20, 30, … Sibling rows are rewritten too; the
-            // FinisterreTask::saved() guard ignores order_column-only changes, so the
-            // renumber never triggers assignee notifications. Timestamps are disabled
-            // while renumbering: a position-only write is not a change to the task, and
-            // bumping updated_at would make every card in the target column look edited.
-            foreach ($ordered as $index => $item) {
-                $position = ($index + 1) * 10;
+                // Renumber the column 10, 20, 30, … Sibling rows are rewritten too; the
+                // FinisterreTask::saved() guard ignores order_column-only changes, so the
+                // renumber never triggers assignee notifications. Timestamps are disabled
+                // while renumbering: a position-only write is not a change to the task, and
+                // bumping updated_at would make every card in the target column look edited.
+                foreach ($ordered as $index => $item) {
+                    $position = ($index + 1) * 10;
 
-                if ((string)$item->getKey() === (string)$card->getKey()) {
-                    $card->fill([$columnField => $columnValue, $positionField => $position]);
+                    if ((string)$item->getKey() === (string)$card->getKey()) {
+                        $card->fill([$columnField => $columnValue, $positionField => $position]);
 
-                    // Only a real column change is worth a new updated_at; a drag inside
-                    // the same column moves nothing but the position.
-                    $card->timestamps = $card->isDirty($columnField);
-                    $card->save();
-                    $card->timestamps = true;
+                        // Only a real column change is worth a new updated_at; a drag inside
+                        // the same column moves nothing but the position.
+                        $card->timestamps = $card->isDirty($columnField);
+                        $card->save();
+                        $card->timestamps = true;
 
-                    $newPosition = (string)$position;
-                } elseif ((int)$item->getAttribute($positionField) !== $position) {
-                    $item->timestamps = false;
-                    $item->update([$positionField => $position]);
-                    $item->timestamps = true;
+                        $newPosition = (string)$position;
+                    } elseif ((int)$item->getAttribute($positionField) !== $position) {
+                        $item->timestamps = false;
+                        $item->update([$positionField => $position]);
+                        $item->timestamps = true;
+                    }
                 }
-            }
+            });
         });
 
         return $newPosition;
@@ -233,21 +248,24 @@ class TasksKanbanBoard extends BoardPage
                     ->limit(1),
             ])
             ->when(
-                $this->filters['filter_tags'] ?? null,
+                $this->taskFilters['filter_tags'] ?? null,
                 fn($query, $tagIds) => $query->withAnyTags(FinisterreTag::findMany($tagIds))
             )
             ->when(
-                $this->filters['filter_text'] ?? null,
+                $this->taskFilters['filter_text'] ?? null,
                 fn($query, $text) => $query->where(fn($query) => $query
                     ->where('title', 'like', "%$text%")
                     ->orWhere('description', 'like', "%$text%"))
             )
             ->when(
-                $this->filters['filter_assignee'] ?? null,
+                $this->taskFilters['filter_assignee'] ?? null,
                 fn($query, $assigneeId) => $query->where('assignee_id', $assigneeId)
             )
             ->when(
-                $this->filters['filter_show_archived'] ?? false,
+                // Livewire writes the toggle to the query string as the *string*
+                // "false", which is truthy, so a reload would silently unhide the
+                // archived tasks without the cast.
+                filter_var($this->taskFilters['filter_show_archived'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 fn($query) => $query,
                 fn($query) => $query->notArchived()
             );
