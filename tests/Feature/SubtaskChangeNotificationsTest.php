@@ -8,8 +8,8 @@ use Arzcode\Finisterre\Notifications\SubtaskChangesNotification;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
+use Illuminate\Bus\UniqueLock;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
@@ -74,8 +74,6 @@ beforeEach(function() {
         });
     }
 
-    releaseDigestLocks();
-
     // Every test here either counts what the observer queued or runs the job by
     // hand, so nothing should ever reach a real queue connection.
     Queue::fake();
@@ -94,12 +92,18 @@ beforeEach(function() {
 /**
  * Stand in for a worker picking the digest up, which is what ends a window.
  *
- * Cache::flush() is not enough: the array store keeps locks separately from
- * cached values, so the unique lock survives it.
+ * Releasing through UniqueLock is exactly what the worker does, so it needs no
+ * knowledge of where the array store keeps its locks: Cache::flush() leaves
+ * them alone and Cache::getStore()->flushLocks() only exists in the newer
+ * Laravel 12 patches, so neither works across the supported range.
  */
 function releaseDigestLocks(): void
 {
-    Cache::getStore()->flushLocks();
+    $lock = app(UniqueLock::class);
+
+    foreach (Queue::pushed(SendSubtaskChangesNotification::class) as $job) {
+        $lock->release($job);
+    }
 }
 
 function subtaskChecklist(FinisterreTask $task): FinisterreSubtasksComponent

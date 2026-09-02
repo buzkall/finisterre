@@ -14,13 +14,38 @@
             @endforeach
         </div>
 
-        @if($assigneeInitials)
-            <span
-                title="{{ $assignee }}"
-                class="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-700 ring-2 ring-black dark:ring-white text-xs font-semibold text-white"
-            >
-                {{ $assigneeInitials }}
-            </span>
+        {{-- The assignee leads the stack: bigger, first, and z-10 keeps it on top
+             of the creator that -space-x-2 tucks in behind its right edge. Each
+             circle holds the host application's avatar when it has one, and falls
+             back to the initials it always showed. --}}
+        @if($assignee || $creator)
+            <div class="shrink-0 flex items-center -space-x-2">
+                @if($assignee)
+                    <span
+                        title="{{ __('finisterre::finisterre.assignee_name') }}: {{ $assignee }}"
+                        class="relative z-10 shrink-0 inline-flex items-center justify-center overflow-hidden w-7 h-7 rounded-full bg-gray-700 ring-2 ring-black dark:ring-white text-xs font-semibold text-white"
+                    >
+                        @if($assigneeAvatar)
+                            <img src="{{ $assigneeAvatar }}" alt="{{ $assignee }}" class="h-full w-full object-cover"/>
+                        @else
+                            {{ $assigneeInitials }}
+                        @endif
+                    </span>
+                @endif
+
+                @if($creator)
+                    <span
+                        title="{{ __('finisterre::finisterre.creator_name') }}: {{ $creator }}"
+                        class="shrink-0 inline-flex items-center justify-center overflow-hidden w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-900 text-[10px] font-semibold text-white"
+                    >
+                        @if($creatorAvatar)
+                            <img src="{{ $creatorAvatar }}" alt="{{ $creator }}" class="h-full w-full object-cover"/>
+                        @else
+                            {{ $creatorInitials }}
+                        @endif
+                    </span>
+                @endif
+            </div>
         @endif
     </div>
 

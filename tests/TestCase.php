@@ -58,6 +58,11 @@ class TestCase extends Orchestra
             Encrypter::generateKey(config('app.cipher', 'AES-256-CBC'))
         ));
 
+        // Only the Filament suite boots the real service provider, so the
+        // package's own translations have to be registered here or every
+        // __('finisterre::…') in a notification comes back as the raw key.
+        $app['translator']->addNamespace('finisterre', __DIR__ . '/../resources/lang');
+
         // Set up the finisterre config for testing
         config()->set('finisterre.authenticatable', User::class);
         config()->set('finisterre.table_name', 'finisterre_tasks');

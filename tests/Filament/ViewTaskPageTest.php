@@ -259,6 +259,10 @@ it('links the board card to the task page', function() {
     $html = view('finisterre::tasks.task-card-info', [
         'assignee'         => 'Alicia',
         'assigneeInitials' => 'A',
+        'assigneeAvatar'   => null,
+        'creator'          => null,
+        'creatorInitials'  => null,
+        'creatorAvatar'    => null,
         'priority'         => $task->priority->getLabel(),
         'priorityColor'    => $task->priority->getColor(),
         'tagNames'         => collect(),

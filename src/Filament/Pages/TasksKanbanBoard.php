@@ -9,6 +9,7 @@ use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
+use Arzcode\Finisterre\Support\UserAvatar;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
@@ -119,20 +120,35 @@ class TasksKanbanBoard extends BoardPage
                     ->components([
                         ViewEntry::make('card_info')
                             ->view('finisterre::tasks.task-card-info')
-                            ->viewData(fn(FinisterreTask $record) => [
-                                'assignee'         => $record->assignee_name,
-                                'assigneeInitials' => self::getInitials($record->assignee_name),
-                                'priority'         => $record->priority->getLabel(),
-                                'priorityColor'    => $record->priority->getColor(),
-                                'tagNames'         => $record->tags->pluck('name'),
-                                'mediaCount'       => $record->media_count ?? 0,
-                                'commentsCount'    => $record->comments_count ?? 0,
-                                'subtasksCount'    => $record->subtasks_count ?? 0,
-                                'subtasksDone'     => $record->completed_subtasks_count ?? 0,
-                                'viewUrl'          => FinisterreTaskResource::getUrl('view', ['record' => $record->id]),
-                                'updatedAt'        => $record->updated_at->diffForHumans(),
-                                'hasChanges'       => (bool)$record->has_changes,
-                            ]),
+                            ->viewData(function(FinisterreTask $record): array {
+                                // The creator circle only earns its space on the card when
+                                // somebody else is doing the work; on a self-assigned task it
+                                // would just repeat the assignee.
+                                $creatorId = $record->creator_id === $record->assignee_id
+                                    ? null
+                                    : $record->creator_id;
+
+                                $creatorName = $creatorId === null ? null : $record->creator_name;
+
+                                return [
+                                    'assignee'         => $record->assignee_name,
+                                    'assigneeInitials' => self::getInitials($record->assignee_name),
+                                    'assigneeAvatar'   => UserAvatar::url($this->cardUser($record->assignee_id)),
+                                    'creator'          => $creatorName,
+                                    'creatorInitials'  => self::getInitials($creatorName),
+                                    'creatorAvatar'    => UserAvatar::url($this->cardUser($creatorId)),
+                                    'priority'         => $record->priority->getLabel(),
+                                    'priorityColor'    => $record->priority->getColor(),
+                                    'tagNames'         => $record->tags->pluck('name'),
+                                    'mediaCount'       => $record->media_count ?? 0,
+                                    'commentsCount'    => $record->comments_count ?? 0,
+                                    'subtasksCount'    => $record->subtasks_count ?? 0,
+                                    'subtasksDone'     => $record->completed_subtasks_count ?? 0,
+                                    'viewUrl'          => FinisterreTaskResource::getUrl('view', ['record' => $record->id]),
+                                    'updatedAt'        => $record->updated_at->diffForHumans(),
+                                    'hasChanges'       => (bool)$record->has_changes,
+                                ];
+                            }),
                     ])
             );
     }
@@ -246,6 +262,10 @@ class TasksKanbanBoard extends BoardPage
                     ->select($userModel::getUserNameSelectExpression())
                     ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.assignee_id')
                     ->limit(1),
+                'creator_name' => $userModel->newQuery()
+                    ->select($userModel::getUserNameSelectExpression())
+                    ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.creator_id')
+                    ->limit(1),
             ])
             ->when(
                 $this->taskFilters['filter_tags'] ?? null,
@@ -284,6 +304,33 @@ class TasksKanbanBoard extends BoardPage
             )
             ->values()
             ->toArray();
+    }
+
+    /**
+     * The user models the visible cards need, resolved once per render.
+     *
+     * The board query cannot carry them: flowforge re-queries the cards through
+     * its own clones (and through Filament's table query once the board is
+     * filterable), so an eager load on this page's query is not guaranteed to
+     * survive, and reading $record->assignee per card is a plain N+1. A card
+     * only needs the model for its avatar, and a board shows a handful of
+     * distinct people, so one keyed lookup each is bounded and shared.
+     *
+     * @var array<int, ?Model>
+     */
+    protected array $cardUsers = [];
+
+    protected function cardUser(?int $id): ?Model
+    {
+        if ($id === null) {
+            return null;
+        }
+
+        if (! array_key_exists($id, $this->cardUsers)) {
+            $this->cardUsers[$id] = app(config('finisterre.authenticatable'))->newQuery()->find($id);
+        }
+
+        return $this->cardUsers[$id];
     }
 
     protected static function getInitials(?string $name): ?string

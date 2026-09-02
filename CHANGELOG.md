@@ -2,6 +2,17 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.5.0 - 2026-09-02
+
+- Board cards now show **who created the task**, not just who it is assigned to: the assignee's circle leads the stack and a smaller, dimmed one for the creator tucks in behind its right edge. It only appears when the two are different people, so a self-assigned task's card looks exactly as it did before, and a task nobody is assigned to now shows its creator instead of no avatar at all. Both circles carry a labelled tooltip ("Created by: …" / "Assigned to: …") where the assignee used to show a bare name. The creator's name comes from a second correlated subselect in the board query, next to the existing one for the assignee, so the board still loads the whole column in one query.
+
+## 4.4.2 - 2026-09-02
+
+- Fixed an urgent task sending three SMS instead of one: the retry loop around the SMS request had no exit on success, so it ran all three attempts every time.
+- The SMS now says who created the task ("[Urgent] task Fix the boiler. Created by: John Doe"). It uses its own `notification.sms` translation key, added in English, Spanish and Catalan, instead of borrowing the email subject line.
+- Fixed the test suite on the oldest supported Laravel 12: the subtask digest tests released the job's unique lock with `Cache::getStore()->flushLocks()`, which only exists in recent 12.x patches. They now release it through `UniqueLock`, exactly as a queue worker does.
+- Fixed the SMS test asserting on the creator's name: only the Filament suite boots the package service provider, so `__('finisterre::…')` came back as the raw key everywhere else and no notification text ever rendered. The base `TestCase` now registers the package translations.
+
 ## 4.4.1 - 2026-09-02
 
 - A task set to done outside the board (the status quick action on the task page, or the host application) now jumps to the top of the done column instead of keeping the position it had in its previous column: the most recently finished task is the first one you see. Dragging a card into the done column still leaves it exactly where it was dropped.

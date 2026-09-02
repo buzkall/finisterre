@@ -44,6 +44,7 @@ use Spatie\Tags\HasTags;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read ?string $assignee_name
+ * @property-read ?string $creator_name
  * @property-read int $has_changes
  */
 class FinisterreTask extends Model implements HasMedia
