@@ -75,6 +75,7 @@ return [
     ],
     'notification' => [
         'subject'          => '[:priority] tasca :title',
+        'sms'              => '[:priority] tasca :title. Creada per: :creator',
         'greeting_new'     => 'Nova tasca :title',
         'greeting_changes' => 'Canvis a la tasca :title',
         'cta'              => 'Veure tasca',

@@ -111,8 +111,12 @@ class TaskNotification extends Notification implements ShouldQueue
                     'from'     => config('finisterre.sms_notification.sender'),
                     'to'       => config('finisterre.sms_notification.notify_to'),
                     'text'     => __(
-                        'finisterre::finisterre.notification.subject',
-                        ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
+                        'finisterre::finisterre.notification.sms',
+                        [
+                            'priority' => $this->task->priority->getLabel(),
+                            'title'    => $this->task->title,
+                            'creator'  => $this->task->creatorName(),
+                        ]
                     )]);
 
             } catch (Exception $e) {

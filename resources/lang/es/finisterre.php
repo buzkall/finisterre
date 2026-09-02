@@ -75,6 +75,7 @@ return [
     ],
     'notification' => [
         'subject'          => '[:priority] tarea :title',
+        'sms'              => '[:priority] tarea :title. Creada por: :creator',
         'greeting_new'     => 'Nueva tarea :title',
         'greeting_changes' => 'Cambios en la tarea :title',
         'cta'              => 'Ver tarea',

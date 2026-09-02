@@ -5,7 +5,9 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -223,4 +225,30 @@ it('does not send sms notification for non-urgent tasks', function() {
     $notification->toSms($user);
 
     expect(true)->toBeTrue();
+});
+
+it('includes the task creator in the sms text', function() {
+    Http::fake();
+
+    config([
+        'finisterre.sms_notification.enabled'           => true,
+        'finisterre.sms_notification.notify_priorities' => [TaskPriorityEnum::Urgent],
+        'finisterre.sms_notification.url'               => 'https://api.smsarena.es/http/sms.php',
+    ]);
+
+    $creator = User::factory()->create(['name' => 'John Doe']);
+    $task = FinisterreTask::factory()->create([
+        'title'      => 'Test Task',
+        'priority'   => TaskPriorityEnum::Urgent,
+        'creator_id' => $creator->id,
+    ]);
+    $task->wasRecentlyCreated = true;
+
+    (new TaskNotification($task))->toSms(User::factory()->create());
+
+    Http::assertSent(function(Request $request) use ($task) {
+        return str_contains($request->url(), 'api.smsarena.es')
+            && str_contains($request['text'], 'John Doe')
+            && str_contains($request['text'], $task->title);
+    });
 });

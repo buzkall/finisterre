@@ -75,6 +75,7 @@ return [
     ],
     'notification' => [
         'subject'          => '[:priority] task :title',
+        'sms'              => '[:priority] task :title. Created by: :creator',
         'greeting_new'     => 'New task :title',
         'greeting_changes' => 'Changes in task :title',
         'cta'              => 'View task',
