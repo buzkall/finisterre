@@ -160,18 +160,27 @@ it('uploads an attachment from the modal and keeps the ones already there', func
     $task = pageTask();
     $task->addMediaFromString('first')->usingFileName('first.png')->toMediaCollection('tasks');
 
-    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
-        ->callAction(quickAction('quick_attachments'), [
-            'attachments' => [UploadedFile::fake()->image('second.png')],
-        ])
+    $component = Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->mountAction(quickAction('quick_attachments'));
+
+    // The modal comes up with the media the task already has, which is what the
+    // action's fillForm() is for. Picking a file in the browser appends to that
+    // state, so the test has to append too: passing the new file on its own would
+    // be the user removing the existing attachment before adding this one.
+    $existing = (array)data_get($component->get('mountedActions'), '0.data.attachments', []);
+
+    expect($existing)->toHaveCount(1);
+
+    $component
+        ->setActionData(['attachments' => [...$existing, UploadedFile::fake()->image('second.png')]])
+        ->callMountedAction()
         ->assertHasNoFormErrors()
         ->assertNotified();
 
+    // Livewire renames the temporary upload, so assert on the count and on the
+    // attachment that was already there.
     $media = $task->refresh()->getMedia('tasks');
 
-    // Livewire renames the temporary upload, so assert on the count and on the
-    // attachment that was already there: mounting the field unfilled would have
-    // wiped it.
     expect($media)->toHaveCount(2)
         ->and($media->pluck('file_name'))->toContain('first.png');
 });
