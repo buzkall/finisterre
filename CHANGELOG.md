@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.5.1 - 2026-09-03
+
+- The scheduled date on the **edit comment** form now shows in 24-hour format like the create form: it was falling back to Filament's native browser picker, which renders 12-hour AM/PM. It now uses the same non-native picker, calendar icon and `d/m/y H:i` display format.
+
 ## 4.5.0 - 2026-09-02
 
 - Board cards now show **who created the task**, not just who it is assigned to: the assignee's circle leads the stack and a smaller, dimmed one for the creator tucks in behind its right edge. It only appears when the two are different people, so a self-assigned task's card looks exactly as it did before, and a task nobody is assigned to now shows its creator instead of no avatar at all. Both circles carry a labelled tooltip ("Created by: …" / "Assigned to: …") where the assignee used to show a bare name. The creator's name comes from a second correlated subselect in the board query, next to the existing one for the assignee, so the board still loads the whole column in one query.

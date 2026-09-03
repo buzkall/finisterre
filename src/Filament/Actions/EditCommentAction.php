@@ -40,6 +40,9 @@ class EditCommentAction extends Action
 
                 Forms\Components\DateTimePicker::make('scheduled_for')
                     ->visible(fn() => FinisterrePlugin::get()->canScheduleComments())
+                    ->native(false)
+                    ->suffixIcon('heroicon-o-calendar')
+                    ->displayFormat('d/m/y H:i')
                     ->label(__('finisterre::finisterre.comments.scheduled_for'))
                     ->seconds(false)
                     ->minDate(today()),
