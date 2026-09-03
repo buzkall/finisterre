@@ -206,12 +206,23 @@ gated by `userCanConfigureFinisterre()` (allowed for everyone by default; see th
 Values are stored in the database and take precedence over `config/finisterre.php` at runtime, so admins can change them
 without a deploy. The page covers:
 
-- **General** — active environments and the Filament panel slug.
+- **General** — active environments, the Filament panel slug, and whether tasks are excluded from global search.
 - **Tasks** — statuses to hide from the board, and the fallback user notified when a task has no assignee.
 - **Assignable users filter** — column/value used to limit who can be assigned tasks (e.g. `role` = `admin`).
 - **Subtasks** — whether to notify the assignee of checklist changes, and how long to group them for.
 - **Comments** — whether to show avatars, and the heroicons used for the comment actions.
 - **SMS** — enable/disable and credentials for SMS notifications (see [SMS notifications](#sms-notifications)).
+
+## Global search
+
+The package's Filament resources stay out of the panel's global search, so tasks don't dilute the results of the host
+application's own resources. If you want tasks to show up there, untick **Exclude tasks from global search** in the
+[settings page](#settings-page), or set the config key to `false`:
+
+```php
+// config/finisterre.php
+'exclude_from_global_search' => false,
+```
 
 ## Subtask notifications
 

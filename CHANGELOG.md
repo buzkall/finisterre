@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.5.2 - 2026-09-03
+
+- The package's Filament resources are now kept out of the panel's **global search** by default, so tasks no longer dilute the results of the host application's own resources. It is a stored setting like the rest: untick *Exclude tasks from global search* in the General section of the settings page, or set `exclude_from_global_search` to `false` in `config/finisterre.php`, to get the old behaviour back. Existing installations pick up the new setting row on the next `finisterre:update`.
+- The **comment form now preselects the task's creator** in the "notify" field, so whoever opened the task hears back about it without the commenter having to remember to pick them. It is a default, not a rule: it can be removed like any other selection, and it is skipped when the creator is the one commenting. The field is reset back to it after each comment is posted.
+
 ## 4.5.1 - 2026-09-03
 
 - `finisterre:update` now understands **squashed migrations**. In an application that ran `schema:dump --prune`, the Finisterre migrations it swallowed have no file left in `database/migrations` — only a row in the migrations table and the `INSERT` that recreates it in `database/schema`. The command used to read those as never published, offer to publish them, and then offer to run the fresh copies against tables that already exist. It now matches migrations by base name against both the migrations table and the schema dump, lists them as *squashed* in the table it prints, and leaves them alone. When it does publish a genuinely missing migration, it throws away the copies `vendor:publish` makes of the squashed ones in the same pass.

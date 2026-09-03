@@ -39,12 +39,32 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     public function mount(): void
     {
-        $options = $this->getNotifyOptions();
+        $this->fillWithDefaults();
+    }
 
+    private function fillWithDefaults(): void
+    {
         $this->form->fill([
-            'notify'        => $options->count() === 1 ? $options->keys()->toArray() : [],
+            'notify'        => $this->getDefaultNotifyIds(),
             'scheduled_for' => null,
         ]);
+    }
+
+    /**
+     * The task creator is notified by default, so whoever opened the task hears
+     * back about it without having to remember to pick them.
+     */
+    private function getDefaultNotifyIds(): array
+    {
+        $options = $this->getNotifyOptions();
+
+        if ($options->count() === 1) {
+            return $options->keys()->toArray();
+        }
+
+        $creatorId = $this->record?->creator_id;
+
+        return $creatorId && $options->has($creatorId) ? [$creatorId] : [];
     }
 
     private function isAllNotifySelected(Get $get): bool
@@ -184,7 +204,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
                 ->send();
         }
 
-        $this->form->fill();
+        $this->fillWithDefaults();
 
         $this->dispatch('commentCreated')->to(TasksKanbanBoard::class);
     }
