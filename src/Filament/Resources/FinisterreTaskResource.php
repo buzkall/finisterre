@@ -26,6 +26,15 @@ class FinisterreTaskResource extends Resource
         return (bool)config('finisterre.active', false);
     }
 
+    public static function canGloballySearch(): bool
+    {
+        if (config('finisterre.exclude_from_global_search', true)) {
+            return false;
+        }
+
+        return parent::canGloballySearch();
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
         return config('finisterre.active', false) && FinisterrePlugin::get()->canViewOnlyTheirTasks();

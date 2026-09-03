@@ -142,6 +142,8 @@ return [
         'environments_help'                        => 'Lista de entornos separados por comas donde Finisterre está activo (p. ej. local,production). Déjalo vacío para habilitarlo en todos.',
         'slug'                                     => 'Slug de la URL del tablero',
         'slug_help'                                => 'El segmento de URL de la página del tablero Kanban.',
+        'exclude_from_global_search'               => 'Excluir las tareas de la búsqueda global',
+        'exclude_from_global_search_help'          => 'Mantiene las tareas de Finisterre fuera de la búsqueda global del panel, para que no diluyan los resultados de tus propios recursos.',
         'section_tasks'                            => 'Tareas',
         'hidden_statuses'                          => 'Estados ocultos',
         'hidden_statuses_help'                     => 'Los estados seleccionados aquí se ocultan del tablero y de los formularios.',

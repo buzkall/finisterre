@@ -15,6 +15,7 @@ class FinisterreSettings extends Settings
     public int $fallback_notifiable_id;
     public string $authenticatable_filter_column;
     public string $authenticatable_filter_value;
+    public bool $exclude_from_global_search;
     public bool $subtasks_notify;
     public int $subtasks_notification_delay_minutes;
     public bool $comments_display_avatars;

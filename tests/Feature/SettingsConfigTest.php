@@ -16,6 +16,7 @@ function fakeFinisterreSettings(array $overrides = []): void
         'fallback_notifiable_id'              => 7,
         'authenticatable_filter_column'       => 'role',
         'authenticatable_filter_value'        => 'admin',
+        'exclude_from_global_search'          => true,
         'subtasks_notify'                     => true,
         'subtasks_notification_delay_minutes' => 5,
         'comments_display_avatars'            => false,
@@ -42,6 +43,7 @@ it('overrides the finisterre config with stored settings', function() {
         ->and(config('finisterre.fallback_notifiable_id'))->toBe(7)
         ->and(config('finisterre.authenticatable_filter_column'))->toBe('role')
         ->and(config('finisterre.authenticatable_filter_value'))->toBe('admin')
+        ->and(config('finisterre.exclude_from_global_search'))->toBeTrue()
         ->and(config('finisterre.comments.display_avatars'))->toBeFalse()
         ->and(config('finisterre.comments.icons.action'))->toBe('heroicon-s-bolt')
         ->and(config('finisterre.comments.icons.delete'))->toBe('heroicon-s-fire')

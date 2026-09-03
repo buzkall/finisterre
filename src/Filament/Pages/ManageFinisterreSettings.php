@@ -65,6 +65,7 @@ class ManageFinisterreSettings extends Page
             'fallback_notifiable_id'              => $settings->fallback_notifiable_id,
             'authenticatable_filter_column'       => $settings->authenticatable_filter_column,
             'authenticatable_filter_value'        => $settings->authenticatable_filter_value,
+            'exclude_from_global_search'          => $settings->exclude_from_global_search,
             'subtasks_notify'                     => $settings->subtasks_notify,
             'subtasks_notification_delay_minutes' => $settings->subtasks_notification_delay_minutes,
             'comments_display_avatars'            => $settings->comments_display_avatars,
@@ -96,6 +97,11 @@ class ManageFinisterreSettings extends Page
                             ->label(__('finisterre::finisterre.settings.slug'))
                             ->helperText(__('finisterre::finisterre.settings.slug_help'))
                             ->required(),
+
+                        Toggle::make('exclude_from_global_search')
+                            ->label(__('finisterre::finisterre.settings.exclude_from_global_search'))
+                            ->helperText(__('finisterre::finisterre.settings.exclude_from_global_search_help'))
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
@@ -216,6 +222,7 @@ class ManageFinisterreSettings extends Page
         $settings->fallback_notifiable_id = (int)$data['fallback_notifiable_id'];
         $settings->authenticatable_filter_column = (string)$data['authenticatable_filter_column'];
         $settings->authenticatable_filter_value = (string)$data['authenticatable_filter_value'];
+        $settings->exclude_from_global_search = (bool)$data['exclude_from_global_search'];
         $settings->subtasks_notify = (bool)$data['subtasks_notify'];
         $settings->subtasks_notification_delay_minutes = (int)$data['subtasks_notification_delay_minutes'];
         $settings->comments_display_avatars = (bool)$data['comments_display_avatars'];

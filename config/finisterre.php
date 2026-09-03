@@ -7,9 +7,10 @@ use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 
 return [
     // The behavioral options below (environments, slug, hidden_statuses,
-    // fallback_notifiable_id, authenticatable_filter_*, comments.display_avatars,
-    // comments.icons.*, sms_notification.*) can be edited at runtime from the
-    // Filament settings page; the values here are used as defaults until then.
+    // fallback_notifiable_id, authenticatable_filter_*, exclude_from_global_search,
+    // comments.display_avatars, comments.icons.*, sms_notification.*) can be edited
+    // at runtime from the Filament settings page; the values here are used as
+    // defaults until then.
     // Environments where Finisterre is active (comma-separated, e.g. "local,production").
     // Empty = active in every environment. Editable from the settings page.
     'environments' => env('FINISTERRE_ENVIRONMENTS', ''),
@@ -33,6 +34,11 @@ return [
     'fallback_notifiable_id'        => 1,
 
     'hidden_statuses' => [],
+
+    // Keep the package's Filament resources out of the panel's global search,
+    // so the host application's own results are not diluted by tasks.
+    // Editable from the settings page.
+    'exclude_from_global_search' => true,
 
     // To set the attachments as private:
     // 1. Change the 'attachments_disk' to 'finisterre'

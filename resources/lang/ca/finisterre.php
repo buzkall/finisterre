@@ -142,6 +142,8 @@ return [
         'environments_help'                        => 'Llista d\'entorns separats per comes on Finisterre està actiu (p. ex. local,production). Deixa-ho buit per habilitar-lo a tots.',
         'slug'                                     => 'Slug de la URL del tauler',
         'slug_help'                                => 'El segment d\'URL de la pàgina del tauler Kanban.',
+        'exclude_from_global_search'               => 'Excloure les tasques de la cerca global',
+        'exclude_from_global_search_help'          => 'Manté les tasques de Finisterre fora de la cerca global del panell, perquè no dilueixin els resultats dels teus propis recursos.',
         'section_tasks'                            => 'Tasques',
         'hidden_statuses'                          => 'Estats ocults',
         'hidden_statuses_help'                     => 'Els estats seleccionats aquí s\'oculten del tauler i dels formularis.',
