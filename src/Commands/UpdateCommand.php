@@ -35,6 +35,7 @@ class UpdateCommand extends Command
 
         $steps = [
             fn(): int => $this->handleUnpublishedMigrations($check),
+            fn(): int => $this->handleRepublishedMigrations($check),
             fn(): int => $this->handlePendingMigrations($check),
             fn(): int => $this->handleMissingSettings($check),
             fn(): int => $this->reportConfigKeys(),
@@ -88,13 +89,16 @@ class UpdateCommand extends Command
     {
         $rows = array_map(fn(array $migration): array => [
             $migration['name'],
-            $migration['file'] === null
-                ? '<fg=yellow>not published</>'
-                : basename((string)$migration['file']),
-            match ($migration['migrated']) {
-                true    => '<fg=green>yes</>',
-                false   => '<fg=yellow>no</>',
-                default => '<fg=gray>unknown</>',
+            match (true) {
+                $migration['squashed']      => '<fg=gray>squashed</>',
+                $migration['file'] === null => '<fg=yellow>not published</>',
+                default                     => basename((string)$migration['file']),
+            },
+            match (true) {
+                $migration['squashed']           => '<fg=green>yes</>',
+                $migration['migrated'] === true  => '<fg=green>yes</>',
+                $migration['migrated'] === false => '<fg=yellow>no</>',
+                default                          => '<fg=gray>unknown</>',
             },
         ], PackageMigrations::status());
 
@@ -104,6 +108,15 @@ class UpdateCommand extends Command
     protected function handleUnpublishedMigrations(bool $check): int
     {
         $missing = PackageMigrations::unpublished();
+        $squashed = PackageMigrations::squashed();
+
+        if ($squashed !== []) {
+            note(sprintf(
+                "%d migration(s) already ran and were squashed into this application's schema, so there is no file left to publish:\n%s",
+                count($squashed),
+                $this->bulletList($squashed)
+            ));
+        }
 
         if ($missing === []) {
             info('Every migration shipped by this version is published.');
@@ -124,10 +137,22 @@ class UpdateCommand extends Command
             return 0;
         }
 
-        // Publishing is idempotent: already-published migrations keep the file
-        // name they got the first time instead of being copied again under a
-        // fresh timestamp.
+        // Publishing is idempotent for migrations that still have a file: they
+        // keep the name they got the first time instead of being copied again
+        // under a fresh timestamp. Squashed ones have no file to match, so they
+        // do get copied back — and are thrown away again right after, before
+        // `migrate` can run them a second time.
         $this->callSilently('vendor:publish', ['--tag' => 'finisterre-migrations']);
+
+        $discarded = PackageMigrations::removePublished($squashed);
+
+        if ($discarded !== []) {
+            note(sprintf(
+                "Discarded %d fresh copy(ies) of migrations that had been squashed away:\n%s",
+                count($discarded),
+                $this->bulletList($discarded)
+            ));
+        }
 
         $stillMissing = PackageMigrations::unpublished();
 
@@ -139,6 +164,43 @@ class UpdateCommand extends Command
         }
 
         info('Missing migrations published.');
+
+        return 0;
+    }
+
+    /**
+     * Migrations sitting in database/migrations that already ran under another
+     * file name — a copy published after the original was squashed away.
+     * `migrate` treats the new name as a migration of its own and would run it
+     * against tables that already exist.
+     */
+    protected function handleRepublishedMigrations(bool $check): int
+    {
+        $republished = PackageMigrations::republished();
+
+        if ($republished === []) {
+            return 0;
+        }
+
+        warning(sprintf('%d published migration(s) already ran under a different name and would run again:', count($republished)));
+        note(
+            $this->bulletList(array_map(fn(string $file): string => basename($file), $republished))
+            . "\n\nThey were published after this application squashed its migrations; running them a second time would fail."
+        );
+
+        if ($check) {
+            return count($republished);
+        }
+
+        if (! confirm(label: 'Delete these duplicate migration files?', default: true)) {
+            note('Skipped — delete them by hand before running `php artisan migrate`.');
+
+            return 0;
+        }
+
+        $removed = PackageMigrations::removeFiles($republished);
+
+        info(sprintf('%d duplicate migration file(s) deleted.', count($removed)));
 
         return 0;
     }

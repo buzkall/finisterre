@@ -118,6 +118,12 @@ package defaults, so copying new keys over is optional) and warns when a theme f
 Nothing is written without your confirmation, and publishing is idempotent — an already-published migration keeps the
 file name it got the first time instead of being copied again under a new timestamp.
 
+It also understands squashed migrations. If your application ran `php artisan schema:dump --prune`, the Finisterre
+migrations it swallowed have no file left in `database/migrations`, only a row in the migrations table and the `INSERT`
+that recreates it inside `database/schema`. Those are reported as squashed instead of missing, so the command never
+publishes a fresh copy for `migrate` to run a second time against tables that already exist — and if such a copy is
+already sitting in `database/migrations`, it offers to delete it.
+
 To only report what is outstanding — useful in CI, where it exits with a non-zero status when anything is pending:
 
 ```bash

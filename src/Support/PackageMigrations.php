@@ -15,6 +15,12 @@ use Throwable;
  * FinisterreServiceProvider::migrationNames()). Matching on that base name is
  * what lets an upgrade tell "this version ships a migration you never
  * published" apart from "you published it already".
+ *
+ * A host application that ran `php artisan schema:dump --prune` has no file
+ * left for the migrations it squashed, only a row in the migrations table (and
+ * the INSERT that recreates it inside database/schema). Those count as applied,
+ * not as missing: republishing them would copy them back under a fresh
+ * timestamp, which `migrate` would then try to run a second time.
  */
 class PackageMigrations
 {
@@ -22,40 +28,55 @@ class PackageMigrations
      * One row per migration the package ships, in the order they must run.
      *
      * `file` is the published path in database/migrations, or null when the
-     * migration was never published. `migrated` is null when the answer can't
-     * be known — the migration isn't published, or the migrations table can't
-     * be read (no database connection yet).
+     * migration was never published or was pruned by a schema dump. `migrated`
+     * is null when the answer can't be known — the migrations table can't be
+     * read (no database connection yet). `record` is the name the migrations
+     * table (or the schema dump) knows this migration by, which is not
+     * necessarily the name of the published file. `squashed` marks a migration
+     * that has already run and whose file the host application pruned.
      *
-     * @return list<array{name: string, file: string|null, migrated: bool|null}>
+     * @return list<array{name: string, file: string|null, migrated: bool|null, squashed: bool, record: string|null}>
      */
     public static function status(): array
     {
         $ran = self::ranMigrations();
+        $dumped = self::schemaDumpMigrations();
 
-        return array_map(function(string $name) use ($ran): array {
+        return array_map(function(string $name) use ($ran, $dumped): array {
             $file = self::publishedFile($name);
+            $record = self::recordFor($name, $ran ?? []) ?? self::recordFor($name, $dumped);
+            $migrated = $ran === null ? null : self::recordFor($name, $ran) !== null;
 
             return [
                 'name'     => $name,
                 'file'     => $file,
-                'migrated' => $file === null || $ran === null
-                    ? null
-                    : in_array(basename($file, '.php'), $ran, true),
+                'migrated' => $migrated,
+                'squashed' => $file === null && $record !== null,
+                'record'   => $record,
             ];
         }, FinisterreServiceProvider::migrationNames());
     }
 
     /**
-     * Base names of the migrations that have never been published.
+     * Base names of the migrations that have never been published and that no
+     * schema dump accounts for — the ones an upgrade still has to publish.
      *
      * @return list<string>
      */
     public static function unpublished(): array
     {
-        return array_values(array_map(
-            fn(array $migration): string => $migration['name'],
-            array_filter(self::status(), fn(array $migration): bool => $migration['file'] === null)
-        ));
+        return self::names(fn(array $migration): bool => $migration['file'] === null && ! $migration['squashed']);
+    }
+
+    /**
+     * Base names of the migrations that already ran and whose file the host
+     * application pruned when it squashed its migrations.
+     *
+     * @return list<string>
+     */
+    public static function squashed(): array
+    {
+        return self::names(fn(array $migration): bool => $migration['squashed']);
     }
 
     /**
@@ -68,7 +89,30 @@ class PackageMigrations
     {
         return array_values(array_map(
             fn(array $migration): string => basename((string)$migration['file'], '.php'),
-            array_filter(self::status(), fn(array $migration): bool => $migration['migrated'] === false)
+            array_filter(
+                self::status(),
+                fn(array $migration): bool => $migration['file'] !== null && $migration['migrated'] === false
+            )
+        ));
+    }
+
+    /**
+     * Paths of published migrations that already ran under a different file
+     * name — a copy published after the original was squashed away. `migrate`
+     * would run them a second time, against tables that already exist.
+     *
+     * @return list<string>
+     */
+    public static function republished(): array
+    {
+        return array_values(array_map(
+            fn(array $migration): string => (string)$migration['file'],
+            array_filter(
+                self::status(),
+                fn(array $migration): bool => $migration['file'] !== null
+                    && $migration['record'] !== null
+                    && basename((string)$migration['file'], '.php') !== $migration['record']
+            )
         ));
     }
 
@@ -105,6 +149,69 @@ class PackageMigrations
     }
 
     /**
+     * Delete the published files for the given base names and return the ones
+     * that went. Used to undo the copies `vendor:publish` makes of migrations
+     * the host application had squashed away.
+     *
+     * @param  list<string>  $names
+     * @return list<string>
+     */
+    public static function removePublished(array $names): array
+    {
+        return self::removeFiles(self::publishedFiles($names));
+    }
+
+    /**
+     * Delete the given migration files and return the base names that went.
+     *
+     * @param  list<string>  $files
+     * @return list<string>
+     */
+    public static function removeFiles(array $files): array
+    {
+        $removed = [];
+
+        foreach ($files as $file) {
+            if (@unlink($file)) {
+                $removed[] = basename($file, '.php');
+            }
+        }
+
+        sort($removed);
+
+        return $removed;
+    }
+
+    /**
+     * @param  callable(array{name: string, file: string|null, migrated: bool|null, squashed: bool, record: string|null}): bool  $filter
+     * @return list<string>
+     */
+    protected static function names(callable $filter): array
+    {
+        return array_values(array_map(
+            fn(array $migration): string => $migration['name'],
+            array_filter(self::status(), $filter)
+        ));
+    }
+
+    /**
+     * The full migration name — timestamp prefix included — under which the
+     * given base name appears in the given list, or null when it doesn't.
+     *
+     * @param  list<string>  $records
+     */
+    protected static function recordFor(string $name, array $records): ?string
+    {
+        foreach ($records as $record) {
+            if ($record === $name || str_ends_with($record, '_' . $name)) {
+                return $record;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Migration names recorded in the migrations table, or null when it can't
      * be read (table missing, no connection configured).
      *
@@ -121,5 +228,38 @@ class PackageMigrations
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Migration names found in the squashed schema files under database/schema.
+     * `schema:dump` appends the migrations table's rows to the dump, so a name
+     * in there has run on every database the dump is loaded into — even before
+     * the host application's migrations table exists.
+     *
+     * @return list<string>
+     */
+    protected static function schemaDumpMigrations(): array
+    {
+        $names = [];
+
+        foreach (glob(database_path('schema/*')) ?: [] as $file) {
+            if (! is_file($file)) {
+                continue;
+            }
+
+            $contents = @file_get_contents($file);
+
+            if ($contents === false) {
+                continue;
+            }
+
+            preg_match_all('/\d{4}_\d{2}_\d{2}_\d{6}_[a-z0-9_]+/i', $contents, $matches);
+
+            foreach ($matches[0] as $match) {
+                $names[$match] = $match;
+            }
+        }
+
+        return array_values($names);
     }
 }

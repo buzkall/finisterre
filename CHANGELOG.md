@@ -4,6 +4,8 @@ All notable changes to `finisterre` will be documented in this file.
 
 ## 4.5.1 - 2026-09-03
 
+- `finisterre:update` now understands **squashed migrations**. In an application that ran `schema:dump --prune`, the Finisterre migrations it swallowed have no file left in `database/migrations` — only a row in the migrations table and the `INSERT` that recreates it in `database/schema`. The command used to read those as never published, offer to publish them, and then offer to run the fresh copies against tables that already exist. It now matches migrations by base name against both the migrations table and the schema dump, lists them as *squashed* in the table it prints, and leaves them alone. When it does publish a genuinely missing migration, it throws away the copies `vendor:publish` makes of the squashed ones in the same pass.
+- `finisterre:update` also warns when a published migration already ran under a different file name — a copy published after the original was squashed away, which `migrate` would run a second time — and offers to delete it. `--check` counts it as outstanding.
 - The scheduled date on the **edit comment** form now shows in 24-hour format like the create form: it was falling back to Filament's native browser picker, which renders 12-hour AM/PM. It now uses the same non-native picker, calendar icon and `d/m/y H:i` display format.
 
 ## 4.5.0 - 2026-09-02
