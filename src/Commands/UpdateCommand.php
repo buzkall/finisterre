@@ -90,9 +90,12 @@ class UpdateCommand extends Command
         $rows = array_map(fn(array $migration): array => [
             $migration['name'],
             match (true) {
-                $migration['squashed']      => '<fg=gray>squashed</>',
-                $migration['file'] === null => '<fg=yellow>not published</>',
-                default                     => basename((string)$migration['file']),
+                // Squashed with nothing naming it: the application built this
+                // schema from a migration of its own, before the package.
+                $migration['squashed'] && $migration['record'] === null => '<fg=gray>in schema</>',
+                $migration['squashed']                                  => '<fg=gray>squashed</>',
+                $migration['file'] === null                             => '<fg=yellow>not published</>',
+                default                                                 => basename((string)$migration['file']),
             },
             match (true) {
                 $migration['squashed']           => '<fg=green>yes</>',
@@ -112,7 +115,7 @@ class UpdateCommand extends Command
 
         if ($squashed !== []) {
             note(sprintf(
-                "%d migration(s) already ran and were squashed into this application's schema, so there is no file left to publish:\n%s",
+                "%d migration(s) are already part of this application's schema — squashed away by a schema dump, or built by migrations of its own — so there is no file left to publish:\n%s",
                 count($squashed),
                 $this->bulletList($squashed)
             ));
@@ -148,7 +151,7 @@ class UpdateCommand extends Command
 
         if ($discarded !== []) {
             note(sprintf(
-                "Discarded %d fresh copy(ies) of migrations that had been squashed away:\n%s",
+                "Discarded %d fresh copy(ies) of migrations this application's schema already has:\n%s",
                 count($discarded),
                 $this->bulletList($discarded)
             ));

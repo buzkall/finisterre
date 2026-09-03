@@ -172,3 +172,43 @@ it('deletes the files it is asked to remove', function() {
     expect(PackageMigrations::removeFiles([$path]))->toBe(['2026_01_01_000000_create_finisterre_tables']);
     expect(file_exists($path))->toBeFalse();
 });
+
+it('treats the migrations before a squashed one as applied even when nothing names them', function() {
+    // An application the package grew out of: it built the first tables from
+    // migrations of its own, so the package's names for them appear nowhere.
+    ($this->dumpSchema)([
+        '2026_02_26_204558_change_order_column_type_in_finisterre_tasks',
+        '2026_08_21_111952_create_finisterre_subtasks_table',
+    ]);
+
+    expect(PackageMigrations::squashed())->toBe(FinisterreServiceProvider::migrationNames());
+    expect(PackageMigrations::unpublished())->toBe([]);
+
+    $status = collect(PackageMigrations::status())->firstWhere('name', 'create_finisterre_tables');
+
+    expect($status['squashed'])->toBeTrue()
+        ->and($status['record'])->toBeNull();
+});
+
+it('still reports the migrations shipped after the last applied one as unpublished', function() {
+    ($this->dumpSchema)(['2026_02_26_204558_change_order_column_type_in_finisterre_tasks']);
+
+    expect(PackageMigrations::unpublished())->toBe([
+        'add_scheduling_to_finisterre_task_comments',
+        'convert_order_column_to_integer_in_finisterre_tasks',
+        'add_subject_to_finisterre_tasks',
+        'create_finisterre_subtasks_table',
+    ]);
+});
+
+it('leaves a published migration alone even when a later one already ran', function() {
+    $path = ($this->publish)('create_finisterre_tables');
+    ($this->dumpSchema)(['2026_08_21_111952_create_finisterre_subtasks_table']);
+    createMigrationsTable();
+
+    expect(PackageMigrations::squashed())->not->toContain('create_finisterre_tables');
+    expect(PackageMigrations::pending())->toBe(['2026_01_01_000000_create_finisterre_tables']);
+    expect($path)->toBeReadableFile();
+
+    Schema::drop('migrations');
+});

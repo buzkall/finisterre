@@ -21,6 +21,15 @@ use Throwable;
  * the INSERT that recreates it inside database/schema). Those count as applied,
  * not as missing: republishing them would copy them back under a fresh
  * timestamp, which `migrate` would then try to run a second time.
+ *
+ * The name isn't always there to match either. An application the package grew
+ * out of built the same tables from migrations of its own, under names of their
+ * own, before the package shipped one — so its earliest package migrations have
+ * neither a file nor a record anywhere, even though the schema they describe is
+ * in place. The order the migrations must run in settles those: a later one can
+ * only have run against the schema the earlier ones leave behind, so everything
+ * before the last one known to have run is applied too, whatever the
+ * application calls it.
  */
 class PackageMigrations
 {
@@ -32,8 +41,10 @@ class PackageMigrations
      * is null when the answer can't be known — the migrations table can't be
      * read (no database connection yet). `record` is the name the migrations
      * table (or the schema dump) knows this migration by, which is not
-     * necessarily the name of the published file. `squashed` marks a migration
-     * that has already run and whose file the host application pruned.
+     * necessarily the name of the published file, and is null for a migration
+     * only the ordering vouches for. `squashed` marks a migration whose effect
+     * is already in this application's schema and whose file is gone, so there
+     * is nothing left to publish or run.
      *
      * @return list<array{name: string, file: string|null, migrated: bool|null, squashed: bool, record: string|null}>
      */
@@ -42,7 +53,7 @@ class PackageMigrations
         $ran = self::ranMigrations();
         $dumped = self::schemaDumpMigrations();
 
-        return array_map(function(string $name) use ($ran, $dumped): array {
+        $status = array_map(function(string $name) use ($ran, $dumped): array {
             $file = self::publishedFile($name);
             $record = self::recordFor($name, $ran ?? []) ?? self::recordFor($name, $dumped);
             $migrated = $ran === null ? null : self::recordFor($name, $ran) !== null;
@@ -55,11 +66,50 @@ class PackageMigrations
                 'record'   => $record,
             ];
         }, FinisterreServiceProvider::migrationNames());
+
+        return self::markImpliedByOrder($status);
     }
 
     /**
-     * Base names of the migrations that have never been published and that no
-     * schema dump accounts for — the ones an upgrade still has to publish.
+     * Mark the migrations nothing names but that must have run anyway.
+     *
+     * Every migration builds on the schema the ones before it leave behind, so
+     * the last migration this application is known to have run — a row in the
+     * migrations table, or a name in the schema dump — settles every earlier
+     * one: those tables and columns are in place, whatever migration of its own
+     * the application created them from. A migration that still has a published
+     * file is left alone: that file is what `migrate` will run, whether or not
+     * the schema it describes is already there.
+     *
+     * @param  list<array{name: string, file: string|null, migrated: bool|null, squashed: bool, record: string|null}>  $status
+     * @return list<array{name: string, file: string|null, migrated: bool|null, squashed: bool, record: string|null}>
+     */
+    protected static function markImpliedByOrder(array $status): array
+    {
+        $last = null;
+
+        foreach ($status as $index => $migration) {
+            if ($migration['record'] !== null) {
+                $last = $index;
+            }
+        }
+
+        if ($last === null) {
+            return $status;
+        }
+
+        foreach ($status as $index => $migration) {
+            if ($index < $last && $migration['file'] === null && $migration['record'] === null) {
+                $status[$index]['squashed'] = true;
+            }
+        }
+
+        return $status;
+    }
+
+    /**
+     * Base names of the migrations that have never been published and that
+     * nothing else accounts for — the ones an upgrade still has to publish.
      *
      * @return list<string>
      */
@@ -69,8 +119,10 @@ class PackageMigrations
     }
 
     /**
-     * Base names of the migrations that already ran and whose file the host
-     * application pruned when it squashed its migrations.
+     * Base names of the migrations that are already part of this application's
+     * schema and have no file left to publish — squashed away by a schema dump,
+     * or built by migrations of the application's own that the ordering vouches
+     * for.
      *
      * @return list<string>
      */

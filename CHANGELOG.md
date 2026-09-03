@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.5.3 - 2026-09-03
+
+- `finisterre:update` no longer offers to publish the **first migrations in an application the package grew out of**. Those applications built the tasks tables from migrations of their own, under names of their own, so the package's names for them appear neither in the migrations table nor in the schema dump — and the command read that as "never published" and offered to publish and run migrations against tables that have been there for years. It now uses the order the migrations must run in: a later migration can only have run against the schema the earlier ones leave behind, so everything before the last one known to have run counts as applied. The table it prints labels those *in schema*, next to the *squashed* ones a schema dump accounts for by name.
+
 ## 4.5.2 - 2026-09-03
 
 - The package's Filament resources are now kept out of the panel's **global search** by default, so tasks no longer dilute the results of the host application's own resources. It is a stored setting like the rest: untick *Exclude tasks from global search* in the General section of the settings page, or set `exclude_from_global_search` to `false` in `config/finisterre.php`, to get the old behaviour back. Existing installations pick up the new setting row on the next `finisterre:update`.

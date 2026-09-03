@@ -89,7 +89,7 @@ it('passes the check when every migration was squashed into the schema dump', fu
     ($this->squashEverything)();
 
     $this->artisan('finisterre:update', ['--check' => true])
-        ->expectsOutputToContain('squashed into this application')
+        ->expectsOutputToContain("already part of this application's schema")
         ->expectsOutputToContain('Every migration shipped by this version is published')
         ->assertSuccessful();
 
