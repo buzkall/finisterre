@@ -2,7 +2,7 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
-## 4.5.3 - 2026-09-03
+## 4.5.4 - 2026-09-03
 
 - `finisterre:update` no longer offers to publish the **first migrations in an application the package grew out of**. Those applications built the tasks tables from migrations of their own, under names of their own, so the package's names for them appear neither in the migrations table nor in the schema dump — and the command read that as "never published" and offered to publish and run migrations against tables that have been there for years. It now uses the order the migrations must run in: a later migration can only have run against the schema the earlier ones leave behind, so everything before the last one known to have run counts as applied. The table it prints labels those *in schema*, next to the *squashed* ones a schema dump accounts for by name.
 
