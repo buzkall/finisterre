@@ -2,6 +2,13 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.5.5 - 2026-09-08
+
+- The **creator avatar** on kanban cards is a little larger (24px instead of 20px), so the face tucked in behind the assignee is legible rather than a smudge.
+- Fixed the **N+1 the board reported on hosts that keep user avatars in a media library** (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). The cards resolved the people on them one lookup at a time, and reading the avatar of each then queried its media relation on its own. Everyone on the board is now fetched in a single query, with the media relation eager-loaded when the host's user model has one.
+- The **breadcrumb on the create form leads back to the board** instead of to the tasks table, like the ones on the task and edit pages already did.
+- The **filter panel on the board is folded away on a phone**, behind a *Filters* button that sits in the page header next to *Create task* and *Settings* and carries a badge with how many filters are on, so a filter left on is still visible while the panel is shut. Below the `lg` breakpoint the four fields stacked into four rows and pushed the columns off the screen; folding and unfolding happens in the browser, with no round trip. A folded panel leaves nothing behind either: the widget row it sits in is taken out of the page, so the board starts right under the header instead of after two stacked gaps. From `lg` up nothing changes: the panel is always open, the button is not rendered, and a tablet turned to landscape opens the panel again.
+
 ## 4.5.4 - 2026-09-03
 
 - `finisterre:update` no longer offers to publish the **first migrations in an application the package grew out of**. Those applications built the tasks tables from migrations of their own, under names of their own, so the package's names for them appear neither in the migrations table nor in the schema dump — and the command read that as "never published" and offered to publish and run migrations against tables that have been there for years. It now uses the order the migrations must run in: a later migration can only have run against the schema the earlier ones leave behind, so everything before the last one known to have run counts as applied. The table it prints labels those *in schema*, next to the *squashed* ones a schema dump accounts for by name.

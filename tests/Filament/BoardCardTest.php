@@ -4,6 +4,7 @@ use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Tests\Support\AvatarUser;
+use Arzcode\Finisterre\Tests\Support\MediaAvatarUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -126,11 +127,11 @@ it('renders every card without lazy loading a relation or querying a user per ca
 
     config()->set('finisterre.authenticatable', AvatarUser::class);
 
-    // Only the per-user lookups the cards make; the board query mentions the
-    // users table too, in the name subselects.
+    // Only the lookups the cards make; the board query mentions the users table
+    // too, in the name subselects.
     $userLookups = 0;
     DB::listen(function($query) use (&$userLookups) {
-        if (preg_match('/^select \* from .users. where .users.\..id. = /', $query->sql)) {
+        if (preg_match('/^select \* from .users. where .users.\..id. (=|in) /', $query->sql)) {
             $userLookups++;
         }
     });
@@ -143,6 +144,45 @@ it('renders every card without lazy loading a relation or querying a user per ca
         Model::preventLazyLoading(false);
     }
 
-    // One lookup per distinct person, not one per card.
-    expect($userLookups)->toBeLessThanOrEqual(count($people));
+    // Everyone on the board in one query, not one per person and not one per card.
+    expect($userLookups)->toBe(1);
+});
+
+it('loads the avatars of a media library host without a query per user', function() {
+    // The common Filament host keeps the avatar in a media library, so reading
+    // it touches a relation: without it loaded up front that is the N+1 an
+    // application's query detector reports on the board.
+    $people = User::factory()->count(3)->create();
+
+    foreach (range(1, 9) as $i) {
+        FinisterreTask::factory()->create([
+            'title'       => 'Task ' . $i,
+            'status'      => TaskStatusEnum::Open,
+            'archived'    => false,
+            'creator_id'  => $people[$i % 3]->id,
+            'assignee_id' => $people[($i + 1) % 3]->id,
+        ]);
+    }
+
+    config()->set('finisterre.authenticatable', MediaAvatarUser::class);
+
+    // Only the standalone reads of the media table: the board query mentions it
+    // too, in the subselect that counts a card's attachments.
+    $mediaQueries = 0;
+    DB::listen(function($query) use (&$mediaQueries) {
+        if (str_starts_with($query->sql, 'select * from "media"')) {
+            $mediaQueries++;
+        }
+    });
+
+    Model::preventLazyLoading();
+
+    try {
+        Livewire::test(TasksKanbanBoard::class)->assertOk();
+    } finally {
+        Model::preventLazyLoading(false);
+    }
+
+    // One eager load covering every user on the board, not one per person.
+    expect($mediaQueries)->toBe(1);
 });

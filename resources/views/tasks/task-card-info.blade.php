@@ -36,7 +36,7 @@
                 @if($creator)
                     <span
                         title="{{ __('finisterre::finisterre.creator_name') }}: {{ $creator }}"
-                        class="shrink-0 inline-flex items-center justify-center overflow-hidden w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-900 text-[10px] font-semibold text-white"
+                        class="shrink-0 inline-flex items-center justify-center overflow-hidden w-6 h-6 rounded-full bg-gray-400 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-900 text-[11px] font-semibold text-white"
                     >
                         @if($creatorAvatar)
                             <img src="{{ $creatorAvatar }}" alt="{{ $creator }}" class="h-full w-full object-cover"/>

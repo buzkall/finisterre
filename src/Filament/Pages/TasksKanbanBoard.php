@@ -25,6 +25,7 @@ use Livewire\Attributes\Url;
 use Relaticle\Flowforge\Board;
 use Relaticle\Flowforge\BoardPage;
 use Relaticle\Flowforge\Column;
+use Spatie\MediaLibrary\HasMedia;
 
 class TasksKanbanBoard extends BoardPage
 {
@@ -98,7 +99,37 @@ class TasksKanbanBoard extends BoardPage
                 ->color('gray')
                 ->url(fn(): string => ManageFinisterreSettings::getUrl())
                 ->visible(fn(): bool => Finisterre::get()->canConfigure()),
+
+            // The panel this folds and unfolds is the filter widget below, so the
+            // click never leaves the browser: it dispatches the event the widget
+            // listens for. From `lg` up the panel is always open and the button is
+            // not rendered.
+            Action::make('toggleFilters')
+                ->label(__('finisterre::finisterre.filter.label'))
+                ->icon(Heroicon::Funnel)
+                ->color('gray')
+                ->badge(fn(): ?int => $this->activeFilterCount() ?: null)
+                ->alpineClickHandler("\$dispatch('finisterre-toggle-filters')")
+                ->extraAttributes(['class' => 'lg:hidden'], merge: true),
         ];
+    }
+
+    /**
+     * How many filters are narrowing the board right now.
+     *
+     * The panel is folded away on a phone, so the button that unfolds it has to
+     * say when something is hidden behind it: a filter left on is otherwise
+     * invisible and the board just looks like it is missing tasks.
+     */
+    public function activeFilterCount(): int
+    {
+        return collect([
+            filled($this->taskFilters['filter_text'] ?? null),
+            filled($this->taskFilters['filter_tags'] ?? null),
+            filled($this->taskFilters['filter_assignee'] ?? null),
+            // Same string "false" the board query has to guard against.
+            filter_var($this->taskFilters['filter_show_archived'] ?? false, FILTER_VALIDATE_BOOLEAN),
+        ])->filter()->count();
     }
 
     #[On('filtersUpdated')]
@@ -307,18 +338,18 @@ class TasksKanbanBoard extends BoardPage
     }
 
     /**
-     * The user models the visible cards need, resolved once per render.
+     * The user models the visible cards need, keyed by id and resolved once per render.
      *
      * The board query cannot carry them: flowforge re-queries the cards through
      * its own clones (and through Filament's table query once the board is
      * filterable), so an eager load on this page's query is not guaranteed to
      * survive, and reading $record->assignee per card is a plain N+1. A card
-     * only needs the model for its avatar, and a board shows a handful of
-     * distinct people, so one keyed lookup each is bounded and shared.
+     * only needs the model for its avatar, so they are all fetched in one go
+     * the first time a card asks for one.
      *
-     * @var array<int, ?Model>
+     * @var array<int, Model>|null
      */
-    protected array $cardUsers = [];
+    protected ?array $cardUsers = null;
 
     protected function cardUser(?int $id): ?Model
     {
@@ -326,11 +357,51 @@ class TasksKanbanBoard extends BoardPage
             return null;
         }
 
-        if (! array_key_exists($id, $this->cardUsers)) {
-            $this->cardUsers[$id] = app(config('finisterre.authenticatable'))->newQuery()->find($id);
+        if ($this->cardUsers === null) {
+            $this->loadCardUsers();
         }
 
-        return $this->cardUsers[$id];
+        return $this->cardUsers[$id] ?? null;
+    }
+
+    /**
+     * Every person on the board in one query, avatars included.
+     *
+     * One lookup per distinct user was still a query per person, and on hosts
+     * that keep avatars in a media library each of those users then read its
+     * media relation lazily — the N+1 the debugger reports on the board. The ids
+     * come from the same filtered query the columns are built from, so only the
+     * people actually on screen are loaded.
+     */
+    protected function loadCardUsers(): void
+    {
+        $table = config('finisterre.table_name');
+
+        $ids = $this->getFilteredQuery()
+            ->reorder()
+            ->select(["$table.assignee_id", "$table.creator_id"])
+            ->get()
+            ->flatMap(fn(FinisterreTask $task) => [$task->assignee_id, $task->creator_id])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            $this->cardUsers = [];
+
+            return;
+        }
+
+        $query = app(config('finisterre.authenticatable'))->newQuery();
+
+        // Hosts whose user model answers getFilamentAvatarUrl() from a media
+        // library would query that relation once per user unless it comes along.
+        if ($query->getModel() instanceof HasMedia) {
+            $query->with('media');
+        }
+
+        $this->cardUsers = $query->findMany($ids)->keyBy(fn(Model $user) => $user->getKey())->all();
     }
 
     protected static function getInitials(?string $name): ?string

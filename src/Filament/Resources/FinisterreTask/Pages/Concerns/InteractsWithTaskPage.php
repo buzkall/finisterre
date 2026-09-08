@@ -2,14 +2,10 @@
 
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns;
 
-use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
-use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Facades\Filament;
-use Illuminate\Support\Facades\Route;
 
 /**
  * Behaviour shared by the task view and edit pages.
@@ -18,6 +14,8 @@ use Illuminate\Support\Facades\Route;
  */
 trait InteractsWithTaskPage
 {
+    use HasKanbanBoardUrl;
+
     /**
      * Opening the task counts as having seen its latest changes, so the blue
      * "changed" dot on the board card goes away for this user.
@@ -75,26 +73,6 @@ trait InteractsWithTaskPage
     protected function getBreadcrumbFallback(): string
     {
         return __('finisterre::finisterre.view_task');
-    }
-
-    protected function getKanbanBoardUrl(): string
-    {
-        if (! FinisterrePlugin::get()->canViewAllTasks()) {
-            return FinisterreTaskResource::getUrl();
-        }
-
-        try {
-            $panel = Filament::getCurrentOrDefaultPanel();
-            $routeName = 'filament.' . $panel->getId() . '.pages.' . TasksKanbanBoard::getSlug($panel);
-
-            if (Route::has($routeName)) {
-                return TasksKanbanBoard::getUrl();
-            }
-        } catch (\Throwable) {
-            // Fall through to default
-        }
-
-        return FinisterreTaskResource::getUrl();
     }
 
     protected function getViewData(): array

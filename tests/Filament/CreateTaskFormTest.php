@@ -1,6 +1,7 @@
 <?php
 
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\CreateFinisterreTask;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTag;
@@ -79,4 +80,26 @@ it('hides the fields a reporter may not set', function() {
 
     // Without the assignee the row would leave a third of it empty.
     expect(selectorColumns($component))->toBe(2);
+});
+
+it('sends the breadcrumb back to the board, not to the tasks table', function() {
+    $breadcrumbs = Livewire::test(CreateFinisterreTask::class)
+        ->instance()
+        ->getBreadcrumbs();
+
+    expect(array_key_first($breadcrumbs))->toBe(TasksKanbanBoard::getUrl())
+        ->and($breadcrumbs)->toBe([
+            TasksKanbanBoard::getUrl() => __('finisterre::finisterre.tasks'),
+            ''                         => __('finisterre::finisterre.create_task'),
+        ]);
+});
+
+it('sends the breadcrumb to the tasks table for a user who may not see every task', function() {
+    FinisterrePlugin::get()->userCanViewAllTasks(fn(): bool => false);
+
+    $breadcrumbs = Livewire::test(CreateFinisterreTask::class)
+        ->instance()
+        ->getBreadcrumbs();
+
+    expect($breadcrumbs)->not->toHaveKey(TasksKanbanBoard::getUrl());
 });
