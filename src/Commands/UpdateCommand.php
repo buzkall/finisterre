@@ -2,6 +2,8 @@
 
 namespace Arzcode\Finisterre\Commands;
 
+use Arzcode\Finisterre\Support\DependencyMigrations;
+use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\SettingsConfig;
 use Composer\InstalledVersions;
@@ -35,6 +37,7 @@ class UpdateCommand extends Command
 
         $steps = [
             fn(): int => $this->handleUnpublishedMigrations($check),
+            fn(): int => $this->handleDependencyMigrations($check),
             fn(): int => $this->handleRepublishedMigrations($check),
             fn(): int => $this->handlePendingMigrations($check),
             fn(): int => $this->handleMissingSettings($check),
@@ -105,7 +108,79 @@ class UpdateCommand extends Command
             },
         ], PackageMigrations::status());
 
-        table(['Migration', 'Published as', 'Migrated'], $rows);
+        // The spatie tables tasks lean on, told apart from Finisterre's own by
+        // their package. "Migrated" means the tables exist, whatever created them.
+        $dependencyRows = array_map(fn(array $dependency): array => [
+            sprintf('%s <fg=gray>(%s)</>', $dependency['name'], $dependency['package']),
+            match (true) {
+                $dependency['file'] !== null    => basename($dependency['file']),
+                $dependency['present'] === true => '<fg=gray>in schema</>',
+                default                         => '<fg=yellow>not published</>',
+            },
+            match ($dependency['present']) {
+                true  => '<fg=green>yes</>',
+                false => '<fg=yellow>no</>',
+                null  => '<fg=gray>unknown</>',
+            },
+        ], DependencyMigrations::status());
+
+        table(['Migration', 'Published as', 'Migrated'], [...$rows, ...$dependencyRows]);
+    }
+
+    /**
+     * Tasks carry tags and attachments, so the tables of spatie/laravel-tags
+     * and spatie/laravel-medialibrary have to exist too. Their migrations are
+     * stubs `migrate` only sees once published; a host that never used those
+     * packages on its own may never have done so.
+     */
+    protected function handleDependencyMigrations(bool $check): int
+    {
+        $missing = DependencyMigrations::missing();
+
+        if ($missing === []) {
+            info('The tags and media tables Finisterre relies on are in place, or their migrations are published.');
+
+            return 0;
+        }
+
+        warning(sprintf('%d table(s) Finisterre relies on are missing, and no migration is published to create them:', count($missing)));
+        note($this->bulletList(array_map(
+            fn(array $dependency): string => sprintf('%s — %s (%s)', implode(', ', $dependency['tables']), $dependency['package'], $dependency['purpose']),
+            $missing
+        )));
+
+        if ($check) {
+            return count($missing);
+        }
+
+        if (! confirm(label: 'Publish the missing dependency migrations now?', default: true)) {
+            note("Skipped — publish them later with:\n" . $this->bulletList(array_map(
+                fn(array $dependency): string => DependencyMigrations::publishCommand($dependency),
+                $missing
+            )));
+
+            return 0;
+        }
+
+        $failed = [];
+
+        foreach ($missing as $dependency) {
+            $this->callSilently('vendor:publish', DependencyMigrations::publishArguments($dependency));
+
+            if (PackageMigrations::publishedFile($dependency['name']) === null) {
+                $failed[] = DependencyMigrations::publishCommand($dependency);
+            }
+        }
+
+        if ($failed !== []) {
+            warning("Some dependency migrations could not be published — run by hand:\n" . $this->bulletList($failed));
+
+            return count($failed);
+        }
+
+        info('Dependency migrations published.');
+
+        return 0;
     }
 
     protected function handleUnpublishedMigrations(bool $check): int
@@ -210,7 +285,7 @@ class UpdateCommand extends Command
 
     protected function handlePendingMigrations(bool $check): int
     {
-        $pending = PackageMigrations::pending();
+        $pending = [...PackageMigrations::pending(), ...DependencyMigrations::pending()];
 
         if ($pending === []) {
             return 0;
@@ -349,29 +424,28 @@ class UpdateCommand extends Command
      */
     protected function reportThemeSources(): int
     {
-        $files = glob(resource_path('css/filament/*/theme.css')) ?: [];
+        $files = FilamentThemes::files();
+        $panelsWithoutTheme = FilamentThemes::panelsWithoutTheme();
 
-        if ($files === []) {
+        if ($files === [] && $panelsWithoutTheme === []) {
             note('No theme.css under resources/css/filament/*/theme.css — nothing to check.');
 
             return 0;
         }
 
-        $markers = [
-            'arzcode/finisterre/resources/views',
-            'relaticle/flowforge/resources/views',
-        ];
-
         $incomplete = [];
 
         foreach ($files as $file) {
-            $contents = (string)file_get_contents($file);
-
-            foreach ($markers as $marker) {
-                if (! str_contains($contents, $marker)) {
-                    $incomplete[] = $this->relativePath($file) . ' — missing @source for ' . $marker;
-                }
+            foreach (FilamentThemes::missingSources($file) as $marker) {
+                $incomplete[] = $this->relativePath($file) . ' — missing @source for ' . $marker;
             }
+        }
+
+        // A panel without a theme compiles none of the package's utilities, so
+        // the board renders unstyled. It counts as outstanding: the install
+        // command creates the theme and adds the lines.
+        foreach ($panelsWithoutTheme as $panelId => $path) {
+            $incomplete[] = sprintf('%s panel — no theme at %s, so the task board renders unstyled', $panelId, $path);
         }
 
         if ($incomplete === []) {
@@ -380,10 +454,10 @@ class UpdateCommand extends Command
             return 0;
         }
 
-        warning('Some Filament themes are missing @source lines:');
-        note($this->bulletList($incomplete) . "\n\nRun `php artisan finisterre:install` to add them back.");
+        warning('Some Filament themes are missing, or are missing @source lines:');
+        note($this->bulletList($incomplete) . "\n\nRun `php artisan finisterre:install` to create the theme and add them back.");
 
-        return 0;
+        return count($incomplete);
     }
 
     protected function refreshAssets(): void

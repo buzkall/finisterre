@@ -14,6 +14,9 @@ use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Support\DependencyMigrations;
+use Arzcode\Finisterre\Support\FilamentThemes;
+use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\SettingsConfig;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
@@ -44,6 +47,15 @@ class FinisterreServiceProvider extends PackageServiceProvider
     /** Fallback board slug when the canonical one is already taken. */
     protected const FALLBACK_BOARD_SLUG = 'finisterre';
 
+    /**
+     * Panels the install left without a theme, keyed by id with the path the
+     * theme is expected at. Reported again at the end: without a theme the
+     * board renders unstyled, and "install complete" would hide that.
+     *
+     * @var array<string, string>
+     */
+    protected array $panelsWithoutTheme = [];
+
     public function configurePackage(Package $package): void
     {
         // More info: https://github.com/spatie/laravel-package-tools
@@ -67,12 +79,14 @@ class FinisterreServiceProvider extends PackageServiceProvider
                     $steps = [
                         fn() => $this->publishConfigFile($cmd),
                         fn() => $this->publishSettingsMigration($cmd),
+                        fn() => $this->publishDependencyMigrations($cmd),
                         fn() => $this->runMigrations($cmd),
                         fn() => $this->activateViaSettings(),
                         fn() => $this->configureBoardSlug(),
                         fn() => $this->publishFilamentAssets($cmd),
                         fn() => $this->patchPanelProviders(),
                         fn() => $this->patchUserModel(),
+                        fn() => $this->ensureFilamentThemes($cmd),
                         fn() => $this->patchFilamentThemes(),
                         fn() => $this->runNpmBuild($cmd),
                         fn() => $this->printFinalSteps(),
@@ -203,6 +217,46 @@ class FinisterreServiceProvider extends PackageServiceProvider
             '--tag'      => 'migrations',
         ]);
         info('Settings table migration published.');
+    }
+
+    /**
+     * Tasks carry tags and attachments, so the tables of spatie/laravel-tags
+     * and spatie/laravel-medialibrary have to exist too. Both packages ship
+     * their migration as a stub that `migrate` only sees once published, and a
+     * host that never used them has no reason to have done so — publish what
+     * neither the database nor database/migrations already accounts for.
+     */
+    protected function publishDependencyMigrations(InstallCommand $command): void
+    {
+        $missing = DependencyMigrations::missing();
+
+        if ($missing === []) {
+            note('The tags and media tables Finisterre relies on are in place, or their migrations are already published.');
+
+            return;
+        }
+
+        foreach ($missing as $dependency) {
+            $command->callSilently('vendor:publish', DependencyMigrations::publishArguments($dependency));
+
+            if (PackageMigrations::publishedFile($dependency['name']) === null) {
+                warning(sprintf(
+                    'Could not publish the %s migration (%s) — run `%s` by hand before `php artisan migrate`.',
+                    $dependency['package'],
+                    $dependency['purpose'],
+                    DependencyMigrations::publishCommand($dependency)
+                ));
+
+                continue;
+            }
+
+            info(sprintf(
+                '%s migration published — Finisterre stores %s in the %s table(s).',
+                $dependency['package'],
+                $dependency['purpose'],
+                implode(', ', $dependency['tables'])
+            ));
+        }
     }
 
     protected function activateViaSettings(): void
@@ -416,12 +470,69 @@ class FinisterreServiceProvider extends PackageServiceProvider
         info(sprintf('Patched %s to use FinisterreUserTrait.', $relative));
     }
 
+    /**
+     * Offer to create a theme for every registered panel that has none.
+     *
+     * Finisterre's views and the flowforge board are compiled by the host's
+     * Filament theme, so a panel without one shows the board unstyled no matter
+     * how many times `npm run build` runs. Filament's own `make:filament-theme`
+     * does the wiring — the theme file, the `vite.config.js` input and the
+     * `viteTheme()` call on the panel provider — so it is what gets called. It
+     * runs in a separate process: Laravel reconfigures Laravel Prompts' static
+     * state on every command run, so calling it in-process with
+     * `--no-interaction` would leave the rest of this install answering its
+     * own prompts with their defaults. Non-interactive, it also builds the bare
+     * theme once; harmless, since the `@source` lines go in right after and the
+     * install ends with a build of its own.
+     */
+    protected function ensureFilamentThemes(InstallCommand $command): void
+    {
+        $panels = FilamentThemes::panelsWithoutTheme();
+
+        if ($panels === []) {
+            return;
+        }
+
+        warning('Finisterre\'s views are compiled by your panel\'s Filament theme — without one the task board renders unstyled.');
+
+        foreach ($panels as $panelId => $path) {
+            $confirmed = confirm(
+                label: sprintf('The %s panel has no theme at %s. Create one now with `php artisan make:filament-theme %s`?', $panelId, $path, $panelId),
+                default: true,
+            );
+
+            if (! $confirmed) {
+                note(sprintf('Skipped — run `php artisan make:filament-theme %s`, then `php artisan finisterre:install` again to add the @source lines.', $panelId));
+                $this->panelsWithoutTheme[$panelId] = $path;
+
+                continue;
+            }
+
+            note('Filament compiles the bare theme once; the install builds it again after adding the @source lines.');
+
+            $process = new Process([PHP_BINARY, 'artisan', 'make:filament-theme', $panelId, '--no-interaction'], base_path());
+            $process->setTimeout(null);
+            $process->run(function(string $type, string $buffer) use ($command): void {
+                $command->getOutput()->write($buffer);
+            });
+
+            if (! $process->isSuccessful() || ! is_file(base_path($path))) {
+                warning(sprintf('Could not create the %s theme — run `php artisan make:filament-theme %s` by hand, then `php artisan finisterre:install` again.', $panelId, $panelId));
+                $this->panelsWithoutTheme[$panelId] = $path;
+
+                continue;
+            }
+
+            info(sprintf('Theme created for the %s panel at %s.', $panelId, $path));
+        }
+    }
+
     protected function patchFilamentThemes(): void
     {
-        $files = glob(resource_path('css/filament/*/theme.css')) ?: [];
+        $files = FilamentThemes::files();
 
         if ($files === []) {
-            warning('No theme.css under resources/css/filament/*/theme.css — add the Finisterre @source line manually.');
+            warning('No Filament theme file found — create one with `php artisan make:filament-theme` and add the Finisterre @source lines (see the README).');
 
             return;
         }
@@ -429,32 +540,15 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // Both finisterre's own views and the flowforge Kanban board views need
         // their Tailwind utilities compiled into the host theme, otherwise the
         // task board renders unstyled.
-        $sourceLines = [
-            'arzcode/finisterre/resources/views'  => "@source '../../../../vendor/arzcode/finisterre/resources/views/**/*.blade.php';",
-            'relaticle/flowforge/resources/views' => "@source '../../../../vendor/relaticle/flowforge/resources/views/**/*.blade.php';",
-        ];
-
         foreach ($files as $file) {
-            $contents = (string)file_get_contents($file);
             $relative = $this->relativePath($file);
 
-            $added = [];
-            foreach ($sourceLines as $marker => $line) {
-                if (str_contains($contents, $marker)) {
-                    continue;
-                }
-
-                $contents = rtrim($contents, "\n") . "\n" . $line . "\n";
-                $added[] = $marker;
-            }
-
-            if ($added === []) {
+            if (FilamentThemes::addSources($file) === []) {
                 note(sprintf('@source lines already present in %s — leaving as-is.', $relative));
 
                 continue;
             }
 
-            file_put_contents($file, $contents);
             info(sprintf('Patched %s with @source for Finisterre and Flowforge views.', $relative));
         }
     }
@@ -480,6 +574,14 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     protected function printFinalSteps(): void
     {
+        if ($this->panelsWithoutTheme !== []) {
+            warning('The task board will render unstyled until these panels get a Filament theme with the Finisterre @source lines:');
+
+            foreach ($this->panelsWithoutTheme as $panelId => $path) {
+                note(sprintf('  • %s — `php artisan make:filament-theme %s` creates %s, then `php artisan finisterre:install` adds the lines and builds it.', $panelId, $panelId, $path));
+            }
+        }
+
         outro('Finisterre install complete. Reload your Filament panel.');
     }
 

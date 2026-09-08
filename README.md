@@ -17,14 +17,17 @@ composer require arzcode/finisterre
 php artisan finisterre:install
 ```
 
-The installation command does everything wiring-related in one shot: publishes the config and migrations, asks to run
-them, enables Finisterre (active in every environment by default — manage it from the settings page), runs
-`php artisan filament:assets`, injects `FinisterrePlugin::make()` into every
-`app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, and appends the
-Tailwind `@source` line to every `resources/css/filament/*/theme.css`. Then run `npm run build`.
+The installation command does everything wiring-related in one shot: publishes the config and migrations — including
+the `tags` and `media` migrations of the spatie packages tasks lean on, when your application doesn't have those tables
+yet — asks to run them, enables Finisterre (active in every environment by default — manage it from the settings page),
+runs `php artisan filament:assets`, injects `FinisterrePlugin::make()` into every
+`app/Providers/Filament/*PanelProvider.php`, adds `use FinisterreUserTrait;` to `app/Models/User.php`, offers to create
+a Filament theme (`php artisan make:filament-theme`) for every panel that has none, appends the Tailwind `@source` lines
+to every theme file, and finishes with `npm run build`.
 
 For each step the command falls back to a printed instruction if your project doesn't match the expected shape
-(different panel directory, custom User location, no Filament theme, etc.).
+(different panel directory, custom User location, etc.). A panel left without a theme is called out again at the end:
+without one the task board renders unstyled, however many times `npm run build` runs.
 
 For Filament 3, use the v1 branch:
 
@@ -109,11 +112,14 @@ After `composer update arzcode/finisterre`, run:
 php artisan finisterre:update
 ```
 
-It lists every migration the package ships next to the file you published for it and whether that migration has run, so
-you can see at a glance what a new version added. Then it offers, one confirmation at a time, to publish the missing
-migrations, run them, seed the settings this version added, re-publish the Filament assets and run `npm run build`. It
-also reports config keys that were added or dropped (your published `config/finisterre.php` is deep-merged over the
-package defaults, so copying new keys over is optional) and warns when a theme file lost its `@source` lines.
+It lists every migration the package ships — and the `tags` and `media` migrations of the spatie packages it builds on —
+next to the file you published for it and whether that migration has run, so you can see at a glance what a new version
+added. Then it offers, one confirmation at a time, to publish the missing migrations (the spatie ones included, when
+their tables are missing and nothing is published to create them), run them, seed the settings this version added,
+re-publish the Filament assets and run `npm run build`. It also reports config keys that were added or dropped (your
+published `config/finisterre.php` is deep-merged over the package defaults, so copying new keys over is optional), warns
+when a theme file lost its `@source` lines, and when a panel has no theme at all — both count as outstanding under
+`--check`, and `php artisan finisterre:install` fixes both.
 
 Nothing is written without your confirmation, and publishing is idempotent — an already-published migration keeps the
 file name it got the first time instead of being copied again under a new timestamp.

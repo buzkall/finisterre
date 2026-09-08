@@ -2,13 +2,32 @@
 
 use Arzcode\Finisterre\Commands\UpdateCommand;
 use Arzcode\Finisterre\FinisterreServiceProvider;
+use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Spatie\MediaLibrary\MediaLibraryServiceProvider;
+use Spatie\Tags\TagsServiceProvider;
 
 beforeEach(function() {
     // The package provider isn't registered in the test app, so register the
     // command on its own — that is all these tests exercise.
     $this->app[Kernel::class]->registerCommand(new UpdateCommand);
+
+    // The spatie tables tasks lean on. Present unless a test drops them, so
+    // the checks below only see what each test is about.
+    foreach (['tags', 'taggables', 'media'] as $table) {
+        if (! Schema::hasTable($table)) {
+            Schema::create($table, fn(Blueprint $table) => $table->id());
+        }
+    }
+
+    $this->dropDependencyTables = function(): void {
+        foreach (['tags', 'taggables', 'media'] as $table) {
+            Schema::dropIfExists($table);
+        }
+    };
 
     $this->migrationsPath = database_path('migrations');
     $this->schemaPath = database_path('schema');
@@ -144,4 +163,62 @@ it('keeps a republished copy when the prompt is declined', function() {
         ->assertSuccessful();
 
     expect(file_exists($duplicate))->toBeTrue();
+});
+
+it('fails the check when the tags and media tables are missing with no migration published', function() {
+    ($this->dropDependencyTables)();
+    ($this->squashEverything)();
+
+    $this->artisan('finisterre:update', ['--check' => true])
+        ->expectsOutputToContain('Finisterre relies on are missing')
+        ->expectsOutputToContain('media — spatie/laravel-medialibrary (task attachments)')
+        ->assertFailed();
+});
+
+it('does not ask for a dependency migration that is published but not run yet', function() {
+    ($this->dropDependencyTables)();
+    ($this->squashEverything)();
+    file_put_contents($this->migrationsPath . '/2026_01_01_000000_create_tag_tables.php', "<?php\n");
+    file_put_contents($this->migrationsPath . '/2026_01_01_000001_create_media_table.php', "<?php\n");
+
+    $this->artisan('finisterre:update', ['--check' => true])
+        ->doesntExpectOutputToContain('Finisterre relies on are missing')
+        ->expectsOutputToContain('have not run yet')
+        ->expectsOutputToContain('create_tag_tables')
+        ->assertFailed();
+});
+
+it('publishes the dependency migrations when asked', function() {
+    ($this->dropDependencyTables)();
+    ($this->squashEverything)();
+
+    // The spatie providers register their publishable migrations; the plain
+    // test app leaves them out like it leaves Finisterre's own provider out.
+    $this->app->register(TagsServiceProvider::class);
+    $this->app->register(MediaLibraryServiceProvider::class);
+
+    $this->artisan('finisterre:update')
+        ->expectsConfirmation('Publish the missing dependency migrations now?', 'yes')
+        ->expectsConfirmation('Run the migrations now?', 'no')
+        ->expectsConfirmation('Re-publish the Filament assets (`php artisan filament:assets`)?', 'no')
+        ->expectsConfirmation('Run `npm run build` now?', 'no')
+        ->assertSuccessful();
+
+    expect(PackageMigrations::publishedFile('create_tag_tables'))->not->toBeNull()
+        ->and(PackageMigrations::publishedFile('create_media_table'))->not->toBeNull()
+        ->and(DependencyMigrations::missing())->toBe([]);
+});
+
+it('leaves the dependency migrations unpublished when the prompt is declined', function() {
+    ($this->dropDependencyTables)();
+    ($this->squashEverything)();
+
+    $this->artisan('finisterre:update')
+        ->expectsConfirmation('Publish the missing dependency migrations now?', 'no')
+        ->expectsOutputToContain('--provider="Spatie\\Tags\\TagsServiceProvider" --tag="tags-migrations"')
+        ->expectsConfirmation('Re-publish the Filament assets (`php artisan filament:assets`)?', 'no')
+        ->expectsConfirmation('Run `npm run build` now?', 'no')
+        ->assertSuccessful();
+
+    expect(DependencyMigrations::missing())->toHaveCount(2);
 });

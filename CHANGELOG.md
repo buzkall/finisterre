@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.6.1 - 2026-09-08
+
+- `finisterre:install` now **publishes the `tags` and `media` migrations** of spatie/laravel-tags and spatie/laravel-medialibrary when the application has neither the tables nor a published migration for them. Tasks carry tags and attachments, but both packages ship their migration as a stub `migrate` never sees until it is published, so a host that had never used them on its own ended the install with every Finisterre migration run and the board dying on its first query with *relation "tags" does not exist*. Tables that exist count whatever created them, and a published file counts as pending, so nothing is published twice.
+- `finisterre:install` now **offers to create a Filament theme for every panel that has none**, through `php artisan make:filament-theme`, which also registers the theme in `vite.config.js` and on the panel provider. The package's views are compiled by the host's theme, so a panel without one showed the board unstyled no matter how many times `npm run build` ran — and the installer only printed a warning half-way through before declaring the install complete. A panel whose theme is declined is called out again at the end instead. The `@source` lines are now written relative to where each theme file sits, so a theme registered with `viteTheme()` outside `resources/css/filament/` gets the right path.
+- `finisterre:update` reports the two spatie migrations in its table, offers to publish them when their tables are missing, lists a published one that has not run among the pending migrations, and counts a panel without a theme — or a theme missing its `@source` lines — as outstanding under `--check`.
+
 ## 4.6.0 - 2026-09-08
 
 - **4.5.5 shipped 4.5.4's code and is skipped**: its tag was created on the commit the previous release already pointed at, so everything below was written for it but never left the repository. Upgrade straight to 4.6.0; there is nothing in 4.5.5 that is not here.
