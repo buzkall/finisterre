@@ -13,13 +13,18 @@ on:
           - create
           - delete
       tag:
-        description: 'Tag name, e.g. v4.0.4'
+        description: 'Tag name, e.g. 4.6.0'
         required: true
         type: string
       sha:
-        description: Commit SHA to tag (create only)
+        description: 'Commit to tag (create only). Leave empty to tag the tip of the branch picked above.'
         required: false
         type: string
+      release:
+        description: Publish a GitHub release with the changelog entry as its notes (create only)
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -28,19 +33,21 @@ jobs:
   manage-tag:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out the branch chosen in the run dialog
+        if: inputs.operation == 'create'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Create tag
         if: inputs.operation == 'create'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
           SHA: ${{ inputs.sha }}
+          MAKE_RELEASE: ${{ inputs.release }}
         run: |
           set -euo pipefail
-
-          if [ -z "$SHA" ]; then
-            echo "::error::A commit SHA is required to create a tag."
-            exit 1
-          fi
 
           # Reject the shapes Packagist silently ignores, such as "v.4.0.4".
           if ! printf '%s' "$TAG" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'; then
@@ -53,12 +60,57 @@ jobs:
             exit 1
           fi
 
-          # Fails on its own if the SHA does not resolve to a commit in this repo.
+          # No SHA typed by hand means no SHA copied from the wrong page: the
+          # default is the tip of the branch the run dialog was pointed at.
+          if [ -z "$SHA" ]; then
+            SHA=$(git rev-parse HEAD)
+            echo "No commit given - tagging the tip of $GITHUB_REF_NAME."
+          fi
+
+          if ! SHA=$(git rev-parse --verify --quiet "${SHA}^{commit}"); then
+            echo "::error::'${{ inputs.sha }}' does not resolve to a commit on $GITHUB_REF_NAME."
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$SHA" HEAD; then
+            echo "::error::$SHA is not on $GITHUB_REF_NAME. Tag a commit that has been merged."
+            exit 1
+          fi
+
+          # A commit that is already tagged is the shape every mis-tag has had
+          # so far: the SHA of the previous release, pasted a second time.
+          EXISTING=$(git tag --points-at "$SHA" | tr '\n' ' ')
+          if [ -n "$EXISTING" ]; then
+            echo "::error::$SHA is already tagged as ${EXISTING%% }. That is the previous release's commit, not this one."
+            exit 1
+          fi
+
+          # The changelog is the only record of what a version contains, so it
+          # decides whether this commit really is the release it claims to be.
+          VERSION=${TAG#v}
+          if ! git show "$SHA:CHANGELOG.md" > /tmp/changelog.md 2>/dev/null; then
+            echo "::error::$SHA has no CHANGELOG.md."
+            exit 1
+          fi
+
+          HEADING=$(grep -m1 -E '^## ' /tmp/changelog.md || true)
+          if ! printf '%s' "$HEADING" | grep -Eq "^## v?${VERSION//./\\.}([[:space:]]|$)"; then
+            echo "::error::The changelog on $SHA opens with '$HEADING', not '## $VERSION'. Commit the entry for $VERSION before tagging."
+            exit 1
+          fi
+
+          awk '/^## /{ if (seen++) exit; next } seen { print }' /tmp/changelog.md > /tmp/notes.md
+
           gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" \
             -f "ref=refs/tags/$TAG" \
             -f "sha=$SHA"
 
-          echo "Created $TAG at $SHA"
+          echo "Created $TAG at $SHA ($(git log -1 --format=%s "$SHA"))"
+
+          if [ "$MAKE_RELEASE" = "true" ]; then
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-file /tmp/notes.md
+            echo "Published release $TAG"
+          fi
 
       - name: Delete tag
         if: inputs.operation == 'delete'
@@ -73,7 +125,7 @@ jobs:
             exit 1
           fi
 
-          # A tag backing a release cannot be removed silently — say so instead.
+          # A tag backing a release cannot be removed silently - say so instead.
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "::error::'$TAG' has a GitHub release attached. Delete the release first."
             exit 1

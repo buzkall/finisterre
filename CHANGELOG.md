@@ -2,8 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
-## 4.5.5 - 2026-09-08
+## 4.6.0 - 2026-09-08
 
+- **4.5.5 shipped 4.5.4's code and is skipped**: its tag was created on the commit the previous release already pointed at, so everything below was written for it but never left the repository. Upgrade straight to 4.6.0; there is nothing in 4.5.5 that is not here.
+- The **Manage tag** workflow can no longer make that mistake. The commit to tag is now optional and defaults to the tip of the branch the run dialog is pointed at, so there is no SHA to copy from the wrong page; and before the tag is written the run refuses a commit that already carries a tag, one that is not on the chosen branch, and one whose `CHANGELOG.md` does not open with the version being tagged. It also publishes the GitHub release itself, taking the title from the tag and the notes from that changelog entry, instead of leaving a release to be drafted by hand with a title borrowed from the commit subject.
 - The **creator avatar** on kanban cards is a little larger (24px instead of 20px), so the face tucked in behind the assignee is legible rather than a smudge.
 - Fixed the **N+1 the board reported on hosts that keep user avatars in a media library** (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). The cards resolved the people on them one lookup at a time, and reading the avatar of each then queried its media relation on its own. Everyone on the board is now fetched in a single query, with the media relation eager-loaded when the host's user model has one.
 - The **breadcrumb on the create form leads back to the board** instead of to the tasks table, like the ones on the task and edit pages already did.
