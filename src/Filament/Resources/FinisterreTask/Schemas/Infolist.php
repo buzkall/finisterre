@@ -42,6 +42,20 @@ class Infolist
         return $schema
             ->columns(1)
             ->components([
+                // The card image leads the page, the way it leads the board card —
+                // at full resolution, since the page is several cards wide.
+                ViewEntry::make('cover')
+                    ->key('cover')
+                    ->hiddenLabel()
+                    ->view('finisterre::tasks.cover')
+                    ->viewData(fn(FinisterreTask $record) => [
+                        'coverUrl'      => $record->coverUrl(thumbnail: false),
+                        'title'         => $record->title,
+                        'position'      => $record->coverPosition(),
+                        'canReposition' => $canQuickEdit($record),
+                    ])
+                    ->visible(fn(FinisterreTask $record) => filled($record->coverUrl())),
+
                 Actions::make(self::quickActions($userIsReporterOnly))
                     ->key('quick_actions')
                     ->visible($canQuickEdit),
@@ -66,7 +80,11 @@ class Infolist
                         ViewEntry::make('attachments')
                             ->hiddenLabel()
                             ->view('finisterre::tasks.attachments')
-                            ->viewData(fn(FinisterreTask $record) => ['media' => $record->getMedia('tasks')])
+                            ->viewData(fn(FinisterreTask $record) => [
+                                'media'        => $record->getMedia('tasks'),
+                                'coverMediaId' => $record->cover_media_id,
+                                'canSetCover'  => $canQuickEdit($record),
+                            ])
                             ->visible(fn(FinisterreTask $record) => $record->getMedia('tasks')->isNotEmpty()),
                     ]),
 

@@ -185,6 +185,84 @@ it('uploads an attachment from the modal and keeps the ones already there', func
         ->and($media->pluck('file_name'))->toContain('first.png');
 });
 
+it('changes and clears the card image from the attachments list', function() {
+    Storage::fake('public');
+    $task = pageTask();
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+    $first = $task->addMediaFromString($png)->usingFileName('first.png')->toMediaCollection('tasks', 'public');
+    $second = $task->addMediaFromString($png)->usingFileName('second.png')->toMediaCollection('tasks', 'public');
+
+    // The first image was promoted automatically when it was attached.
+    expect($task->refresh()->cover_media_id)->toBe($first->getKey());
+
+    $component = Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()]);
+
+    $component->call('setCoverMedia', $second->getKey())->assertOk()->assertNotified();
+    expect($task->refresh()->cover_media_id)->toBe($second->getKey());
+
+    // A task is allowed to have no card image at all.
+    $component->call('setCoverMedia', null)->assertOk()->assertNotified();
+    expect($task->refresh()->cover_media_id)->toBeNull();
+});
+
+it('saves where the card image was dragged to on its own media row', function() {
+    Storage::fake('public');
+    $task = pageTask();
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+    $media = $task->addMediaFromString($png)->usingFileName('shot.png')->toMediaCollection('tasks', 'public');
+
+    $component = Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()]);
+
+    $component->call('setCoverPosition', 32.5)->assertOk()->assertNotified();
+
+    expect($media->refresh()->getCustomProperty(FinisterreTask::COVER_POSITION_PROPERTY))->toBe(32.5)
+        ->and($task->refresh()->coverPosition())->toBe(32.5);
+
+    // The value comes from the browser, so it is kept inside the frame.
+    $component->call('setCoverPosition', 140);
+
+    expect($task->refresh()->coverPosition())->toBe(100.0);
+});
+
+it('has no position to save on a task without a card image', function() {
+    Livewire::test(ViewFinisterreTask::class, ['record' => pageTask()->getKey()])
+        ->call('setCoverPosition', 20)
+        ->assertNotFound();
+});
+
+it('forbids a user who may not update the task from repositioning the card image', function() {
+    Gate::policy(FinisterreTask::class, ReadOnlyTaskPolicy::class);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => pageTask()->getKey()])
+        ->call('setCoverPosition', 20)
+        ->assertForbidden();
+});
+
+it('refuses to set a card image from another task', function() {
+    Storage::fake('public');
+    $task = pageTask();
+    $other = pageTask(['title' => 'Somebody else']);
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+    $foreign = $other->addMediaFromString($png)->usingFileName('theirs.png')->toMediaCollection('tasks', 'public');
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->call('setCoverMedia', $foreign->getKey())
+        ->assertNotFound();
+
+    expect($task->refresh()->cover_media_id)->toBeNull();
+});
+
+it('forbids a user who may not update the task from changing the card image', function() {
+    Gate::policy(FinisterreTask::class, ReadOnlyTaskPolicy::class);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => pageTask()->getKey()])
+        ->call('setCoverMedia', null)
+        ->assertForbidden();
+});
+
 it('shows a read-only strip to users who may not update', function() {
     Gate::policy(FinisterreTask::class, ReadOnlyTaskPolicy::class);
     $task = pageTask();

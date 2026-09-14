@@ -1,43 +1,73 @@
 <ul class="flex flex-wrap items-center gap-2 text-sm">
     @foreach ($media as $file)
         @php($isImage = str_starts_with((string) $file->mime_type, 'image/'))
+        @php($isCover = $isImage && (int) $coverMediaId === (int) $file->getKey())
 
         <li class="inline-flex items-center gap-2 rounded-lg bg-gray-50 px-2 py-1 dark:bg-white/5">
             @if ($isImage)
-                {{-- Images open in a lightbox built on Filament's own modal, no extra library needed. --}}
-                <x-filament::modal
-                    id="finisterre-attachment-{{ $file->getKey() }}"
-                    width="5xl"
-                    :heading="$file->name"
-                    :close-button="true"
-                >
-                    <x-slot name="trigger">
-                        <button type="button" class="block" title="{{ $file->name }}">
-                            <img
-                                src="{{ $file->getUrl() }}"
-                                alt="{{ $file->name }}"
-                                class="h-16 w-16 rounded-lg object-cover"
+                {{-- The star and the lightbox trigger have to be siblings: the trigger is
+                     already a button, and a button inside a button is not a thing. --}}
+                <div class="group relative">
+                    {{-- Images open in a lightbox built on Filament's own modal, no extra library needed. --}}
+                    <x-filament::modal
+                        id="finisterre-attachment-{{ $file->getKey() }}"
+                        width="5xl"
+                        :heading="$file->name"
+                        :close-button="true"
+                    >
+                        <x-slot name="trigger">
+                            <button type="button" class="block" title="{{ $file->name }}">
+                                <img
+                                    src="{{ $file->getUrl() }}"
+                                    alt="{{ $file->name }}"
+                                    @class([
+                                        'h-16 w-16 rounded-lg object-cover',
+                                        'ring-2 ring-primary-500' => $isCover,
+                                    ])
+                                />
+                            </button>
+                        </x-slot>
+
+                        <img
+                            src="{{ $file->getUrl() }}"
+                            alt="{{ $file->name }}"
+                            class="mx-auto max-h-[80vh] w-auto"
+                        />
+
+                        <div class="flex items-center justify-end gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <a
+                                href="{{ $file->getUrl() }}"
+                                download="{{ $file->file_name }}"
+                                class="inline-flex shrink-0 items-center gap-1 text-primary-600 underline"
+                            >
+                                <x-filament::icon icon="heroicon-o-arrow-down-tray" class="h-4 w-4"/>
+                                {{ __('finisterre::finisterre.download') }}
+                            </a>
+                        </div>
+                    </x-filament::modal>
+
+                    @if ($canSetCover)
+                        {{-- The current card image keeps its star on show, so it is obvious
+                             which picture the board card is using; the others reveal one on
+                             hover, and on focus so the keyboard reaches them too. --}}
+                        <button
+                            type="button"
+                            wire:click="setCoverMedia({{ $isCover ? 'null' : $file->getKey() }})"
+                            title="{{ $isCover
+                                ? __('finisterre::finisterre.remove_card_image')
+                                : __('finisterre::finisterre.set_card_image') }}"
+                            @class([
+                                'absolute right-0.5 top-0.5 inline-flex items-center justify-center rounded-full bg-gray-900/60 p-1 text-white transition',
+                                'opacity-0 group-hover:opacity-100 focus:opacity-100' => ! $isCover,
+                            ])
+                        >
+                            <x-filament::icon
+                                :icon="$isCover ? 'heroicon-s-star' : 'heroicon-o-star'"
+                                class="h-4 w-4"
                             />
                         </button>
-                    </x-slot>
-
-                    <img
-                        src="{{ $file->getUrl() }}"
-                        alt="{{ $file->name }}"
-                        class="mx-auto max-h-[80vh] w-auto"
-                    />
-
-                    <div class="flex items-center justify-end gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        <a
-                            href="{{ $file->getUrl() }}"
-                            download="{{ $file->file_name }}"
-                            class="inline-flex shrink-0 items-center gap-1 text-primary-600 underline"
-                        >
-                            <x-filament::icon icon="heroicon-o-arrow-down-tray" class="h-4 w-4"/>
-                            {{ __('finisterre::finisterre.download') }}
-                        </a>
-                    </div>
-                </x-filament::modal>
+                    @endif
+                </div>
             @else
                 <x-filament::icon icon="heroicon-o-paper-clip" class="h-4 w-4 text-gray-400"/>
 

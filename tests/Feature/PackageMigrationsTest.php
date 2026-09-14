@@ -176,9 +176,13 @@ it('deletes the files it is asked to remove', function() {
 it('treats the migrations before a squashed one as applied even when nothing names them', function() {
     // An application the package grew out of: it built the first tables from
     // migrations of its own, so the package's names for them appear nowhere.
+    // The last shipped migration is read off the provider so that shipping
+    // another one does not turn this into a failing test.
+    $names = FinisterreServiceProvider::migrationNames();
+
     ($this->dumpSchema)([
         '2026_02_26_204558_change_order_column_type_in_finisterre_tasks',
-        '2026_08_21_111952_create_finisterre_subtasks_table',
+        '2026_08_21_111952_' . end($names),
     ]);
 
     expect(PackageMigrations::squashed())->toBe(FinisterreServiceProvider::migrationNames());
@@ -193,12 +197,12 @@ it('treats the migrations before a squashed one as applied even when nothing nam
 it('still reports the migrations shipped after the last applied one as unpublished', function() {
     ($this->dumpSchema)(['2026_02_26_204558_change_order_column_type_in_finisterre_tasks']);
 
-    expect(PackageMigrations::unpublished())->toBe([
-        'add_scheduling_to_finisterre_task_comments',
-        'convert_order_column_to_integer_in_finisterre_tasks',
-        'add_subject_to_finisterre_tasks',
-        'create_finisterre_subtasks_table',
-    ]);
+    // Every migration the provider lists after the one the dump names.
+    $names = FinisterreServiceProvider::migrationNames();
+    $after = array_slice($names, array_search('change_order_column_type_in_finisterre_tasks', $names, true) + 1);
+
+    expect(PackageMigrations::unpublished())->toBe($after)
+        ->and($after)->toContain('create_finisterre_subtasks_table');
 });
 
 it('leaves a published migration alone even when a later one already ran', function() {

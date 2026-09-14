@@ -217,6 +217,22 @@ Clicking a card on the board (or a row in the task list) opens the task page rat
 
 Every badge is a quick action for users allowed to update the task: status, priority and assignee change with one click from a dropdown; tags, due date and attachments open a small modal (new tags can be created on the spot, and the attachments modal uploads new files and removes existing ones). The page updates in place after each change. Image attachments open in a lightbox; other files open in a new tab or download. The **Edit** button leads to the form, which only keeps the long-form fields: title, description and attachments.
 
+## Card images
+
+A task can carry a **card image**: one of its attachments, shown full-bleed across the top of its kanban card, at the top of the task page, and in the first column of the tasks list.
+
+The first image attached to a task becomes its card image automatically. To change it, hover (or tab to) any image in the attachments list on the task page and click the star; the current card image keeps its star on show. Clicking the filled star removes the card image, and it stays removed — a task is allowed to have none, and the automatic pick only fires on a task's very first image, so attaching more files never puts one back. Deleting the attachment behind a card image clears it too.
+
+To choose which part of a tall picture shows, hover the banner at the top of the task page, click **Reposition**, drag the image up or down and click **Save position**. The position is stored on the attachment (`custom_properties.finisterre_cover_position`, 0 = top, 100 = bottom) and the board card crops at the same spot.
+
+On the board and in the table the image is served from a `finisterre-card` conversion (600px wide, not cropped) generated after the response, so no queue worker is needed; the task page shows the original. Attachments uploaded before this feature existed have no thumbnail and are served at full size until you run:
+
+```bash
+php artisan media-library:regenerate
+```
+
+The board card itself comes from the package's own copy of flowforge's card view, which is registered in front of flowforge's on the `flowforge::` view namespace. If your application has published its own `resources/views/vendor/flowforge/livewire/card.blade.php`, yours wins and no card image is rendered — copy the cover block out of `vendor/arzcode/finisterre/resources/views/vendor/flowforge/livewire/card.blade.php` into it.
+
 ## Settings page
 
 Most configuration can be managed at runtime from an in-app **settings page** instead of editing the config file. It is

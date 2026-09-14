@@ -281,6 +281,9 @@ class TasksKanbanBoard extends BoardPage
         $userModel = app(config('finisterre.authenticatable'));
 
         return FinisterreTask::query()
+            // The card image is rendered on every card, so the relation comes along
+            // with the board query — the counts below are subqueries and load no rows.
+            ->with('coverMedia')
             ->withCount([
                 'comments' => fn($q) => $q->where(fn($q) => $q->whereNull('scheduled_for')->orWhereNotNull('sent_at')),
                 'media',

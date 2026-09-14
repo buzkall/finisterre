@@ -11,6 +11,7 @@ use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Observers\FinisterreMediaObserver;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
@@ -25,10 +26,12 @@ use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\confirm;
@@ -177,6 +180,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             'convert_order_column_to_integer_in_finisterre_tasks',
             'add_subject_to_finisterre_tasks',
             'create_finisterre_subtasks_table',
+            'add_cover_media_id_to_finisterre_tasks',
         ];
     }
 
@@ -812,6 +816,9 @@ class FinisterreServiceProvider extends PackageServiceProvider
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
 
+        $this->observeMedia();
+        $this->registerBoardCardView();
+
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang');
 
         // this will get copied to the project's public folder when
@@ -824,5 +831,57 @@ class FinisterreServiceProvider extends PackageServiceProvider
         }
 
         // remember to run php artisan filament:assets after changing assets in the site
+    }
+
+    /**
+     * Watch the media library for attachments added to or removed from a task.
+     *
+     * The model is the host application's (media-library lets it be swapped), and the
+     * observer bails out on every row that is not a task attachment, so this is a
+     * narrow hook rather than a claim on the host's media.
+     */
+    protected function observeMedia(): void
+    {
+        /** @var class-string<Media> $model */
+        $model = config('media-library.media_model') ?? Media::class;
+
+        $model::observe(FinisterreMediaObserver::class);
+    }
+
+    /**
+     * Render board cards from our own copy of flowforge's card view.
+     *
+     * A card image has to sit above the card title, and flowforge renders that title
+     * itself with no setting to reach in front of it, so the view is replaced whole.
+     * The replacement goes in front of flowforge's own directory on the `flowforge::`
+     * namespace rather than under a Blade alias of ours, because Blade resolves a
+     * component *alias* while it compiles the parent view: an alias swap would be
+     * baked into flowforge's already-compiled column view, which never changes when
+     * this package is upgraded, so the old card would keep rendering until somebody
+     * ran `view:clear`. A view name resolves through the finder on every render
+     * instead, so the swap survives a stale compiled view. Only card.blade.php lives
+     * in that directory; every other flowforge view still falls through.
+     *
+     * An application that published its own copy of the card keeps it: overriding a
+     * host's deliberate override would be the rude way round.
+     */
+    protected function registerBoardCardView(): void
+    {
+        if ($this->hostOverridesBoardCard()) {
+            return;
+        }
+
+        View::prependNamespace('flowforge', __DIR__ . '/../resources/views/vendor/flowforge');
+    }
+
+    protected function hostOverridesBoardCard(): bool
+    {
+        foreach ((array)config('view.paths', []) as $path) {
+            if (is_file($path . '/vendor/flowforge/livewire/card.blade.php')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

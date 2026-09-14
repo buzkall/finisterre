@@ -77,10 +77,11 @@ class FinisterreTaskObserver
     public function saved(FinisterreTask $task): void
     {
         // Skip notification when nothing meaningful changed. updated_at alone means the task
-        // was touched by a comment (which has its own notification logic), and order_column
+        // was touched by a comment (which has its own notification logic), order_column
         // alone means a kanban reorder (drag within a column, plus the sibling renumbers it
-        // triggers) — neither should notify the assignee.
-        if (empty(array_diff_key($task->getDirty(), array_flip(['order_column', 'updated_at'])))) {
+        // triggers), and cover_media_id alone means somebody picked which attachment shows
+        // on the card — none of the three should notify the assignee.
+        if (empty(array_diff_key($task->getDirty(), array_flip(['order_column', 'cover_media_id', 'updated_at'])))) {
             return;
         }
 

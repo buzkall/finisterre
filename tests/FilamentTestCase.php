@@ -83,6 +83,12 @@ abstract class FilamentTestCase extends TestCase
             });
         }
 
+        if (! Schema::hasColumn('finisterre_tasks', 'cover_media_id')) {
+            Schema::table('finisterre_tasks', function(Blueprint $table) {
+                $table->unsignedBigInteger('cover_media_id')->nullable();
+            });
+        }
+
         $this->createTableIfMissing('finisterre_subtasks', function(Blueprint $table) {
             $table->id();
             $table->foreignId('task_id')->constrained('finisterre_tasks')->cascadeOnDelete();

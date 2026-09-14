@@ -23,8 +23,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Tags\HasTags;
 
 /**
@@ -40,6 +42,7 @@ use Spatie\Tags\HasTags;
  * @property ?Carbon $completed_at
  * @property int $creator_id
  * @property ?int $assignee_id
+ * @property ?int $cover_media_id
  * @property ?Model $subject
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -51,8 +54,14 @@ class FinisterreTask extends Model implements HasMedia
 {
     use HasFactory, HasTags, InteractsWithMedia;
 
+    /** Media conversion the card image is served from. */
+    public const COVER_CONVERSION = 'finisterre-card';
+
+    /** Custom property on the cover media holding its vertical focus, 0 (top) to 100 (bottom). */
+    public const COVER_POSITION_PROPERTY = 'finisterre_cover_position';
+
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'due_at', 'completed_at',
-        'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id'];
+        'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id', 'cover_media_id'];
     protected $casts = [
         'status'       => TaskStatusEnum::class,
         'archived'     => 'boolean',
@@ -180,6 +189,93 @@ class FinisterreTask extends Model implements HasMedia
             : $label;
 
         return new HtmlString($type . ': ' . $link);
+    }
+
+    /**
+     * The attachment promoted to the task's card image, if any.
+     *
+     * A null cover_media_id is a deliberate "no card image", not a missing value:
+     * the first image attached to a task fills it in (FinisterreMediaObserver), and
+     * once the user clears it nothing puts it back on its own. The media table is
+     * spatie's, so the column carries no foreign key — a row deleted behind our back
+     * simply resolves to null here.
+     *
+     * @return BelongsTo<Media, $this>
+     */
+    public function coverMedia(): BelongsTo
+    {
+        /** @var class-string<Media> $model */
+        $model = config('media-library.media_model') ?? Media::class;
+
+        return $this->belongsTo($model, 'cover_media_id');
+    }
+
+    /**
+     * What to render as the task's card image, or null when it has none.
+     *
+     * The thumbnail is sized for a 300px board card and a table cell. Anything wider,
+     * like the banner across the task page, asks for the original: stretching the
+     * thumbnail to the page's width is what turns it into a blur.
+     *
+     * Attachments uploaded before the conversion existed have no thumbnail, and
+     * regenerating them is the host's call (`php artisan media-library:regenerate`),
+     * so the original stands in until then rather than 404ing.
+     */
+    public function coverUrl(bool $thumbnail = true): ?string
+    {
+        $media = $this->coverMedia;
+
+        if (! $media instanceof Media || ! str_starts_with((string)$media->mime_type, 'image/')) {
+            return null;
+        }
+
+        return $thumbnail && $media->hasGeneratedConversion(self::COVER_CONVERSION)
+            ? $media->getUrl(self::COVER_CONVERSION)
+            : $media->getUrl();
+    }
+
+    /**
+     * Which part of the card image shows where it is cropped, as the vertical
+     * `object-position` percentage: 0 pins the top edge, 100 the bottom, 50 the middle.
+     *
+     * It lives on the media row rather than the task, so it belongs to the picture:
+     * switching the card image to another attachment and back finds it where it was
+     * left. Both the board card and the task page banner read it.
+     */
+    public function coverPosition(): float
+    {
+        $media = $this->coverMedia;
+
+        if (! $media instanceof Media) {
+            return 50.0;
+        }
+
+        return max(0.0, min(100.0, (float)$media->getCustomProperty(self::COVER_POSITION_PROPERTY, 50)));
+    }
+
+    /**
+     * A card-sized version of every image attached to a task.
+     *
+     * The board renders one per card, so serving the originals there means a column
+     * of full-size photos. It is scaled down but not cropped: the card crops it in the
+     * browser at the position the user dragged it to, and a crop baked into the file
+     * would have thrown that part of the picture away already.
+     *
+     * Deferred rather than queued or immediate: the package cannot assume the host
+     * runs a worker, and a thumbnail is not worth failing an upload over — a file
+     * whose contents do not match its extension makes the image driver throw, and
+     * after the response that is a reported error instead of a 500 in the user's
+     * face. Until a thumbnail exists coverUrl() serves the original, so nothing is
+     * missing in the meantime.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        // The manipulations go last: fit() forwards to the image driver, so anything
+        // chained after it is no longer talking to the conversion.
+        $this->addMediaConversion(self::COVER_CONVERSION)
+            ->performOnCollections('tasks')
+            ->deferred()
+            ->fit(Fit::Max, 600, 2400);
     }
 
     /**

@@ -7,6 +7,7 @@ use Arzcode\Finisterre\Tests\Support\AvatarUser;
 use Arzcode\Finisterre\Tests\Support\MediaAvatarUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
 
@@ -183,6 +184,112 @@ it('loads the avatars of a media library host without a query per user', functio
         Model::preventLazyLoading(false);
     }
 
-    // One eager load covering every user on the board, not one per person.
+    // One eager load covering every user on the board, not one per person. No card
+    // here has a card image, so the cover relation asks for nothing at all.
     expect($mediaQueries)->toBe(1);
+});
+
+it('loads the card images of a whole board in a single query', function() {
+    Storage::fake('public');
+
+    $user = User::factory()->create(['name' => 'Ana Ruiz']);
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+
+    foreach (range(1, 8) as $i) {
+        $task = FinisterreTask::factory()->create([
+            'title'       => 'Task ' . $i,
+            'status'      => TaskStatusEnum::Open,
+            'archived'    => false,
+            'creator_id'  => $user->id,
+            'assignee_id' => $user->id,
+        ]);
+
+        // The observer promotes it to the card image, so every card has one.
+        $task->addMediaFromString($png)->usingFileName('shot.png')->toMediaCollection('tasks', 'public');
+    }
+
+    $mediaQueries = 0;
+    DB::listen(function($query) use (&$mediaQueries) {
+        if (str_starts_with($query->sql, 'select * from "media"')) {
+            $mediaQueries++;
+        }
+    });
+
+    Model::preventLazyLoading();
+
+    try {
+        Livewire::test(TasksKanbanBoard::class)->assertOk();
+    } finally {
+        Model::preventLazyLoading(false);
+    }
+
+    // The host here keeps no avatars in a media library, so this one read is the
+    // covers: eight cards, one query, not one per card.
+    expect($mediaQueries)->toBe(1);
+});
+
+it('shows the card image at the top of a card that has one', function() {
+    Storage::fake('public');
+
+    $user = User::factory()->create(['name' => 'Ana Ruiz']);
+
+    $task = FinisterreTask::factory()->create([
+        'title'       => 'With a picture',
+        'status'      => TaskStatusEnum::Open,
+        'archived'    => false,
+        'creator_id'  => $user->id,
+        'assignee_id' => $user->id,
+    ]);
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+
+    $media = $task->addMediaFromString($png)
+        ->usingFileName('shot.png')
+        ->toMediaCollection('tasks', 'public');
+
+    Livewire::test(TasksKanbanBoard::class)
+        ->assertOk()
+        ->assertSee($media->getUrl(), escape: false);
+});
+
+it('crops the card image at the position the user dragged it to', function() {
+    Storage::fake('public');
+
+    $user = User::factory()->create(['name' => 'Ana Ruiz']);
+
+    $task = FinisterreTask::factory()->create([
+        'title'       => 'Repositioned',
+        'status'      => TaskStatusEnum::Open,
+        'archived'    => false,
+        'creator_id'  => $user->id,
+        'assignee_id' => $user->id,
+    ]);
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+
+    $task->addMediaFromString($png)
+        ->usingFileName('shot.png')
+        ->withCustomProperties([FinisterreTask::COVER_POSITION_PROPERTY => 30])
+        ->toMediaCollection('tasks', 'public');
+
+    Livewire::test(TasksKanbanBoard::class)
+        ->assertOk()
+        ->assertSee('object-position: 50% 30%', escape: false);
+});
+
+it('renders a card without a picture when the task has no card image', function() {
+    $user = User::factory()->create(['name' => 'Ana Ruiz']);
+
+    FinisterreTask::factory()->create([
+        'title'       => 'No picture',
+        'status'      => TaskStatusEnum::Open,
+        'archived'    => false,
+        'creator_id'  => $user->id,
+        'assignee_id' => $user->id,
+    ]);
+
+    Livewire::test(TasksKanbanBoard::class)
+        ->assertOk()
+        ->assertSee('No picture')
+        ->assertDontSee('object-cover"', escape: false);
 });
