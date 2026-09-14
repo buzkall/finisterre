@@ -43,6 +43,7 @@ use Spatie\Tags\HasTags;
  * @property int $creator_id
  * @property ?int $assignee_id
  * @property ?int $cover_media_id
+ * @property ?list<string> $editor_files
  * @property ?Model $subject
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -69,6 +70,7 @@ class FinisterreTask extends Model implements HasMedia
         'due_at'       => 'datetime',
         'completed_at' => 'datetime',
         'order_column' => 'integer',
+        'editor_files' => 'array',
     ];
     protected $with = ['tags'];
 

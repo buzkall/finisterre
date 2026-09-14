@@ -63,6 +63,13 @@ beforeEach(function() {
     ));
 });
 
+beforeEach(function() {
+    // Already on a private disk, so the update has nothing to say about it; the
+    // tests about the disk put the public one back.
+    config()->set('filesystems.disks.finisterre', ['driver' => 'local', 'root' => storage_path('app/finisterre-files')]);
+    config()->set('finisterre.attachments_disk', 'finisterre');
+});
+
 afterEach(function() {
     foreach (glob($this->migrationsPath . '/*.php') ?: [] as $file) {
         unlink($file);
@@ -70,6 +77,67 @@ afterEach(function() {
 
     foreach (glob($this->schemaPath . '/*') ?: [] as $file) {
         unlink($file);
+    }
+});
+
+it('counts attachments on the public disk as outstanding', function() {
+    config()->set('finisterre.attachments_disk', 'public');
+    ($this->squashEverything)();
+
+    $this->artisan('finisterre:update', ['--check' => true])
+        ->expectsOutputToContain('Attachments are stored on the public disk')
+        ->assertFailed();
+});
+
+it('fails the check when attachments_disk names a disk that does not exist', function() {
+    config()->set('filesystems.disks.finisterre', null);
+    ($this->squashEverything)();
+
+    $this->artisan('finisterre:update', ['--check' => true])
+        ->expectsOutputToContain('has no disk by that name')
+        ->assertFailed();
+});
+
+it('keeps the public disk when the prompt is declined', function() {
+    config()->set('finisterre.attachments_disk', 'public');
+    ($this->squashEverything)();
+
+    $this->artisan('finisterre:update')
+        ->expectsConfirmation('Move the attachments to a private disk now?', 'no')
+        ->expectsConfirmation('Re-publish the Filament assets (`php artisan filament:assets`)?', 'no')
+        ->expectsConfirmation('Run `npm run build` now?', 'no')
+        ->assertSuccessful();
+
+    expect(config('finisterre.attachments_disk'))->toBe('public');
+});
+
+it('switches to the private disk when asked', function() {
+    config()->set('finisterre.attachments_disk', 'public');
+    config()->set('filesystems.disks.finisterre', null);
+    ($this->squashEverything)();
+
+    // Both files live in the testbench skeleton, which every later test reuses.
+    // The package provider is not registered here, so the config file is copied
+    // in by hand the way `vendor:publish` would.
+    $filesystems = config_path('filesystems.php');
+    $original = (string)file_get_contents($filesystems);
+    $finisterre = config_path('finisterre.php');
+    copy(__DIR__ . '/../../config/finisterre.php', $finisterre);
+
+    try {
+        $this->artisan('finisterre:update')
+            ->expectsConfirmation('Move the attachments to a private disk now?', 'yes')
+            ->expectsConfirmation('Re-publish the Filament assets (`php artisan filament:assets`)?', 'no')
+            ->expectsConfirmation('Run `npm run build` now?', 'no')
+            ->assertSuccessful();
+
+        expect(file_get_contents($filesystems))->toContain("'finisterre' => [")
+            ->and(file_get_contents($finisterre))->toContain("'attachments_disk' => 'finisterre', // finisterre")
+            ->and(config('finisterre.attachments_disk'))->toBe('finisterre')
+            ->and(config('filesystems.disks.finisterre.root'))->toBe(storage_path('app/finisterre-files'));
+    } finally {
+        file_put_contents($filesystems, $original);
+        @unlink($finisterre);
     }
 });
 

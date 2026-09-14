@@ -116,6 +116,10 @@ abstract class FilamentTestCase extends TestCase
             $table->timestamps();
         });
 
+        if (! Schema::hasColumn('finisterre_tasks', 'editor_files')) {
+            (include __DIR__ . '/../database/migrations/add_editor_files_to_finisterre_tasks.php.stub')->up();
+        }
+
         $this->createTableIfMissing('tags', function(Blueprint $table) {
             $table->id();
             $table->json('name');

@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Commands;
 
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
@@ -23,7 +24,7 @@ use function Laravel\Prompts\warning;
 class UpdateCommand extends Command
 {
     public $signature = 'finisterre:update {--check : Report what is outstanding without publishing, migrating or seeding anything}';
-    public $description = 'After upgrading the package: show which migrations still need publishing or running, seed new settings and refresh the published assets.';
+    public $description = 'After upgrading the package: show which migrations still need publishing or running, seed new settings, keep attachments private and refresh the published assets.';
 
     public function handle(): int
     {
@@ -41,6 +42,7 @@ class UpdateCommand extends Command
             fn(): int => $this->handleRepublishedMigrations($check),
             fn(): int => $this->handlePendingMigrations($check),
             fn(): int => $this->handleMissingSettings($check),
+            fn(): int => $this->handleAttachmentsDisk($check),
             fn(): int => $this->reportConfigKeys(),
             fn(): int => $this->reportThemeSources(),
         ];
@@ -344,6 +346,81 @@ class UpdateCommand extends Command
         } catch (Throwable) {
             warning('Could not seed the settings — check the settings table and try again.');
         }
+
+        return 0;
+    }
+
+    /**
+     * The web server hands out anything on the public disk to whoever has the URL.
+     * Offer the private disk and, once it is in use, the files left behind.
+     */
+    protected function handleAttachmentsDisk(bool $check): int
+    {
+        if (AttachmentsDisk::isPublic()) {
+            warning("Attachments are stored on the public disk: anybody with a file's URL can open them without logging in.");
+
+            if ($check) {
+                return 1;
+            }
+
+            if (! confirm(label: 'Move the attachments to a private disk now?', default: true)) {
+                note('Skipped — see "Private attachments" in the README to switch later.');
+
+                return 0;
+            }
+
+            $problems = AttachmentsDisk::makePrivate();
+
+            if ($problems !== []) {
+                warning("Could not switch to the private disk on its own — finish by hand:\n" . $this->bulletList($problems));
+
+                return count($problems);
+            }
+
+            info(sprintf("Attachments now go to the private '%s' disk, added to config/filesystems.php.", AttachmentsDisk::PRIVATE_DISK));
+
+            if (app()->configurationIsCached()) {
+                note('The configuration is cached — run `php artisan config:cache` again to pick up the new disk.');
+            }
+
+            if (array_sum(AttachmentsDisk::publicLeftovers()) > 0) {
+                $this->call('finisterre:privatize-attachments', ['--force' => true]);
+            }
+
+            return 0;
+        }
+
+        if (! AttachmentsDisk::isConfigured()) {
+            warning(sprintf("attachments_disk is '%s', but config/filesystems.php has no disk by that name, so attachments can be neither stored nor served.", AttachmentsDisk::name()));
+
+            return 1;
+        }
+
+        $leftovers = AttachmentsDisk::publicLeftovers();
+
+        if (array_sum($leftovers) === 0) {
+            info(sprintf("Attachments are private, on the '%s' disk.", AttachmentsDisk::name()));
+
+            return 0;
+        }
+
+        warning(sprintf(
+            '%d task attachment(s) and %d description(s) or comment(s) still load files from the public disk, where anybody with the URL can open them.',
+            $leftovers['attachments'],
+            $leftovers['contents']
+        ));
+
+        if ($check) {
+            return array_sum($leftovers);
+        }
+
+        if (! confirm(label: 'Move them onto the private disk now?', default: true)) {
+            note('Skipped — `php artisan finisterre:privatize-attachments` shows what would move; add --force to move it.');
+
+            return 0;
+        }
+
+        $this->call('finisterre:privatize-attachments', ['--force' => true]);
 
         return 0;
     }

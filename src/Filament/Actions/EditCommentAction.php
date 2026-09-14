@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Filament\Actions;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -35,6 +36,7 @@ class EditCommentAction extends Action
                 Forms\Components\RichEditor::make('comment')
                     ->hiddenLabel()
                     ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                    ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                     ->extraInputAttributes(['style' => 'min-height: 6rem'])
                     ->required(),
 

@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -86,6 +87,7 @@ class Form
                     RichEditor::make('description')
                         ->label(__('finisterre::finisterre.description'))
                         ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                        ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                         // The editor ships a 3rem body, barely one line. Its content
                         // area is flex-1 inside this wrapper, so growing the wrapper
                         // is what gives the field room to write in; an inline style

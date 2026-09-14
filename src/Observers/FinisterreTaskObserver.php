@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Observers;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskNotification;
+use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +77,10 @@ class FinisterreTaskObserver
 
     public function saved(FinisterreTask $task): void
     {
+        if ($task->isDirty('description')) {
+            EditorFiles::claim($task->description, $task->getKey());
+        }
+
         // Skip notification when nothing meaningful changed. updated_at alone means the task
         // was touched by a comment (which has its own notification logic), order_column
         // alone means a kanban reorder (drag within a column, plus the sibling renumbers it

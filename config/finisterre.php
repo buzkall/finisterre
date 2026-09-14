@@ -47,9 +47,11 @@ return [
     // Editable from the settings page.
     'exclude_from_global_search' => true,
 
-    // To set the attachments as private:
-    // 1. Change the 'attachments_disk' to 'finisterre'
-    // 2. Add a disk in filesystem named 'finisterre' with url /storage/finisterre and visibility public
+    // Disk for attachments, card images and the images pasted into descriptions
+    // and comments. On 'public' anybody with a file's URL can open it. To keep
+    // them private, add a disk outside public/ whose url is /storage/finisterre-files
+    // and set its name here: the package then serves every file only to users who
+    // can see its task (see "Private attachments" in the README).
     // 'finisterre' => [
     //            'driver'     => 'local',
     //            'root'       => storage_path('app/finisterre-files'),
@@ -57,10 +59,6 @@ return [
     //            'visibility' => 'public',
     //            'throw'      => false,
     //        ],
-    // 3. Add the route controller to the bootstrap app.php file in withRouting
-    // then: function() {
-    //          (new Arzcode\FinisterrePlugin\Controllers\FilamentRouteController)();
-    //       }
     'attachments_disk' => 'public', // finisterre
 
     'task_changes_table_name' => 'finisterre_task_changes',

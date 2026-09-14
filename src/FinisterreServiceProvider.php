@@ -3,9 +3,11 @@
 namespace Arzcode\Finisterre;
 
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
+use Arzcode\Finisterre\Commands\PrivatizeAttachmentsCommand;
 use Arzcode\Finisterre\Commands\ResetSequencesCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Commands\UpdateCommand;
+use Arzcode\Finisterre\Controllers\FilamentRouteController;
 use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
@@ -15,6 +17,7 @@ use Arzcode\Finisterre\Observers\FinisterreMediaObserver;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
@@ -71,6 +74,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasMigrations(self::migrationNames())
             ->hasCommands([
                 DispatchScheduledCommentsCommand::class,
+                PrivatizeAttachmentsCommand::class,
                 ResetSequencesCommand::class,
                 UninstallCommand::class,
                 UpdateCommand::class,
@@ -84,6 +88,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                         fn() => $this->publishSettingsMigration($cmd),
                         fn() => $this->publishDependencyMigrations($cmd),
                         fn() => $this->runMigrations($cmd),
+                        fn() => $this->configureAttachmentsDisk($cmd),
                         fn() => $this->activateViaSettings(),
                         fn() => $this->configureBoardSlug(),
                         fn() => $this->publishFilamentAssets($cmd),
@@ -181,6 +186,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             'add_subject_to_finisterre_tasks',
             'create_finisterre_subtasks_table',
             'add_cover_media_id_to_finisterre_tasks',
+            'add_editor_files_to_finisterre_tasks',
         ];
     }
 
@@ -203,6 +209,39 @@ class FinisterreServiceProvider extends PackageServiceProvider
         }
 
         $command->call('migrate');
+    }
+
+    /**
+     * Offer the private disk while there is nothing to move yet. Run again on a host
+     * that already has files on the public disk, it moves them too.
+     */
+    protected function configureAttachmentsDisk(InstallCommand $command): void
+    {
+        if (! AttachmentsDisk::isPublic()) {
+            note(sprintf("Attachments are already on the private '%s' disk.", AttachmentsDisk::name()));
+
+            return;
+        }
+
+        if (! confirm(label: 'Store attachments on a private disk, served only to users who can see their task?', default: true)) {
+            note("Skipped — attachments go to the public disk, where anybody with a file's URL can open them. `php artisan finisterre:update` offers the switch again.");
+
+            return;
+        }
+
+        $problems = AttachmentsDisk::makePrivate();
+
+        if ($problems !== []) {
+            warning("Could not switch to the private disk on its own — finish by hand:\n" . implode("\n", array_map(fn(string $problem): string => '  • ' . $problem, $problems)));
+
+            return;
+        }
+
+        info(sprintf("Attachments now go to the private '%s' disk, added to config/filesystems.php.", AttachmentsDisk::PRIVATE_DISK));
+
+        if (array_sum(AttachmentsDisk::publicLeftovers()) > 0) {
+            $command->call('finisterre:privatize-attachments', ['--force' => true]);
+        }
     }
 
     protected function publishSettingsMigration(InstallCommand $command): void
@@ -815,6 +854,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
         Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
         Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
+
+        // A private attachments disk sits outside public/, so its files are served
+        // by routes that check the viewer may see the task they belong to.
+        FilamentRouteController::registerForPrivateDisk();
 
         $this->observeMedia();
         $this->registerBoardCardView();

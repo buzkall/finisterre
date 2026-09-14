@@ -153,6 +153,7 @@ class ManageFinisterreSettings extends Page
                             ->maxValue(1440)
                             ->required()
                             ->visible(fn(Get $get): bool => (bool)$get('subtasks_notify'))
+                            ->dehydratedWhenHidden()
                             ->columnSpanFull(),
                     ]),
 
@@ -179,22 +180,26 @@ class ManageFinisterreSettings extends Page
                             ->label(__('finisterre::finisterre.settings.sms_url'))
                             ->url()
                             ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
+                            ->dehydratedWhenHidden()
                             ->columnSpanFull(),
 
                         TextInput::make('sms_auth_key')
                             ->label(__('finisterre::finisterre.settings.sms_auth_key'))
                             ->password()
                             ->revealable()
-                            ->visible(fn(Get $get): bool => (bool)$get('sms_enabled')),
+                            ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
+                            ->dehydratedWhenHidden(),
 
                         Grid::make()->columns(2)->schema([
                             TextInput::make('sms_sender')
                                 ->label(__('finisterre::finisterre.settings.sms_sender'))
-                                ->visible(fn(Get $get): bool => (bool)$get('sms_enabled')),
+                                ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
+                                ->dehydratedWhenHidden(),
 
                             TextInput::make('sms_notify_to')
                                 ->label(__('finisterre::finisterre.settings.sms_notify_to'))
-                                ->visible(fn(Get $get): bool => (bool)$get('sms_enabled')),
+                                ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
+                                ->dehydratedWhenHidden(),
                         ]),
 
                         CheckboxList::make('sms_notify_priorities')
@@ -205,6 +210,7 @@ class ManageFinisterreSettings extends Page
                                 ->all())
                             ->columns(2)
                             ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
+                            ->dehydratedWhenHidden()
                             ->columnSpanFull(),
                     ]),
             ]);

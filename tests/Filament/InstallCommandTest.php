@@ -41,6 +41,11 @@ beforeEach(function() {
     $this->install = fn() => $this->artisan('finisterre:install')
         ->expectsConfirmation('Would you like to publish the config file?', 'no')
         ->expectsConfirmation('Would you like to run the migrations now?', 'no');
+
+    // Already on a private disk, so the install does not ask about it; the test
+    // about that prompt puts the public disk back.
+    config()->set('filesystems.disks.finisterre', ['driver' => 'local', 'root' => storage_path('app/finisterre-files')]);
+    config()->set('finisterre.attachments_disk', 'finisterre');
 });
 
 afterEach(function() {
@@ -49,6 +54,33 @@ afterEach(function() {
     }
 
     File::deleteDirectory($this->themesPath);
+});
+
+it('switches attachments to a private disk when asked', function() {
+    config()->set('finisterre.attachments_disk', 'public');
+    config()->set('filesystems.disks.finisterre', null);
+
+    // Both files live in the testbench skeleton, which every later test reuses.
+    $filesystems = config_path('filesystems.php');
+    $original = (string)file_get_contents($filesystems);
+    $finisterre = config_path('finisterre.php');
+
+    try {
+        ($this->install)()
+            ->expectsConfirmation('Store attachments on a private disk, served only to users who can see their task?', 'yes')
+            ->expectsConfirmation('The admin panel has no theme at resources/css/filament/admin/theme.css. Create one now with `php artisan make:filament-theme admin`?', 'no')
+            ->expectsConfirmation('Would you like to run `npm run build` now?', 'no')
+            ->assertSuccessful();
+
+        expect(file_get_contents($filesystems))->toContain("'finisterre' => [")
+            // The config file prompt was declined, so the switch published it.
+            ->and(file_get_contents($finisterre))->toContain("'attachments_disk' => 'finisterre'")
+            ->and(config('finisterre.attachments_disk'))->toBe('finisterre')
+            ->and(config('filesystems.disks.finisterre.root'))->toBe(storage_path('app/finisterre-files'));
+    } finally {
+        file_put_contents($filesystems, $original);
+        @unlink($finisterre);
+    }
 });
 
 it('publishes the spatie tags and media migrations an application does not have yet', function() {

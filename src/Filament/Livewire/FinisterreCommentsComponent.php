@@ -9,6 +9,7 @@ use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -152,6 +153,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             Forms\Components\RichEditor::make('comment')
                 ->hiddenLabel()
                 ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                 ->extraInputAttributes(['style' => 'min-height: 6rem'])
                 ->required()
                 ->placeholder(__('finisterre::finisterre.comments.placeholder')),

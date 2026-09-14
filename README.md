@@ -233,6 +233,47 @@ php artisan media-library:regenerate
 
 The board card itself comes from the package's own copy of flowforge's card view, which is registered in front of flowforge's on the `flowforge::` view namespace. If your application has published its own `resources/views/vendor/flowforge/livewire/card.blade.php`, yours wins and no card image is rendered — copy the cover block out of `vendor/arzcode/finisterre/resources/views/vendor/flowforge/livewire/card.blade.php` into it.
 
+## Private attachments
+
+Attachments go to Laravel's `public` disk unless you choose otherwise, and there anybody who has a file's URL can open it without logging in. To keep every file private (attachments, card images and their thumbnails, and the images pasted into descriptions and comments), store them on a disk outside `public/`.
+
+`php artisan finisterre:install` asks whether to, and `php artisan finisterre:update` offers the switch to any application still on the public disk. Either one adds the disk to `config/filesystems.php`, sets `attachments_disk` in `config/finisterre.php` (publishing that file if needed) and moves the files already uploaded. `finisterre:update --check` counts a public disk, and files left behind on it, as outstanding. If your configuration is cached, run `php artisan config:cache` again afterwards.
+
+To do it by hand:
+
+1. Add the disk to `config/filesystems.php`. The `url` has to be `/storage/finisterre-files`, the path the package serves it from:
+
+    ```php
+    'finisterre' => [
+        'driver'     => 'local',
+        'root'       => storage_path('app/finisterre-files'),
+        'url'        => env('APP_URL') . '/storage/finisterre-files',
+        'visibility' => 'public', // file permissions only: the root is outside public/
+        'throw'      => false,
+    ],
+    ```
+
+2. Point Finisterre at it in `config/finisterre.php`:
+
+    ```php
+    'attachments_disk' => 'finisterre',
+    ```
+
+With any disk other than `public`, the package registers `/storage/finisterre-files/{id}/{file}` (attachments and their conversions) and `/storage/finisterre-files/{file}` (rich editor images). A file is only served to a user logged in on `finisterre.guard` who can see the task it belongs to: the task policy's `viewAny` and `view`, and for users limited by `userCanViewOnlyTheirTasks()`, only the tasks they created. Guests are refused. A rich editor image belongs to the task it was first saved in from the session that uploaded it (listed in the task's `editor_files` column), and is served only while a description or comment of that task loads it: writing its URL into another task unlocks nothing, and until it is saved only its uploader is shown it. Notification emails embed the images instead of linking to them.
+
+Earlier versions asked you to call `(new FilamentRouteController)()` from `bootstrap/app.php`. That is no longer needed, and leaving it in does not register the routes twice.
+
+### Moving images off the public disk
+
+Switching the disk only changes where new files go. Images pasted into descriptions and comments before that still load from `/storage/…` on the public disk. Move them, and rewrite the HTML that loads them, with:
+
+```bash
+php artisan finisterre:privatize-attachments          # dry run: reports what it would do
+php artisan finisterre:privatize-attachments --force  # moves the files and rewrites the HTML
+```
+
+Run the migrations first: the command records each moved image as belonging to the tasks that load it, and refuses to run until the `editor_files` column exists. A file missing from both disks is left as it was and listed. An attachment with a file that cannot be copied is left on the public disk, and whatever of it had been copied already is removed from the private one. `--keep-originals` copies instead of moving, and `--from=` names a source disk other than `public`. The command does not move media library attachments: those stay on the disk they were uploaded to.
+
 ## Settings page
 
 Most configuration can be managed at runtime from an in-app **settings page** instead of editing the config file. It is
