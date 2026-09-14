@@ -114,6 +114,25 @@ class EditorFiles
     }
 
     /**
+     * The images the HTML loads from the attachments disk in use, as paths on it.
+     *
+     * A private disk serves them through the checked route (see in()); the public
+     * disk leaves the rich editor's own `/storage/` URLs in place.
+     *
+     * @return list<string>
+     */
+    public static function imagesOnDisk(?string $html): array
+    {
+        if (! AttachmentsDisk::isPublic()) {
+            return static::in($html);
+        }
+
+        preg_match_all(AttachmentsDisk::PUBLIC_IMAGE, (string)$html, $matches);
+
+        return array_values(array_unique($matches[2]));
+    }
+
+    /**
      * False until the host has run the migration that adds it.
      */
     public static function columnExists(): bool

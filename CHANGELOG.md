@@ -2,6 +2,13 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.8.0 - 2026-09-14
+
+- An **image pasted into the description or a comment can now be the card image**. On the task page, hovering (or tapping) such an image shows the same star the attachments list has; clicking it copies the image into the task's attachments and makes that copy the card image, so its thumbnail, repositioning and private serving work exactly as for any attachment. Picking the same image again reuses the copy rather than attaching it twice, and its star shows filled while it is the card image — clicking it then removes the card image. Only images the task's own description or visible comments load are accepted, and on a private disk only the ones the task owns (`editor_files`). Applications compiling the package's views need a fresh `npm run build`.
+- On the task page the **attachments now sit below the description card** instead of inside it, with thumbnails 20% larger, and the created by / created / updated dates moved up to their right, above the subtasks. The comments heading is now as large as the subtasks one, and the line above it is gray.
+- Fixed the **N+1 on the task page's comments for hosts that keep user avatars in a media library** (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). Each comment's creator read its avatar's media relation on its own; the creators now come with it eager-loaded when the host's user model has one, the way the board already loads them.
+- Fixed **saving any file from a panel that doesn't carry the plugin** failing with *Plugin [finisterre] is not registered for panel [...]*. Since 4.7.0 the card image observer looks at every media file the application saves, which boots the task model wherever that happens, and the model resolved the plugin on boot to decide whether to limit users to their own tasks. That decision is now taken each time tasks are queried, and outside a panel with the plugin nobody is limited.
+
 ## 4.7.3 - 2026-09-14
 
 - Board cards now show **both the creation and the last update date** in their footer, in the space the update date alone used to take: the creation date as a short date (`12 sep`, with the year only when it isn't the current one) and the update as a short relative time (`3h`, `2d`), each behind its own icon. Hovering them shows both in full. A task never edited since it was created shows the creation date alone.

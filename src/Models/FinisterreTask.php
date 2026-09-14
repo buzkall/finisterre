@@ -62,6 +62,9 @@ class FinisterreTask extends Model implements HasMedia
     /** Custom property on the cover media holding its vertical focus, 0 (top) to 100 (bottom). */
     public const COVER_POSITION_PROPERTY = 'finisterre_cover_position';
 
+    /** Custom property on an attachment copied from an image pasted into the description or a comment: that image's file. */
+    public const COVER_SOURCE_PROPERTY = 'finisterre_editor_file';
+
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'due_at', 'completed_at',
         'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id', 'cover_media_id'];
     protected $with = ['tags'];
@@ -73,12 +76,35 @@ class FinisterreTask extends Model implements HasMedia
             return;
         }
 
-        // add global scope only for users that can only see their tasks
-        if (app()->bound('filament') && FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
-            static::addGlobalScope('canViewOnlyTheirTasks', fn($query) => $query->where('creator_id', auth()->id()));
-        }
+        // Users who can only see their tasks get just the ones they created.
+        static::addGlobalScope('canViewOnlyTheirTasks', function(Builder $query): void {
+            if (static::currentUserCanViewOnlyTheirTasks()) {
+                $query->where('creator_id', auth()->id());
+            }
+        });
 
         static::observe(FinisterreTaskObserver::class);
+    }
+
+    /**
+     * Decided per query rather than once at boot, because the model boots wherever
+     * it is first touched — and that is not always a panel carrying the plugin. The
+     * media observer builds a task on every file saved anywhere in the host, so a
+     * host panel without Finisterre (a website editor, say) booted the model there
+     * and FinisterrePlugin::get() threw "Plugin [finisterre] is not registered".
+     * Outside a panel with the plugin nobody is restricted to their own tasks.
+     */
+    protected static function currentUserCanViewOnlyTheirTasks(): bool
+    {
+        if (! app()->bound('filament')) {
+            return false;
+        }
+
+        try {
+            return FinisterrePlugin::get()->canViewOnlyTheirTasks();
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     public function getTable()
@@ -245,6 +271,18 @@ class FinisterreTask extends Model implements HasMedia
         }
 
         return max(0.0, min(100.0, (float)$media->getCustomProperty(self::COVER_POSITION_PROPERTY, 50)));
+    }
+
+    /**
+     * The pasted image the card image was copied from, when it came from the
+     * description or a comment rather than being attached. The task page uses it to
+     * show that image's star filled.
+     */
+    public function coverSourceFile(): ?string
+    {
+        $media = $this->coverMedia;
+
+        return $media instanceof Media ? $media->getCustomProperty(self::COVER_SOURCE_PROPERTY) : null;
     }
 
     /**

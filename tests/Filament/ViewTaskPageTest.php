@@ -263,6 +263,104 @@ it('forbids a user who may not update the task from changing the card image', fu
         ->assertForbidden();
 });
 
+/**
+ * An image the rich editor left at the root of the public disk, loaded the way the editor's HTML loads it.
+ */
+function pastedPublicImage(string $file = 'pasted.png'): string
+{
+    Storage::disk('public')->put($file, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='));
+
+    return '<p><img src="http://localhost/storage/' . $file . '"></p>';
+}
+
+it('copies an image pasted into a comment into the attachments and makes it the card image', function() {
+    Storage::fake('public');
+    $task = pageTask();
+    $task->comments()->create(['comment' => pastedPublicImage(), 'creator_id' => auth()->id()]);
+
+    $component = Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()]);
+
+    $component->call('setCoverFromEditorImage', 'pasted.png')->assertOk()->assertNotified();
+
+    $media = $task->refresh()->getMedia('tasks');
+
+    expect($media)->toHaveCount(1)
+        ->and($media->first()->getCustomProperty(FinisterreTask::COVER_SOURCE_PROPERTY))->toBe('pasted.png')
+        ->and($task->cover_media_id)->toBe($media->first()->getKey())
+        ->and($task->coverSourceFile())->toBe('pasted.png')
+        // The comment still loads the pasted file, so it stays where it was.
+        ->and(Storage::disk('public')->exists('pasted.png'))->toBeTrue();
+
+    // Picking it again, after clearing the card image, reuses the copy.
+    $component->call('setCoverMedia', null);
+    $component->call('setCoverFromEditorImage', 'pasted.png')->assertOk();
+
+    expect($task->refresh()->getMedia('tasks'))->toHaveCount(1)
+        ->and($task->cover_media_id)->toBe($media->first()->getKey());
+});
+
+it('makes an image pasted into the description the card image', function() {
+    Storage::fake('public');
+    $task = pageTask(['description' => pastedPublicImage('described.png')]);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->call('setCoverFromEditorImage', 'described.png')
+        ->assertOk();
+
+    expect($task->refresh()->coverSourceFile())->toBe('described.png');
+});
+
+it('refuses an image the task does not load', function(string $file) {
+    Storage::fake('public');
+    $task = pageTask();
+    pastedPublicImage('stray.png');
+
+    // Loaded by a comment, but on somebody else's task.
+    pageTask(['title' => 'Somebody else'])->comments()->create(['comment' => pastedPublicImage('theirs.png'), 'creator_id' => auth()->id()]);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->call('setCoverFromEditorImage', $file)
+        ->assertNotFound();
+
+    expect($task->refresh()->cover_media_id)->toBeNull()
+        ->and($task->getMedia('tasks'))->toBeEmpty();
+})->with(['stray.png', 'theirs.png', '../stray.png', 'nested/stray.png']);
+
+it('refuses a pasted file that is not an image and leaves no attachment behind', function() {
+    Storage::fake('public');
+    Storage::disk('public')->put('notes.txt', 'not a picture');
+    $task = pageTask(['description' => '<p><img src="/storage/notes.txt"></p>']);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->call('setCoverFromEditorImage', 'notes.txt')
+        ->assertNotFound();
+
+    expect($task->refresh()->getMedia('tasks'))->toBeEmpty()
+        ->and($task->cover_media_id)->toBeNull();
+});
+
+it('offers the pasted image star only to users who may update the task', function() {
+    $task = pageTask();
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->assertSeeHtml('data-finisterre-cover-star');
+
+    Gate::policy(FinisterreTask::class, ReadOnlyTaskPolicy::class);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->assertDontSeeHtml('data-finisterre-cover-star');
+});
+
+it('forbids a user who may not update the task from using a pasted image as the card image', function() {
+    Gate::policy(FinisterreTask::class, ReadOnlyTaskPolicy::class);
+    Storage::fake('public');
+    $task = pageTask(['description' => pastedPublicImage()]);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->call('setCoverFromEditorImage', 'pasted.png')
+        ->assertForbidden();
+});
+
 it('shows a read-only strip to users who may not update', function() {
     Gate::policy(FinisterreTask::class, ReadOnlyTaskPolicy::class);
     $task = pageTask();

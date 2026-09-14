@@ -64,7 +64,8 @@
                                 </div>
                             </div>
 
-                            <div class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none pr-8">
+                            {{-- data-finisterre-editor-images: its pasted images get the card image star on the task page. --}}
+                            <div data-finisterre-editor-images class="prose dark:prose-invert [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 prose-sm text-sm leading-6 text-gray-950 dark:text-white max-w-none pr-8">
                                 @php
                                     $content = preg_replace_callback('/<[^>]*>/', function($match) {
                                         return str_replace(['http://', 'https://'], ['__HTTP__', '__HTTPS__'], $match[0]);

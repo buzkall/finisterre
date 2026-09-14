@@ -223,6 +223,8 @@ A task can carry a **card image**: one of its attachments, shown full-bleed acro
 
 The first image attached to a task becomes its card image automatically. To change it, hover (or tab to) any image in the attachments list on the task page and click the star; the current card image keeps its star on show. Clicking the filled star removes the card image, and it stays removed — a task is allowed to have none, and the automatic pick only fires on a task's very first image, so attaching more files never puts one back. Deleting the attachment behind a card image clears it too.
 
+Images pasted into the description or a comment can be used too: hover (or tap) one on the task page and click its star. The image is copied into the task's attachments — the card image is always an attachment — and that copy becomes the card image; picking the same image again reuses it. The copy records where it came from in `custom_properties.finisterre_editor_file`.
+
 To choose which part of a tall picture shows, hover the banner at the top of the task page, click **Reposition**, drag the image up or down and click **Save position**. The position is stored on the attachment (`custom_properties.finisterre_cover_position`, 0 = top, 100 = bottom) and the board card crops at the same spot.
 
 On the board and in the table the image is served from a `finisterre-card` conversion (600px wide, not cropped) generated after the response, so no queue worker is needed; the task page shows the original. Attachments uploaded before this feature existed have no thumbnail and are served at full size until you run:

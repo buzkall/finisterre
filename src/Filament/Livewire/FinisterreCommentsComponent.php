@@ -24,10 +24,12 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema as DatabaseSchema;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Spatie\MediaLibrary\HasMedia;
 
 /**
  * @property-read Schema $form
@@ -246,7 +248,12 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         // when the modal is opened
         return $this->record?->comments()
             ->visibleTo(auth()->id())
-            ->with('creator')
+            // Each comment shows its creator's avatar; hosts that keep avatars in a
+            // media library would query that relation once per creator unless it
+            // comes along.
+            ->with(['creator' => fn(BelongsTo $query) => $query->getRelated() instanceof HasMedia
+                ? $query->with('media')
+                : $query])
             ->latest()
             ->get() ?? collect();
     }

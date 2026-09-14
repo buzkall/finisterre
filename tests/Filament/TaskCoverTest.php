@@ -1,6 +1,8 @@
 <?php
 
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Filament\Facades\Filament;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +64,19 @@ it('still picks and clears the card image when the host maps tasks to a morph al
         // The morph map is static: leaving it set would leak into every later test.
         Relation::morphMap([], false);
     }
+});
+
+it('picks the card image while the current panel does not carry the plugin', function() {
+    // A host saving media from a panel without Finisterre boots the task model there,
+    // through the observer, and resolving the plugin at boot used to throw.
+    $website = Panel::make()->id('website')->path('website');
+    Filament::registerPanel($website);
+    Filament::setCurrentPanel($website);
+
+    $task = coverTask();
+    $media = attachImage($task);
+
+    expect($task->refresh()->cover_media_id)->toBe($media->getKey());
 });
 
 it('leaves the card image alone once a task already has one', function() {

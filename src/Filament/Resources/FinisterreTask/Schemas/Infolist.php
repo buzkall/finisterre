@@ -19,6 +19,7 @@ use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -75,18 +76,42 @@ class Infolist
                             ->hiddenLabel()
                             ->html()
                             ->prose()
+                            // Marks its pasted images for the card image star on the task page.
+                            ->extraAttributes(['data-finisterre-editor-images' => true])
                             ->placeholder(__('finisterre::finisterre.no_description')),
-
-                        ViewEntry::make('attachments')
-                            ->hiddenLabel()
-                            ->view('finisterre::tasks.attachments')
-                            ->viewData(fn(FinisterreTask $record) => [
-                                'media'        => $record->getMedia('tasks'),
-                                'coverMediaId' => $record->cover_media_id,
-                                'canSetCover'  => $canQuickEdit($record),
-                            ])
-                            ->visible(fn(FinisterreTask $record) => $record->getMedia('tasks')->isNotEmpty()),
                     ]),
+
+                // Attachments on the left, who created the task and when on the right.
+                Flex::make([
+                    ViewEntry::make('attachments')
+                        ->hiddenLabel()
+                        ->view('finisterre::tasks.attachments')
+                        ->viewData(fn(FinisterreTask $record) => [
+                            'media'        => $record->getMedia('tasks'),
+                            'coverMediaId' => $record->cover_media_id,
+                            'canSetCover'  => $canQuickEdit($record),
+                        ])
+                        ->visible(fn(FinisterreTask $record) => $record->getMedia('tasks')->isNotEmpty()),
+
+                    TextEntry::make('dates')
+                        ->hiddenLabel()
+                        ->hintIcon('heroicon-o-clock')
+                        ->hint(fn(FinisterreTask $record) => new HtmlString(
+                            __('finisterre::finisterre.created_by') . ': ' .
+                            '&nbsp;&nbsp;&nbsp;&nbsp;' .
+                            $record->creatorName() .
+                            '<br />' .
+                            __('finisterre::finisterre.created_at') . ': ' .
+                            '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' .
+                            $record->created_at->format('d/m/y H:i:s') .
+                            '<br />' .
+                            __('finisterre::finisterre.updated_at') . ': ' . $record->updated_at->format('d/m/y H:i:s')
+                        ))
+                        ->alignEnd()
+                        ->grow(false),
+                ])
+                    ->from('md')
+                    ->verticallyAlignStart(),
 
                 Section::make(__('finisterre::finisterre.subtasks.label'))
                     ->icon('heroicon-o-check-circle')
@@ -108,22 +133,6 @@ class Infolist
                     ->label(__('finisterre::finisterre.related_record'))
                     ->visible(fn(FinisterreTask $record) => $record->subject instanceof FinisterreReportable)
                     ->state(fn(FinisterreTask $record): ?HtmlString => $record->subjectReportLink()),
-
-                TextEntry::make('dates')
-                    ->hiddenLabel()
-                    ->hintIcon('heroicon-o-clock')
-                    ->hint(fn(FinisterreTask $record) => new HtmlString(
-                        __('finisterre::finisterre.created_by') . ': ' .
-                        '&nbsp;&nbsp;&nbsp;&nbsp;' .
-                        $record->creatorName() .
-                        '<br />' .
-                        __('finisterre::finisterre.created_at') . ': ' .
-                        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' .
-                        $record->created_at->format('d/m/y H:i:s') .
-                        '<br />' .
-                        __('finisterre::finisterre.updated_at') . ': ' . $record->updated_at->format('d/m/y H:i:s')
-                    ))
-                    ->alignEnd(),
             ]);
     }
 

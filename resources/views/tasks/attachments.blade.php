@@ -21,7 +21,7 @@
                                     src="{{ $file->getUrl() }}"
                                     alt="{{ $file->name }}"
                                     @class([
-                                        'h-16 w-16 rounded-lg object-cover',
+                                        'h-19 w-19 rounded-lg object-cover',
                                         'ring-2 ring-primary-500' => $isCover,
                                     ])
                                 />

@@ -2,6 +2,7 @@
 
 use Arzcode\Finisterre\Controllers\FilamentRouteController;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ViewFinisterreTask;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
@@ -283,5 +284,49 @@ describe('on a private disk', function() {
 
         expect(Storage::disk('finisterre')->exists($path))->toBeTrue()
             ->and(session(EditorFiles::SESSION_KEY))->toBe([$path]);
+    });
+
+    it('reads the pasted images off the disk in use', function() {
+        $html = '<img src="/storage/finisterre-files/private.png"><img src="http://localhost/storage/public.png">';
+
+        expect(EditorFiles::imagesOnDisk($html))->toBe(['private.png']);
+
+        config()->set('finisterre.attachments_disk', 'public');
+
+        expect(EditorFiles::imagesOnDisk($html))->toBe(['public.png']);
+    });
+
+    it('uses only a pasted image the task owns as its card image', function() {
+        $base = '/' . FilamentRouteController::URL_PATH . '/';
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+
+        Storage::disk('finisterre')->put('owned.png', $png);
+        Storage::disk('finisterre')->put('borrowed.png', $png);
+
+        // Both are loaded by the description, but only one was claimed by the task.
+        $task = FinisterreTask::factory()->create([
+            'creator_id'  => $this->owner->id,
+            'assignee_id' => $this->owner->id,
+            'description' => '<img src="' . $base . 'owned.png"><img src="' . $base . 'borrowed.png">',
+        ]);
+        EditorFiles::grant(['owned.png'], $task->id);
+
+        Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+            ->call('setCoverFromEditorImage', 'borrowed.png')
+            ->assertNotFound();
+
+        expect($task->refresh()->cover_media_id)->toBeNull();
+
+        Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+            ->call('setCoverFromEditorImage', 'owned.png')
+            ->assertOk();
+
+        $media = $task->refresh()->coverMedia;
+
+        // Copied onto the private disk, and served through the checked route.
+        expect($media->disk)->toBe('finisterre')
+            ->and($task->coverSourceFile())->toBe('owned.png');
+
+        $this->get(attachmentUrl($media))->assertOk();
     });
 });
