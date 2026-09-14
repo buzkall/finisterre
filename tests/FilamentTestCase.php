@@ -44,6 +44,11 @@ abstract class FilamentTestCase extends TestCase
             'finisterre.subtasks.table_name'        => 'finisterre_subtasks',
             'finisterre.task_changes_table_name'    => 'finisterre_task_changes',
             'media-library.media_model'             => Media::class,
+            // Laravel 12's skeleton serves the local disk (Laravel 13's does not), which
+            // adds a catch-all GET /storage/{path} route once the app has booted. A host
+            // registers the private attachment routes while booting, ahead of it, but the
+            // tests switch disks and register them afterwards, where it would answer first.
+            'filesystems.disks.local.serve' => false,
         ]);
 
         $this->createSupportingTables();
