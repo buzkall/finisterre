@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.7.2 - 2026-09-14
+
+- Board cards now show **both the creation and the last update date** in their footer, in the space the update date alone used to take: the creation date as a short date (`12 sep`, with the year only when it isn't the current one) and the update as a short relative time (`3h`, `2d`), each behind its own icon. Hovering them shows both in full. A task never edited since it was created shows the creation date alone.
+
 ## 4.7.1 - 2026-09-14
 
 - **Requires `relaticle/flowforge` 4.0.15 or newer.** The board card view calls `Board::resolveCardAction()`, which earlier 4.0 releases don't have, so installing against them broke every board with *Method resolveCardAction does not exist*.

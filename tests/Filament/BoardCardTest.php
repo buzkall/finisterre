@@ -5,6 +5,7 @@ use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Tests\Support\AvatarUser;
 use Arzcode\Finisterre\Tests\Support\MediaAvatarUser;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -275,6 +276,46 @@ it('crops the card image at the position the user dragged it to', function() {
     Livewire::test(TasksKanbanBoard::class)
         ->assertOk()
         ->assertSee('object-position: 50% 30%', escape: false);
+});
+
+it('shows the creation date and how long ago an edited task was updated', function() {
+    $user = User::factory()->create(['name' => 'Ana Ruiz']);
+
+    $task = FinisterreTask::factory()->create([
+        'title'       => 'Edited later',
+        'status'      => TaskStatusEnum::Open,
+        'archived'    => false,
+        'creator_id'  => $user->id,
+        'assignee_id' => $user->id,
+    ]);
+
+    FinisterreTask::withoutTimestamps(fn() => $task->forceFill([
+        'created_at' => now()->subDays(5),
+        'updated_at' => now()->subHours(3),
+    ])->save());
+
+    Livewire::test(TasksKanbanBoard::class)
+        ->assertOk()
+        ->assertSee($task->created_at->isoFormat('L LT'))
+        ->assertSee($task->updated_at->isoFormat('L LT'))
+        ->assertSee($task->updated_at->diffForHumans(syntax: CarbonInterface::DIFF_ABSOLUTE, short: true));
+});
+
+it('shows only the creation date on a task never edited since it was created', function() {
+    $user = User::factory()->create(['name' => 'Ana Ruiz']);
+
+    $task = FinisterreTask::factory()->create([
+        'title'       => 'Untouched',
+        'status'      => TaskStatusEnum::Open,
+        'archived'    => false,
+        'creator_id'  => $user->id,
+        'assignee_id' => $user->id,
+    ]);
+
+    Livewire::test(TasksKanbanBoard::class)
+        ->assertOk()
+        ->assertSee($task->created_at->isoFormat('L LT'))
+        ->assertDontSee(__('finisterre::finisterre.updated_at'));
 });
 
 it('renders a card without a picture when the task has no card image', function() {

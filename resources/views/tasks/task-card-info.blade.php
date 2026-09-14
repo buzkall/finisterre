@@ -73,8 +73,23 @@
             @endif
         </div>
 
-        @if($updatedAt)
-            <div class="text-xs text-gray-500 dark:text-gray-400 ml-auto">{{ $updatedAt }}</div>
-        @endif
+        {{-- Created as a short date, updated as a short relative time; the tooltip
+             carries both in full. --}}
+        <div
+            title="{{ __('finisterre::finisterre.created_at') }} {{ $createdAtFull }}@if($updatedAt) · {{ __('finisterre::finisterre.updated_at') }} {{ $updatedAtFull }}@endif"
+            class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 ml-auto"
+        >
+            <span class="inline-flex items-center gap-1">
+                <x-filament::icon icon="heroicon-o-plus-circle" class="h-3 w-3"/>
+                {{ $createdAt }}
+            </span>
+
+            @if($updatedAt)
+                <span class="inline-flex items-center gap-1">
+                    <x-filament::icon icon="heroicon-o-pencil" class="h-3 w-3"/>
+                    {{ $updatedAt }}
+                </span>
+            @endif
+        </div>
     </div>
 </a>

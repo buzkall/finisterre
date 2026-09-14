@@ -12,6 +12,7 @@ use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Arzcode\Finisterre\Support\PanelLabel;
 use Arzcode\Finisterre\Support\UserAvatar;
 use BackedEnum;
+use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
@@ -163,6 +164,10 @@ class TasksKanbanBoard extends BoardPage
 
                                 $creatorName = $creatorId === null ? null : $record->creator_name;
 
+                                // A task saved within a minute of its creation was never really
+                                // edited, so the card keeps to the creation date alone.
+                                $wasUpdated = $record->updated_at->diffInSeconds($record->created_at, true) > 60;
+
                                 return [
                                     'assignee'         => $record->assignee_name,
                                     'assigneeInitials' => self::getInitials($record->assignee_name),
@@ -178,8 +183,13 @@ class TasksKanbanBoard extends BoardPage
                                     'subtasksCount'    => $record->subtasks_count ?? 0,
                                     'subtasksDone'     => $record->completed_subtasks_count ?? 0,
                                     'viewUrl'          => FinisterreTaskResource::getUrl('view', ['record' => $record->id]),
-                                    'updatedAt'        => $record->updated_at->diffForHumans(),
-                                    'hasChanges'       => (bool)$record->has_changes,
+                                    'createdAt'        => $record->created_at->translatedFormat($record->created_at->isCurrentYear() ? 'j M' : 'j M y'),
+                                    'createdAtFull'    => $record->created_at->isoFormat('L LT'),
+                                    'updatedAt'        => $wasUpdated
+                                        ? $record->updated_at->diffForHumans(syntax: CarbonInterface::DIFF_ABSOLUTE, short: true)
+                                        : null,
+                                    'updatedAtFull' => $wasUpdated ? $record->updated_at->isoFormat('L LT') : null,
+                                    'hasChanges'    => (bool)$record->has_changes,
                                 ];
                             }),
                     ])

@@ -349,10 +349,49 @@ it('links the board card to the task page', function() {
         'subtasksCount'    => 0,
         'subtasksDone'     => 0,
         'viewUrl'          => $viewUrl,
+        'createdAt'        => '12 sep',
+        'createdAtFull'    => '12/09/2026 10:14',
         'updatedAt'        => null,
+        'updatedAtFull'    => null,
         'hasChanges'       => false,
     ])->render();
 
     expect($html)->toContain('href="' . $viewUrl . '"')
         ->and($viewUrl)->toEndWith('/admin/finisterre-tasks/' . $task->getKey());
+});
+
+it('shows the creation and update dates on the board card', function() {
+    $task = pageTask();
+
+    $render = fn(?string $updatedAt, ?string $updatedAtFull) => view('finisterre::tasks.task-card-info', [
+        'assignee'         => null,
+        'assigneeInitials' => null,
+        'assigneeAvatar'   => null,
+        'creator'          => null,
+        'creatorInitials'  => null,
+        'creatorAvatar'    => null,
+        'priority'         => $task->priority->getLabel(),
+        'priorityColor'    => $task->priority->getColor(),
+        'tagNames'         => collect(),
+        'mediaCount'       => 0,
+        'commentsCount'    => 0,
+        'subtasksCount'    => 0,
+        'subtasksDone'     => 0,
+        'viewUrl'          => FinisterreTaskResource::getUrl('view', ['record' => $task]),
+        'createdAt'        => '12 sep',
+        'createdAtFull'    => '12/09/2026 10:14',
+        'updatedAt'        => $updatedAt,
+        'updatedAtFull'    => $updatedAtFull,
+        'hasChanges'       => false,
+    ])->render();
+
+    expect($render('3h', '14/09/2026 08:02'))
+        ->toContain('12 sep')
+        ->toContain('3h')
+        ->toContain(__('finisterre::finisterre.created_at') . ' 12/09/2026 10:14 · ' . __('finisterre::finisterre.updated_at') . ' 14/09/2026 08:02');
+
+    expect($render(null, null))
+        ->toContain('12 sep')
+        ->toContain('title="' . __('finisterre::finisterre.created_at') . ' 12/09/2026 10:14"')
+        ->not->toContain('14/09/2026 08:02');
 });
