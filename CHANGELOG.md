@@ -2,9 +2,13 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
-## 4.7.2 - 2026-09-14
+## 4.7.3 - 2026-09-14
 
 - Board cards now show **both the creation and the last update date** in their footer, in the space the update date alone used to take: the creation date as a short date (`12 sep`, with the year only when it isn't the current one) and the update as a short relative time (`3h`, `2d`), each behind its own icon. Hovering them shows both in full. A task never edited since it was created shows the creation date alone.
+
+## 4.7.2 - 2026-09-14
+
+- **The release that actually ships the 4.7.1 changes below**: the `relaticle/flowforge` 4.0.15 requirement and the Rector pass. The 4.7.1 tag was placed on the same commit as 4.7.0, so it contains neither — install 4.7.2 or newer to get them.
 
 ## 4.7.1 - 2026-09-14
 
