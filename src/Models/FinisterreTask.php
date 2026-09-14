@@ -28,6 +28,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Tags\HasTags;
+use Throwable;
 
 /**
  * @property string $title
@@ -63,15 +64,6 @@ class FinisterreTask extends Model implements HasMedia
 
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'due_at', 'completed_at',
         'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id', 'cover_media_id'];
-    protected $casts = [
-        'status'       => TaskStatusEnum::class,
-        'archived'     => 'boolean',
-        'priority'     => TaskPriorityEnum::class,
-        'due_at'       => 'datetime',
-        'completed_at' => 'datetime',
-        'order_column' => 'integer',
-        'editor_files' => 'array',
-    ];
     protected $with = ['tags'];
 
     protected static function booted(): void
@@ -177,9 +169,9 @@ class FinisterreTask extends Model implements HasMedia
         // Resolve the resource label defensively: this method is also rendered inside queued
         // notifications, where no Filament panel is bootstrapped and getModelResource() would throw.
         try {
-            /** @var class-string<\Filament\Resources\Resource>|null $resource */
+            /** @var class-string<resource>|null $resource */
             $resource = Filament::getModelResource($subject);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $resource = null;
         }
         $type = e(Str::headline($resource ? $resource::getModelLabel() : class_basename($subject)));
@@ -311,5 +303,18 @@ class FinisterreTask extends Model implements HasMedia
                 ? $this->getRelation('media')->where('collection_name', 'tasks')->values()
                 : collect()
         );
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'status'       => TaskStatusEnum::class,
+            'archived'     => 'boolean',
+            'priority'     => TaskPriorityEnum::class,
+            'due_at'       => 'datetime',
+            'completed_at' => 'datetime',
+            'order_column' => 'integer',
+            'editor_files' => 'array',
+        ];
     }
 }

@@ -35,11 +35,9 @@ class FinisterreTaskObserver
 
     public function creating(FinisterreTask $task): void
     {
-        $task->status = $task->status ?? TaskStatusEnum::Open;
-        $task->creator_id = $task->creator_id ?? auth()->id();
-        if (is_null($task->assignee_id)) {
-            $task->assignee_id = config('finisterre.fallback_notifiable_id');
-        }
+        $task->status ??= TaskStatusEnum::Open;
+        $task->creator_id ??= auth()->id();
+        $task->assignee_id ??= config('finisterre.fallback_notifiable_id');
     }
 
     public function created(FinisterreTask $task): void
@@ -130,7 +128,7 @@ class FinisterreTaskObserver
     {
         $keyName = $task->getKeyName();
 
-        $position = DB::transaction(function() use ($task, $keyName) {
+        $position = DB::transaction(function() use ($task, $keyName): int {
             $siblings = FinisterreTask::query()
                 ->withoutGlobalScopes()
                 ->where('status', $task->status)

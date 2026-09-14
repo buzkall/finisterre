@@ -20,7 +20,7 @@ trait EmbedsPrivateImages
 
         return preg_replace_callback(
             '/(src=["\'])(?:[^"\']*?)storage\/finisterre-files\/([^"\']+)(["\'])/i',
-            function($matches) use ($disk) {
+            function(array $matches) use ($disk): string {
                 $relativePath = $matches[2];
 
                 if (! Storage::disk($disk)->exists($relativePath)) {

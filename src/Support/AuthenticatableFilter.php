@@ -19,13 +19,13 @@ class AuthenticatableFilter
 
         if (is_string($value)) {
             $value = array_values(array_filter(
-                array_map('trim', explode(',', $value)),
+                array_map(trim(...), explode(',', $value)),
                 static fn($item) => $item !== '',
             ));
         }
 
         return array_map(
-            static fn($item) => self::scalar($item),
+            self::scalar(...),
             is_array($value) ? $value : [$value],
         );
     }

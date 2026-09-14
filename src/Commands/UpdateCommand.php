@@ -43,8 +43,8 @@ class UpdateCommand extends Command
             fn(): int => $this->handlePendingMigrations($check),
             fn(): int => $this->handleMissingSettings($check),
             fn(): int => $this->handleAttachmentsDisk($check),
-            fn(): int => $this->reportConfigKeys(),
-            fn(): int => $this->reportThemeSources(),
+            $this->reportConfigKeys(...),
+            $this->reportThemeSources(...),
         ];
 
         foreach ($steps as $step) {
@@ -81,7 +81,7 @@ class UpdateCommand extends Command
     {
         try {
             if (class_exists(InstalledVersions::class) && InstalledVersions::isInstalled('arzcode/finisterre')) {
-                return ' ' . (string)InstalledVersions::getPrettyVersion('arzcode/finisterre');
+                return ' ' . InstalledVersions::getPrettyVersion('arzcode/finisterre');
             }
         } catch (Throwable) {
             // Fall through to an unversioned title.
@@ -157,7 +157,7 @@ class UpdateCommand extends Command
 
         if (! confirm(label: 'Publish the missing dependency migrations now?', default: true)) {
             note("Skipped — publish them later with:\n" . $this->bulletList(array_map(
-                fn(array $dependency): string => DependencyMigrations::publishCommand($dependency),
+                DependencyMigrations::publishCommand(...),
                 $missing
             )));
 
@@ -264,7 +264,7 @@ class UpdateCommand extends Command
 
         warning(sprintf('%d published migration(s) already ran under a different name and would run again:', count($republished)));
         note(
-            $this->bulletList(array_map(fn(string $file): string => basename($file), $republished))
+            $this->bulletList(array_map(basename(...), $republished))
             . "\n\nThey were published after this application squashed its migrations; running them a second time would fail."
         );
 

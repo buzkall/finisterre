@@ -35,11 +35,6 @@ class FinisterreTaskComment extends Model implements HasMedia
 
     protected $fillable = ['task_id', 'comment', 'creator_id', 'scheduled_for', 'sent_at', 'notify_user_ids'];
     protected $touches = ['task'];
-    protected $casts = [
-        'scheduled_for'   => 'datetime',
-        'sent_at'         => 'datetime',
-        'notify_user_ids' => 'array',
-    ];
 
     public function getTable(): string
     {
@@ -119,5 +114,14 @@ class FinisterreTaskComment extends Model implements HasMedia
         }
 
         return $notified;
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'scheduled_for'   => 'datetime',
+            'sent_at'         => 'datetime',
+            'notify_user_ids' => 'array',
+        ];
     }
 }

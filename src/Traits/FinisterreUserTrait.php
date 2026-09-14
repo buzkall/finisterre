@@ -14,11 +14,7 @@ trait FinisterreUserTrait
 {
     public function canArchiveTasks(): bool
     {
-        if (! config('finisterre.active')) {
-            return false;
-        }
-
-        return true;
+        return (bool)config('finisterre.active');
     }
 
     public function scopeUserIsActive(Builder $query): Builder
@@ -71,7 +67,7 @@ trait FinisterreUserTrait
 
         if (is_array($attr)) {
             $grammar = DB::connection()->getQueryGrammar();
-            $cols = implode(', ', array_map(fn($c) => $grammar->wrap($c), $attr));
+            $cols = implode(', ', array_map($grammar->wrap(...), $attr));
 
             return DB::raw("CONCAT_WS(' ', $cols)");
         }

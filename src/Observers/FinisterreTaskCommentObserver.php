@@ -9,7 +9,7 @@ class FinisterreTaskCommentObserver
 {
     public function creating(FinisterreTaskComment $taskComment): void
     {
-        $taskComment->creator_id = $taskComment->creator_id ?? auth()->id();
+        $taskComment->creator_id ??= auth()->id();
     }
 
     public function saved(FinisterreTaskComment $taskComment): void

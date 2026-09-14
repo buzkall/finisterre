@@ -3,6 +3,8 @@
 namespace Arzcode\Finisterre\Support;
 
 use Illuminate\Support\Facades\Schema;
+use Spatie\MediaLibrary\MediaLibraryServiceProvider;
+use Spatie\Tags\TagsServiceProvider;
 use Throwable;
 
 /**
@@ -35,7 +37,7 @@ class DependencyMigrations
                 'purpose'  => 'task tags',
                 'name'     => 'create_tag_tables',
                 'tables'   => ['tags', 'taggables'],
-                'provider' => 'Spatie\Tags\TagsServiceProvider',
+                'provider' => TagsServiceProvider::class,
                 'tag'      => 'tags-migrations',
             ],
             [
@@ -43,7 +45,7 @@ class DependencyMigrations
                 'purpose'  => 'task attachments',
                 'name'     => 'create_media_table',
                 'tables'   => ['media'],
-                'provider' => 'Spatie\MediaLibrary\MediaLibraryServiceProvider',
+                'provider' => MediaLibraryServiceProvider::class,
                 'tag'      => 'medialibrary-migrations',
             ],
         ];

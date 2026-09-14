@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.7.1 - 2026-09-14
+
+- **Requires `relaticle/flowforge` 4.0.15 or newer.** The board card view calls `Board::resolveCardAction()`, which earlier 4.0 releases don't have, so installing against them broke every board with *Method resolveCardAction does not exist*.
+- Every published migration's `up()` now declares its `: void` return, so **Rector no longer flags the migrations** an application publishes from the package. The rest of the code went through the same Rector rules too (first-class callables, `::class` constants, imported names, `casts()` methods on the models), with no change in behaviour. Rector is now a dev dependency with its own `rector.php`: `composer rector` applies it and `composer ci:check` fails when it has changes left to make.
+
 ## 4.7.0 - 2026-09-11
 
 - Tasks now carry a **card image**, the way Frello and Trello do: one of a task's attachments is shown full-bleed across the top of its kanban card, so a screenshot or a photo identifies the task without reading it. The first image attached to a task becomes its card image on its own, and the same picture heads the task page and fills a new first column of the tasks table.

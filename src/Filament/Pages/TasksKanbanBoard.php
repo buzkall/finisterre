@@ -11,6 +11,7 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Arzcode\Finisterre\Support\PanelLabel;
 use Arzcode\Finisterre\Support\UserAvatar;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
@@ -43,7 +44,7 @@ class TasksKanbanBoard extends BoardPage
     #[Url]
     public ?array $taskFilters = null;
 
-    protected static string|null|\BackedEnum $navigationIcon = Heroicon::OutlinedExclamationTriangle;
+    protected static string|null|BackedEnum $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected $listeners = [
         'commentCreated' => '$refresh',
     ];

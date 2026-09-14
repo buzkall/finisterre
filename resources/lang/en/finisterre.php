@@ -149,7 +149,7 @@ return [
         'slug'                                     => 'Board URL slug',
         'slug_help'                                => 'The URL segment for the Kanban board page.',
         'exclude_from_global_search'               => 'Exclude tasks from global search',
-        'exclude_from_global_search_help'          => 'Keep Finisterre tasks out of the panel\'s global search, so they do not dilute your own resources\' results.',
+        'exclude_from_global_search_help'          => "Keep Finisterre tasks out of the panel's global search, so they do not dilute your own resources' results.",
         'section_tasks'                            => 'Tasks',
         'hidden_statuses'                          => 'Hidden statuses',
         'hidden_statuses_help'                     => 'Statuses selected here are hidden from the board and forms.',

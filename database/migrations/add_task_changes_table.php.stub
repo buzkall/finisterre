@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create(config('finisterre.task_changes_table_name', 'finisterre_task_changes'), function(Blueprint $table) {
             $table->id();

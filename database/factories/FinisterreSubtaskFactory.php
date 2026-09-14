@@ -6,6 +6,9 @@ use Arzcode\Finisterre\Models\FinisterreSubtask;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<FinisterreSubtask>
+ */
 class FinisterreSubtaskFactory extends Factory
 {
     protected $model = FinisterreSubtask::class;
@@ -14,7 +17,7 @@ class FinisterreSubtaskFactory extends Factory
     {
         return [
             'task_id'   => FinisterreTask::inRandomOrder()->first() ?: FinisterreTask::factory(),
-            'title'     => fake()->sentence,
+            'title'     => fake()->sentence(),
             'completed' => fake()->boolean(),
         ];
     }

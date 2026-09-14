@@ -3,7 +3,7 @@
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
 
 use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListFinisterreTasks extends ListRecords
@@ -13,7 +13,7 @@ class ListFinisterreTasks extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

@@ -37,7 +37,7 @@ class FilterTasks extends Component implements HasForms
     public function mount(): void
     {
         // Load from session if URL params are empty
-        if (empty($this->filter_text) && empty($this->filter_tags) && empty($this->filter_assignee)) {
+        if (empty($this->filter_text) && $this->filter_tags === [] && empty($this->filter_assignee)) {
             $sessionFilters = session('finisterre.filters', []);
             $this->filter_text = $sessionFilters['filter_text'] ?? null;
             $this->filter_tags = $sessionFilters['filter_tags'] ?? [];

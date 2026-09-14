@@ -6,7 +6,8 @@ use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Actions\Action;
-use Filament\Forms;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\RichEditor;
 use Filament\Notifications\Notification;
 
 class EditCommentAction extends Action
@@ -33,14 +34,14 @@ class EditCommentAction extends Action
                 ];
             })
             ->schema([
-                Forms\Components\RichEditor::make('comment')
+                RichEditor::make('comment')
                     ->hiddenLabel()
                     ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
                     ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                     ->extraInputAttributes(['style' => 'min-height: 6rem'])
                     ->required(),
 
-                Forms\Components\DateTimePicker::make('scheduled_for')
+                DateTimePicker::make('scheduled_for')
                     ->visible(fn() => FinisterrePlugin::get()->canScheduleComments())
                     ->native(false)
                     ->suffixIcon('heroicon-o-calendar')

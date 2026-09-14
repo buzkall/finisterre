@@ -2,7 +2,10 @@
 
 namespace Arzcode\Finisterre\Filament\Resources;
 
-use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\CreateFinisterreTask;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\EditFinisterreTask;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ListFinisterreTasks;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ViewFinisterreTask;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Form as TaskForm;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Infolist as TaskInfolist;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTable;
@@ -69,10 +72,10 @@ class FinisterreTaskResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListFinisterreTasks::route('/'),
-            'create' => Pages\CreateFinisterreTask::route('/create'),
-            'view'   => Pages\ViewFinisterreTask::route('/{record}'),
-            'edit'   => Pages\EditFinisterreTask::route('/{record}/edit'),
+            'index'  => ListFinisterreTasks::route('/'),
+            'create' => CreateFinisterreTask::route('/create'),
+            'view'   => ViewFinisterreTask::route('/{record}'),
+            'edit'   => EditFinisterreTask::route('/{record}/edit'),
         ];
     }
 }

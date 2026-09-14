@@ -38,7 +38,7 @@ class FilterTasksWidget extends Widget implements HasForms
 
     public function mount(): void
     {
-        if (empty($this->filter_text) && empty($this->filter_tags) && empty($this->filter_assignee)) {
+        if (empty($this->filter_text) && $this->filter_tags === [] && empty($this->filter_assignee)) {
             $sessionFilters = session('finisterre.filters', []);
             $this->filter_text = $sessionFilters['filter_text'] ?? null;
             $this->filter_tags = $sessionFilters['filter_tags'] ?? [];

@@ -7,6 +7,9 @@ use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<FinisterreTask>
+ */
 class FinisterreTaskFactory extends Factory
 {
     protected $model = FinisterreTask::class;
@@ -16,8 +19,8 @@ class FinisterreTaskFactory extends Factory
         $authenticatable = config('finisterre.authenticatable');
 
         return [
-            'title'        => fake()->sentence,
-            'description'  => fake()->paragraph,
+            'title'        => fake()->sentence(),
+            'description'  => fake()->paragraph(),
             'status'       => fake()->randomElement(TaskStatusEnum::values()),
             'priority'     => fake()->randomElement(TaskPriorityEnum::values()),
             'due_at'       => fake()->dateTimeThisMonth(),

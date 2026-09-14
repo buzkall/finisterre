@@ -279,7 +279,7 @@ class Infolist
     {
         // Actions whose field persists on its own (the attachments upload) pass
         // nothing and only need the refresh below.
-        if ($persist) {
+        if ($persist instanceof Closure) {
             $persist();
         }
 

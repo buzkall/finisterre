@@ -105,6 +105,7 @@ class AttachmentsDisk
 
         $lineStart = strrpos(substr($contents, 0, $close), "\n");
         $lineStart = $lineStart === false ? 0 : $lineStart + 1;
+
         $closeIndent = (string)preg_replace('/\S.*$/', '', substr($contents, $lineStart, $close - $lineStart));
 
         $head = rtrim(substr($contents, 0, $lastEnd) . ($needsComma ? ',' : '') . substr($contents, $lastEnd, $close - $lastEnd));
@@ -125,7 +126,7 @@ class AttachmentsDisk
         }
 
         $contents = (string)file_get_contents($path);
-        $updated = preg_replace('/^(\s*[\'"]attachments_disk[\'"]\s*=>\s*)([\'"])[^\'"]*\2/m', '${1}\'' . $disk . '\'', $contents, 1, $count);
+        $updated = preg_replace('/^(\s*[\'"]attachments_disk[\'"]\s*=>\s*)([\'"])[^\'"]*\2/m', '${1}\'' . $disk . "'", $contents, 1, $count);
 
         if ($count === 0 || $updated === null) {
             return false;

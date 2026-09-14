@@ -22,6 +22,7 @@ use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule;
@@ -34,8 +35,10 @@ use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Spatie\LaravelSettings\LaravelSettingsServiceProvider;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\Process\Process;
+use Throwable;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\info;
@@ -89,15 +92,15 @@ class FinisterreServiceProvider extends PackageServiceProvider
                         fn() => $this->publishDependencyMigrations($cmd),
                         fn() => $this->runMigrations($cmd),
                         fn() => $this->configureAttachmentsDisk($cmd),
-                        fn() => $this->activateViaSettings(),
-                        fn() => $this->configureBoardSlug(),
+                        $this->activateViaSettings(...),
+                        $this->configureBoardSlug(...),
                         fn() => $this->publishFilamentAssets($cmd),
-                        fn() => $this->patchPanelProviders(),
-                        fn() => $this->patchUserModel(),
+                        $this->patchPanelProviders(...),
+                        $this->patchUserModel(...),
                         fn() => $this->ensureFilamentThemes($cmd),
-                        fn() => $this->patchFilamentThemes(),
+                        $this->patchFilamentThemes(...),
                         fn() => $this->runNpmBuild($cmd),
-                        fn() => $this->printFinalSteps(),
+                        $this->printFinalSteps(...),
                     ];
 
                     foreach ($steps as $step) {
@@ -256,7 +259,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         }
 
         $command->callSilently('vendor:publish', [
-            '--provider' => 'Spatie\LaravelSettings\LaravelSettingsServiceProvider',
+            '--provider' => LaravelSettingsServiceProvider::class,
             '--tag'      => 'migrations',
         ]);
         info('Settings table migration published.');
@@ -315,7 +318,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             info($created > 0
                 ? sprintf('Finisterre settings seeded (%d created) — active in all environments by default. Manage it from the settings page.', $created)
                 : 'Finisterre installed — active in all environments by default. Manage it from the settings page.');
-        } catch (\Throwable) {
+        } catch (Throwable) {
             warning('Could not seed Finisterre settings automatically — run the migrations, then configure it from the settings page.');
         }
     }
@@ -350,7 +353,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
             // Re-prompt while the chosen path collides with an existing route.
             do {
-                $answer = (string)text(
+                $answer = text(
                     label: 'URL path for the Finisterre task board',
                     default: $default,
                     hint: 'Only the last segment is used — the panel slug is fixed by config.',
@@ -374,7 +377,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 $settings->save();
                 info(sprintf("Board slug set to '%s'.", $slug));
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             warning('Could not set the board slug — change it later from the settings page.');
         }
     }
@@ -463,7 +466,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 continue;
             }
 
-            $withImport = $this->addUseImport($contents, 'Arzcode\Finisterre\FinisterrePlugin');
+            $withImport = $this->addUseImport($contents, FinisterrePlugin::class);
 
             // Inject into an existing ->plugins([…]) call, or add a new one to
             // the $panel chain when the provider doesn't have one yet.
@@ -500,7 +503,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             return;
         }
 
-        $patched = $this->addUseImport($contents, 'Arzcode\Finisterre\Traits\FinisterreUserTrait');
+        $patched = $this->addUseImport($contents, FinisterreUserTrait::class);
         $patched = $this->addTraitInsideClass($patched, 'FinisterreUserTrait');
 
         if ($patched === null) {
@@ -669,6 +672,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         $lineStart = strrpos(substr($contents, 0, $closeAt), "\n");
         $closeIndent = $lineStart === false ? '' : substr($contents, $lineStart + 1, $closeAt - $lineStart - 1);
         $closeIndent = preg_replace('/[^\s].*$/', '', $closeIndent);
+
         $itemIndent = $closeIndent . '    ';
 
         $before = rtrim(substr($contents, 0, $closeAt));

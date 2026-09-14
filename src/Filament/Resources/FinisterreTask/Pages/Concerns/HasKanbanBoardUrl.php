@@ -7,6 +7,7 @@ use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
+use Throwable;
 
 /**
  * Where "Tasks" points on the pages that hang off the board.
@@ -31,7 +32,7 @@ trait HasKanbanBoardUrl
             if (Route::has($routeName)) {
                 return TasksKanbanBoard::getUrl();
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Fall through to default
         }
 

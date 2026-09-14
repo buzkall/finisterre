@@ -13,7 +13,9 @@ use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -109,7 +111,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $notifyOptions = $this->getNotifyOptions();
 
-        $notify = Forms\Components\Select::make('notify')
+        $notify = Select::make('notify')
             ->multiple()
             ->live()
             ->columnSpan($canSchedule ? 1 : 'full')
@@ -137,7 +139,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         $gridComponents = $canSchedule
             ? [
                 $notify,
-                Forms\Components\DateTimePicker::make('scheduled_for')
+                DateTimePicker::make('scheduled_for')
                     ->native(false)
                     ->suffixIcon('heroicon-o-calendar')
                     ->displayFormat('d/m/y H:i')
@@ -150,7 +152,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             : [$notify];
 
         return $schema->components([
-            Forms\Components\RichEditor::make('comment')
+            RichEditor::make('comment')
                 ->hiddenLabel()
                 ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
                 ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
@@ -180,10 +182,10 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             'comment'         => $data['comment'],
             'creator_id'      => auth()->id(),
             'scheduled_for'   => $scheduledFor,
-            'notify_user_ids' => $scheduledFor ? $notifyIds : null,
+            'notify_user_ids' => $scheduledFor instanceof Carbon ? $notifyIds : null,
         ]);
 
-        if ($scheduledFor) {
+        if ($scheduledFor instanceof Carbon) {
             Notification::make()
                 ->title(__('finisterre::finisterre.comments.notifications.scheduled', [
                     'time' => $scheduledFor->isoFormat('LLL'),

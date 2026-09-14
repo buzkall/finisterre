@@ -2,8 +2,10 @@
 
 namespace Arzcode\Finisterre\Commands;
 
+use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Arzcode\Finisterre\Support\PackageMigrations;
+use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
@@ -35,16 +37,16 @@ class UninstallCommand extends Command
         }
 
         $steps = [
-            fn() => $this->unpatchPanelProviders(),
-            fn() => $this->unpatchUserModel(),
-            fn() => $this->unpatchFilamentThemes(),
-            fn() => $this->deactivateInEnvFile(),
-            fn() => $this->deleteSettings(),
-            fn() => $this->dropTables(),
-            fn() => $this->deletePublishedMigrations(),
-            fn() => $this->deletePublishedAssets(),
-            fn() => $this->deleteConfigFile(),
-            fn() => $this->runFinalSteps(),
+            $this->unpatchPanelProviders(...),
+            $this->unpatchUserModel(...),
+            $this->unpatchFilamentThemes(...),
+            $this->deactivateInEnvFile(...),
+            $this->deleteSettings(...),
+            $this->dropTables(...),
+            $this->deletePublishedMigrations(...),
+            $this->deletePublishedAssets(...),
+            $this->deleteConfigFile(...),
+            $this->runFinalSteps(...),
         ];
 
         foreach ($steps as $step) {
@@ -84,7 +86,7 @@ class UninstallCommand extends Command
             }
 
             $patched = $this->removeLinesContaining($contents, 'FinisterrePlugin::make()');
-            $patched = $this->removeUseImport($patched, 'Arzcode\Finisterre\FinisterrePlugin');
+            $patched = $this->removeUseImport($patched, FinisterrePlugin::class);
 
             file_put_contents($file, $patched);
             info(sprintf('Removed FinisterrePlugin from %s.', $relative));
@@ -111,7 +113,7 @@ class UninstallCommand extends Command
         }
 
         $patched = preg_replace('/^[ \t]*use\s+FinisterreUserTrait\s*;[ \t]*\r?\n/m', '', $contents) ?? $contents;
-        $patched = $this->removeUseImport($patched, 'Arzcode\Finisterre\Traits\FinisterreUserTrait');
+        $patched = $this->removeUseImport($patched, FinisterreUserTrait::class);
 
         if (str_contains($patched, 'FinisterreUserTrait')) {
             warning(sprintf('FinisterreUserTrait still referenced in %s — remove it manually (it may be grouped with other traits).', $relative));
@@ -269,7 +271,7 @@ class UninstallCommand extends Command
             public_path('css/relaticle/flowforge'),
         ];
 
-        $existing = array_values(array_filter($dirs, 'is_dir'));
+        $existing = array_values(array_filter($dirs, is_dir(...)));
 
         if ($existing === []) {
             note('No published Finisterre assets found — skipping.');

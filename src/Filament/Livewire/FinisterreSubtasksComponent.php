@@ -8,6 +8,7 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Throwable;
 
 /**
  * Subtask checklist with instant persistence: every tick, rename, delete and
@@ -21,7 +22,7 @@ use Livewire\Component;
 class FinisterreSubtasksComponent extends Component
 {
     /** Gap between order values, so a future insert-between has room. */
-    private const ORDER_STEP = 10;
+    private const int ORDER_STEP = 10;
 
     public ?FinisterreTask $record = null;
 
@@ -46,7 +47,7 @@ class FinisterreSubtasksComponent extends Component
 
     public function canManage(): bool
     {
-        if ($this->record === null) {
+        if (! $this->record instanceof FinisterreTask) {
             return false;
         }
 
@@ -57,7 +58,7 @@ class FinisterreSubtasksComponent extends Component
             if (FinisterrePlugin::get()->canViewOnlyTheirTasks()) {
                 return false;
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // No panel — fall through to the policy check below.
         }
 
@@ -103,7 +104,7 @@ class FinisterreSubtasksComponent extends Component
 
         $subtask = $this->subtaskAt($rowKey);
 
-        if (! $subtask) {
+        if (! $subtask instanceof FinisterreSubtask) {
             return;
         }
 
@@ -148,7 +149,7 @@ class FinisterreSubtasksComponent extends Component
         // Only ids that really belong to this task, in the order given.
         $owned = $this->record->subtasks()->pluck('id')->all();
         $ordered = array_values(array_filter(
-            array_map('intval', $ids),
+            array_map(intval(...), $ids),
             fn(int $id) => in_array($id, $owned, true)
         ));
 
@@ -222,7 +223,7 @@ class FinisterreSubtasksComponent extends Component
 
     protected function loadSubtasks(): void
     {
-        $this->subtasks = $this->record
+        $this->subtasks = $this->record instanceof FinisterreTask
             ? $this->record->subtasks()->get()
                 ->mapWithKeys(fn(FinisterreSubtask $subtask): array => [
                     self::rowKey($subtask->id) => [

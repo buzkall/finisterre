@@ -41,7 +41,7 @@ class TaskNotification extends Notification implements ShouldQueue
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
             ))
             ->greeting(
-                empty($this->taskChanges) ?
+                $this->taskChanges === [] ?
                     __('finisterre::finisterre.notification.greeting_new', ['title' => $this->task->title]) :
                     __('finisterre::finisterre.notification.greeting_changes', ['title' => $this->task->title])
             )
@@ -49,7 +49,7 @@ class TaskNotification extends Notification implements ShouldQueue
             ->line(__('finisterre::finisterre.created_by') . ': ' . $this->task->creatorName())
             ->when($relatedRecord, fn(MailMessage $mail) => $mail->line($relatedRecord))
             ->when(
-                empty($this->taskChanges),
+                $this->taskChanges === [],
                 fn(MailMessage $mail) => $mail->when(
                     filled($this->task->description),
                     fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description)))

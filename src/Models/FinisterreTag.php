@@ -10,7 +10,7 @@ class FinisterreTag extends Tag
 
     public static function findOrCreateFromString(string $name, ?string $type = null, ?string $locale = null)
     {
-        $locale = $locale ?? static::getLocale();
+        $locale ??= static::getLocale();
 
         $tag = static::findFromString($name, $type, $locale);
 

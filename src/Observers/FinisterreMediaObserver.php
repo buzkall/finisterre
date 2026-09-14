@@ -33,7 +33,7 @@ class FinisterreMediaObserver
 
         $task = $this->task($media);
 
-        if ($task === null || $task->cover_media_id !== null) {
+        if (! $task instanceof FinisterreTask || $task->cover_media_id !== null) {
             return;
         }
 

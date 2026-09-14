@@ -6,6 +6,9 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<FinisterreTaskComment>
+ */
 class FinisterreTaskCommentFactory extends Factory
 {
     protected $model = FinisterreTaskComment::class;
@@ -16,7 +19,7 @@ class FinisterreTaskCommentFactory extends Factory
 
         return [
             'task_id'    => FinisterreTask::inRandomOrder()->first() ?: FinisterreTask::factory(),
-            'comment'    => fake()->paragraph,
+            'comment'    => fake()->paragraph(),
             'creator_id' => $authenticatable::inRandomOrder()->first() ?: $authenticatable::factory(),
         ];
     }

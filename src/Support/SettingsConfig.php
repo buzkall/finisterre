@@ -152,7 +152,7 @@ class SettingsConfig
      */
     protected static function isActiveForEnvironments(string $environments): bool
     {
-        $list = array_values(array_filter(array_map('trim', explode(',', $environments))));
+        $list = array_values(array_filter(array_map(trim(...), explode(',', $environments))));
 
         return $list === [] || app()->environment($list);
     }

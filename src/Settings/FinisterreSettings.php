@@ -24,9 +24,9 @@ class FinisterreSettings extends Settings
     public string $comments_icon_empty;
     public bool $sms_enabled;
     public string $sms_url;
-    public ?string $sms_auth_key;
-    public ?string $sms_sender;
-    public ?string $sms_notify_to;
+    public ?string $sms_auth_key = null;
+    public ?string $sms_sender = null;
+    public ?string $sms_notify_to = null;
 
     /** @var array<int, string> */
     public array $sms_notify_priorities;

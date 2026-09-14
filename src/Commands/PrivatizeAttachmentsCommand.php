@@ -78,8 +78,8 @@ class PrivatizeAttachmentsCommand extends Command
         try {
             $this->source = Storage::disk($this->from);
             $this->target = Storage::disk($this->to);
-        } catch (InvalidArgumentException $exception) {
-            warning($exception->getMessage());
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            warning($invalidArgumentException->getMessage());
 
             return self::FAILURE;
         }

@@ -17,7 +17,7 @@ class UserAvatar
      */
     public static function url(?Model $user): ?string
     {
-        if ($user === null) {
+        if (! $user instanceof Model) {
             return null;
         }
 

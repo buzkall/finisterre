@@ -27,10 +27,6 @@ class FinisterreSubtask extends Model
     // reflects subtask edits. FinisterreTaskObserver::saved() ignores changes
     // limited to updated_at, so this never triggers an assignee notification.
     protected $touches = ['task'];
-    protected $casts = [
-        'completed'    => 'boolean',
-        'order_column' => 'integer',
-    ];
 
     public function getTable(): string
     {
@@ -45,5 +41,13 @@ class FinisterreSubtask extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(FinisterreTask::class, 'task_id');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'completed'    => 'boolean',
+            'order_column' => 'integer',
+        ];
     }
 }
