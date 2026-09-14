@@ -9,6 +9,7 @@ use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
+use Arzcode\Finisterre\Support\PanelLabel;
 use Arzcode\Finisterre\Support\UserAvatar;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -76,12 +77,12 @@ class TasksKanbanBoard extends BoardPage
 
     public function getTitle(): string|Htmlable
     {
-        return __('finisterre::finisterre.tasks');
+        return PanelLabel::plural();
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('finisterre::finisterre.tasks');
+        return PanelLabel::plural();
     }
 
     protected function getHeaderActions(): array

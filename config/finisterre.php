@@ -18,6 +18,13 @@ return [
     'panel_slug'   => 'admin',
     'slug'         => 'tasks',
 
+    // Name given to tasks in the admin panel: navigation entry, board title,
+    // breadcrumbs and the resource's headings. Null keeps the translated
+    // defaults ("Task"/"Tasks", or "Issue"/"Issues" for users restricted to
+    // their own tasks). Set a plain string, or a translation key you own.
+    'label'        => null, // 'Ticket'
+    'plural_label' => null, // 'Tickets'
+
     // Locales to save when creating tags (e.g., ['es', 'ca'])
     'locales' => ['es', 'ca'],
 

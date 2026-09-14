@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\PanelLabel;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 
@@ -62,7 +63,7 @@ trait InteractsWithTaskPage
     {
         if (FinisterrePlugin::get()->canViewAllTasks()) {
             return [
-                $this->getKanbanBoardUrl() => __('finisterre::finisterre.tasks'),
+                $this->getKanbanBoardUrl() => PanelLabel::plural(),
                 ''                         => $this->record->title ?: $this->getBreadcrumbFallback(),
             ];
         }

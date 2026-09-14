@@ -8,6 +8,7 @@ use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Infolist as Tas
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTable;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\PanelLabel;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -42,16 +43,12 @@ class FinisterreTaskResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return FinisterrePlugin::get()->canViewOnlyTheirTasks() ?
-            __('finisterre::finisterre.task_report') :
-            __('finisterre.task');
+        return PanelLabel::singular();
     }
 
     public static function getPluralLabel(): ?string
     {
-        return FinisterrePlugin::get()->canViewOnlyTheirTasks() ?
-            __('finisterre::finisterre.task_reports') :
-            __('finisterre.tasks');
+        return PanelLabel::plural();
     }
 
     public static function form(Schema $schema): Schema

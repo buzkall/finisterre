@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns\HasKanbanBoardUrl;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\FinisterrePlugin;
+use Arzcode\Finisterre\Support\PanelLabel;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateFinisterreTask extends CreateRecord
@@ -23,7 +24,7 @@ class CreateFinisterreTask extends CreateRecord
     {
         if (FinisterrePlugin::get()->canViewAllTasks()) {
             return [
-                $this->getKanbanBoardUrl() => __('finisterre::finisterre.tasks'),
+                $this->getKanbanBoardUrl() => PanelLabel::plural(),
                 ''                         => __('finisterre::finisterre.create_task'),
             ];
         }

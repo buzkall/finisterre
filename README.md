@@ -197,6 +197,20 @@ FinisterrePlugin::make()
     ->userCanConfigureFinisterre(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
 ```
 
+## Renaming tasks in the panel
+
+Tasks are called *Tasks* in the navigation, on the board and in the breadcrumbs (and *Issues* for users restricted to
+their own tasks). To call them something else — tickets, incidents, jobs — set the two labels in the config file:
+
+```php
+// config/finisterre.php
+'label'        => 'Ticket',
+'plural_label' => 'Tickets',
+```
+
+Both default to `null`, which keeps the translated wording. A value is passed through the translator, so a translation
+key of your own (`'labels.ticket'`) works as well as a literal string.
+
 ## The task page
 
 Clicking a card on the board (or a row in the task list) opens the task page rather than a form. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel and the comments below.
