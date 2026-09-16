@@ -254,7 +254,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->with(['creator' => fn(BelongsTo $query) => $query->getRelated() instanceof HasMedia
                 ? $query->with('media')
                 : $query])
-            ->latest()
+            // A scheduled comment shows its scheduled time, so it takes its place in
+            // the timeline by that time rather than by when it was written: replies
+            // posted before it was published stay below it.
+            ->orderByRaw('coalesce(scheduled_for, created_at) desc')
+            ->orderByDesc('id')
             ->get() ?? collect();
     }
 

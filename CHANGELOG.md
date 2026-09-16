@@ -5,6 +5,7 @@ All notable changes to `finisterre` will be documented in this file.
 ## 4.8.1 - 2026-09-16
 
 - Fixed the **board failing with *The attribute [id] either does not exist or was not retrieved for model [FinisterreTask]*** in applications that enable `Model::shouldBeStrict()`. The query 4.8.0 added to collect the card users selected only the assignee and creator columns, yet still built task models and their eager loads, which need the id. The test suite now runs in strict mode, so a column that isn't selected or a lazy load fails the tests too.
+- A **scheduled comment now takes its place in the timeline by its scheduled time**, the time it already showed, instead of by when it was written. A reply posted while the comment was waiting to be published no longer ends up above it with an earlier time.
 
 ## 4.8.0 - 2026-09-14
 
