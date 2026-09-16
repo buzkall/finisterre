@@ -395,8 +395,11 @@ class TasksKanbanBoard extends BoardPage
         $ids = $this->getFilteredQuery()
             ->reorder()
             ->select(["$table.assignee_id", "$table.creator_id"])
+            // Only two columns are selected, so the model's eager loads (tags,
+            // coverMedia) would read a missing id, which strict mode rejects.
+            ->toBase()
             ->get()
-            ->flatMap(fn(FinisterreTask $task) => [$task->assignee_id, $task->creator_id])
+            ->flatMap(fn(object $task) => [$task->assignee_id, $task->creator_id])
             ->filter()
             ->unique()
             ->values()

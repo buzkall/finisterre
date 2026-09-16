@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Tests;
 
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Encryption\Encrypter;
 use Livewire\Livewire;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -15,6 +16,12 @@ class TestCase extends Orchestra
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Host applications commonly enable strict mode outside production, so
+        // the package has to hold up under it: a lazy load, a silently
+        // discarded attribute or a column the query never selected must fail
+        // here rather than in their local environment.
+        Model::shouldBeStrict();
 
         Factory::guessFactoryNamesUsing(
             fn(string $modelName) => 'Arzcode\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory'

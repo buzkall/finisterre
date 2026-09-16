@@ -125,6 +125,16 @@ abstract class FilamentTestCase extends TestCase
             (include __DIR__ . '/../database/migrations/add_editor_files_to_finisterre_tasks.php.stub')->up();
         }
 
+        if (! Schema::hasColumn('finisterre_tasks', 'subject_id')) {
+            (include __DIR__ . '/../database/migrations/add_subject_to_finisterre_tasks.php.stub')->up();
+        }
+
+        // The base migration already created the comments table, so the
+        // blueprint above never runs and the scheduling columns come from here.
+        if (! Schema::hasColumn('finisterre_task_comments', 'scheduled_for')) {
+            (include __DIR__ . '/../database/migrations/add_scheduling_to_finisterre_task_comments.php.stub')->up();
+        }
+
         $this->createTableIfMissing('tags', function(Blueprint $table) {
             $table->id();
             $table->json('name');

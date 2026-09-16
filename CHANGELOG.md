@@ -2,6 +2,10 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.8.1 - 2026-09-16
+
+- Fixed the **board failing with *The attribute [id] either does not exist or was not retrieved for model [FinisterreTask]*** in applications that enable `Model::shouldBeStrict()`. The query 4.8.0 added to collect the card users selected only the assignee and creator columns, yet still built task models and their eager loads, which need the id. The test suite now runs in strict mode, so a column that isn't selected or a lazy load fails the tests too.
+
 ## 4.8.0 - 2026-09-14
 
 - An **image pasted into the description or a comment can now be the card image**. On the task page, hovering (or tapping) such an image shows the same star the attachments list has; clicking it copies the image into the task's attachments and makes that copy the card image, so its thumbnail, repositioning and private serving work exactly as for any attachment. Picking the same image again reuses the copy rather than attaching it twice, and its star shows filled while it is the card image — clicking it then removes the card image. Only images the task's own description or visible comments load are accepted, and on a private disk only the ones the task owns (`editor_files`). Applications compiling the package's views need a fresh `npm run build`.
