@@ -2,157 +2,391 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.8.3 - 2026-09-22
+
+- Fixed the **last card of a long board column being out of reach**. The board was sized to the screen as if nothing sat
+  above it, so the filters pushed its bottom off the screen, and scrolling a column never moved the page. The board now
+  takes exactly the height left below the filters and adjusts when they load, fold away on a phone or the window
+  resizes, so each column scrolls to its end and the board's sideways scrollbar stays visible. On very short screens it
+  keeps a minimum height and the page scrolls.
+- Fixed **assigning a task or commenting failing with *relation "notifications" does not exist*** in applications that
+  had never sent a database notification. Finisterre notifies users in the panel through Filament database
+  notifications, which need Laravel's `notifications` table. `finisterre:install` and `finisterre:update` now check for
+  it next to the tags and media tables, and publish a migration when it is missing (`finisterre:update --check` reports
+  it). The migration stores `data` as `json` instead of Laravel's `text`, because Filament's notification bell reads
+  that column with JSON operators, and PostgreSQL only allows them on json columns.
+
 ## 4.8.1 - 2026-09-16
 
-- Fixed the **board failing with *The attribute [id] either does not exist or was not retrieved for model [FinisterreTask]*** in applications that enable `Model::shouldBeStrict()`. The query 4.8.0 added to collect the card users selected only the assignee and creator columns, yet still built task models and their eager loads, which need the id. The test suite now runs in strict mode, so a column that isn't selected or a lazy load fails the tests too.
-- A **scheduled comment now takes its place in the timeline by its scheduled time**, the time it already showed, instead of by when it was written. A reply posted while the comment was waiting to be published no longer ends up above it with an earlier time.
+- Fixed the **board failing with *The attribute [id] either does not exist or was not retrieved for
+  model [FinisterreTask]*** in applications that enable `Model::shouldBeStrict()`. The query 4.8.0 added to collect the
+  card users selected only the assignee and creator columns, yet still built task models and their eager loads, which
+  need the id. The test suite now runs in strict mode, so a column that isn't selected or a lazy load fails the tests
+  too.
+- A **scheduled comment now takes its place in the timeline by its scheduled time**, the time it already showed, instead
+  of by when it was written. A reply posted while the comment was waiting to be published no longer ends up above it
+  with an earlier time.
 
 ## 4.8.0 - 2026-09-14
 
-- An **image pasted into the description or a comment can now be the card image**. On the task page, hovering (or tapping) such an image shows the same star the attachments list has; clicking it copies the image into the task's attachments and makes that copy the card image, so its thumbnail, repositioning and private serving work exactly as for any attachment. Picking the same image again reuses the copy rather than attaching it twice, and its star shows filled while it is the card image — clicking it then removes the card image. Only images the task's own description or visible comments load are accepted, and on a private disk only the ones the task owns (`editor_files`). Applications compiling the package's views need a fresh `npm run build`.
-- On the task page the **attachments now sit below the description card** instead of inside it, with thumbnails 20% larger, and the created by / created / updated dates moved up to their right, above the subtasks. The comments heading is now as large as the subtasks one, and the line above it is gray.
-- Fixed the **N+1 on the task page's comments for hosts that keep user avatars in a media library** (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). Each comment's creator read its avatar's media relation on its own; the creators now come with it eager-loaded when the host's user model has one, the way the board already loads them.
-- Fixed **saving any file from a panel that doesn't carry the plugin** failing with *Plugin [finisterre] is not registered for panel [...]*. Since 4.7.0 the card image observer looks at every media file the application saves, which boots the task model wherever that happens, and the model resolved the plugin on boot to decide whether to limit users to their own tasks. That decision is now taken each time tasks are queried, and outside a panel with the plugin nobody is limited.
+- An **image pasted into the description or a comment can now be the card image**. On the task page, hovering (or
+  tapping) such an image shows the same star the attachments list has; clicking it copies the image into the task's
+  attachments and makes that copy the card image, so its thumbnail, repositioning and private serving work exactly as
+  for any attachment. Picking the same image again reuses the copy rather than attaching it twice, and its star shows
+  filled while it is the card image — clicking it then removes the card image. Only images the task's own description or
+  visible comments load are accepted, and on a private disk only the ones the task owns (`editor_files`). Applications
+  compiling the package's views need a fresh `npm run build`.
+- On the task page the **attachments now sit below the description card** instead of inside it, with thumbnails 20%
+  larger, and the created by / created / updated dates moved up to their right, above the subtasks. The comments heading
+  is now as large as the subtasks one, and the line above it is gray.
+- Fixed the **N+1 on the task page's comments for hosts that keep user avatars in a media library**
+  (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). Each comment's creator read its avatar's media
+  relation on its own; the creators now come with it eager-loaded when the host's user model has one, the way the board
+  already loads them.
+- Fixed **saving any file from a panel that doesn't carry the plugin** failing with *Plugin [finisterre] is not
+  registered for panel [...]*. Since 4.7.0 the card image observer looks at every media file the application saves,
+  which boots the task model wherever that happens, and the model resolved the plugin on boot to decide whether to limit
+  users to their own tasks. That decision is now taken each time tasks are queried, and outside a panel with the plugin
+  nobody is limited.
 
 ## 4.7.3 - 2026-09-14
 
-- Board cards now show **both the creation and the last update date** in their footer, in the space the update date alone used to take: the creation date as a short date (`12 sep`, with the year only when it isn't the current one) and the update as a short relative time (`3h`, `2d`), each behind its own icon. Hovering them shows both in full. A task never edited since it was created shows the creation date alone.
+- Board cards now show **both the creation and the last update date** in their footer, in the space the update date
+  alone used to take: the creation date as a short date (`12 sep`, with the year only when it isn't the current one) and
+  the update as a short relative time (`3h`, `2d`), each behind its own icon. Hovering them shows both in full. A task
+  never edited since it was created shows the creation date alone.
 
 ## 4.7.2 - 2026-09-14
 
-- **The release that actually ships the 4.7.1 changes below**: the `relaticle/flowforge` 4.0.15 requirement and the Rector pass. The 4.7.1 tag was placed on the same commit as 4.7.0, so it contains neither — install 4.7.2 or newer to get them.
+- **The release that actually ships the 4.7.1 changes below**: the `relaticle/flowforge` 4.0.15 requirement and the
+  Rector pass. The 4.7.1 tag was placed on the same commit as 4.7.0, so it contains neither — install 4.7.2 or newer to
+  get them.
 
 ## 4.7.1 - 2026-09-14
 
-- **Requires `relaticle/flowforge` 4.0.15 or newer.** The board card view calls `Board::resolveCardAction()`, which earlier 4.0 releases don't have, so installing against them broke every board with *Method resolveCardAction does not exist*.
-- Every published migration's `up()` now declares its `: void` return, so **Rector no longer flags the migrations** an application publishes from the package. The rest of the code went through the same Rector rules too (first-class callables, `::class` constants, imported names, `casts()` methods on the models), with no change in behaviour. Rector is now a dev dependency with its own `rector.php`: `composer rector` applies it and `composer ci:check` fails when it has changes left to make.
+- **Requires `relaticle/flowforge` 4.0.15 or newer.** The board card view calls `Board::resolveCardAction()`, which
+  earlier 4.0 releases don't have, so installing against them broke every board with *Method resolveCardAction does not
+  exist*.
+- Every published migration's `up()` now declares its `: void` return, so **Rector no longer flags the migrations** an
+  application publishes from the package. The rest of the code went through the same Rector rules too (first-class
+  callables, `::class` constants, imported names, `casts()` methods on the models), with no change in behaviour. Rector
+  is now a dev dependency with its own `rector.php`: `composer rector` applies it and `composer ci:check` fails when it
+  has changes left to make.
 
 ## 4.7.0 - 2026-09-11
 
-- Tasks now carry a **card image**, the way Frello and Trello do: one of a task's attachments is shown full-bleed across the top of its kanban card, so a screenshot or a photo identifies the task without reading it. The first image attached to a task becomes its card image on its own, and the same picture heads the task page and fills a new first column of the tasks table.
-- The card image is **changed and removed from the task page**: every image in the attachments list carries a star — the current card image keeps its star on show, the others reveal one on hover or keyboard focus. Clicking the filled star takes the card image away and leaves it away: a task is allowed to have none, and the automatic pick only ever fires on a task's very first image, so attaching more attachments never quietly puts one back. Deleting the attachment behind a card image clears it too.
-- The card image can be **dragged into place**, the way Notion's page covers are: **Reposition** on the task page banner, drag the picture up or down, **Save position**. The position is stored on the attachment itself, so switching the card image to another picture and back finds it where it was left, and the board card crops at the same spot. A picture no taller than the banner has nothing hidden to reveal and offers no button.
-- Card images on the board and in the table are served from a **new `finisterre-card` conversion**, scaled to 600px wide rather than the original file, so a board of photos is not a column of full-size downloads. It is not cropped, since the crop happens in the browser at the dragged position. The banner on the task page is several cards wide and uses the original, so it stays sharp. It is generated after the response instead of on a queue, so no worker is needed and a file whose contents do not match its extension can no longer fail an upload. Attachments uploaded before this version have no thumbnail yet and are served at full size until `php artisan media-library:regenerate` is run.
-- **New migration**, `add_cover_media_id_to_finisterre_tasks`: run `php artisan finisterre:update` (or publish the migrations and `php artisan migrate`) after upgrading. Applications compiling the package's views also need a fresh `npm run build`.
-- Files on a **private attachments disk are now only served to users who can see their task**. The routes behind `/storage/finisterre-files` used to check one thing besides being logged in: that the user matched the assignee filter (`authenticatable_filter_column`/`_value`). So any user passing it could open any task's files, users restricted to their own tasks were refused the images in those tasks, and with the filter left empty nobody got anything. Each request now goes through the task policy (`viewAny` and `view`), and users limited by `userCanViewOnlyTheirTasks()` only see files from tasks they created. That covers attachments, their card thumbnails and rich editor images.
-- A **rich editor image now belongs to the task it was pasted into**, and is served only to users who can see that task. Every upload is remembered in its uploader's session, and the first description or comment saved from that session with it adds it to the task's new `editor_files` column. Before, any description or comment loading an image was enough, so a user could write another task's image URL into a task of their own and be served it. Until it is saved anywhere, only its uploader is shown it, so it appears in the editor straight away. **New migration**, `add_editor_files_to_finisterre_tasks`. It gives the images already in descriptions and comments to every task loading them, so nothing that could be seen before the upgrade stops loading.
-- The **private routes register themselves** whenever `attachments_disk` is not `public`, so switching the disk is the only step. The `(new FilamentRouteController)()` call earlier versions asked for in `bootstrap/app.php` can stay: it no longer registers the routes a second time. The routes point at controller methods now, so `route:cache` can cache them. The README has a new **Private attachments** section, and the config comment no longer names a controller class that does not exist.
-- New **`finisterre:privatize-attachments`** command for hosts that switched to a private disk after using the public one. Task attachments uploaded before the switch stay on the public disk, and images pasted into descriptions and comments still load from `/storage/…`, where anybody with the link can open them. The command moves the attachments with their conversions, repointing their media rows without changing their ids so card images keep working. It moves the pasted images too and rewrites the HTML to load them through the checked route. It is a dry run unless `--force` is passed, `--keep-originals` copies instead of moving, and it writes straight to the tables, so no task change is logged and nobody is notified. An attachment with a file that cannot be copied stays on the public disk, and the files of it already copied are removed from the private disk rather than left behind untracked.
-- **`finisterre:install` asks whether to store attachments on a private disk**, and **`finisterre:update` offers the switch** to applications still on the public disk. Either one adds a `finisterre` disk to `config/filesystems.php`, found with PHP's tokenizer so comments and strings in the file don't throw it off. It also sets `attachments_disk` in `config/finisterre.php`, publishing that file first if needed, and moves the files already uploaded. Once the disk is private, `finisterre:update` also offers to move anything still left on the public disk. `finisterre:update --check` counts a public disk, and files left behind on it, as outstanding.
-- Fixed the **private attachments disk 404ing anything media library stores in a subdirectory**. The `storage/finisterre-files/{id}/{file}` route stopped at the first slash, so the conversions the card images are served from — `{id}/conversions/{name}-finisterre-card.jpg` — could never be reached on a host using the private `finisterre` disk.
-- Tasks can be **renamed in the panel from the config file**: the new `label` and `plural_label` keys replace the word *Tasks* in the navigation entry, the board title, the breadcrumbs and the resource's own headings, so a host that calls them tickets or incidents no longer has to override the package's translations. Both default to `null`, which keeps the translated wording, and a value is run through the translator so it can be a translation key as well as a literal string.
-- Fixed the **task resource's singular and plural labels rendering as `finisterre.task` / `finisterre.tasks`**: the two lines looked the translation up without the package's `finisterre::` namespace, so the raw key was shown wherever Filament used the resource's own label.
-- Fixed **saving the settings page with SMS notifications or subtask notifications turned off** failing with *Undefined array key "sms_url"* (or `subtasks_notification_delay_minutes`). Fields hidden behind those toggles were left out of the submitted form, so the save handler had nothing to read; they are now submitted hidden too, and keep their stored values.
+- Tasks now carry a **card image**, the way Frello and Trello do: one of a task's attachments is shown full-bleed across
+  the top of its kanban card, so a screenshot or a photo identifies the task without reading it. The first image
+  attached to a task becomes its card image on its own, and the same picture heads the task page and fills a new first
+  column of the tasks table.
+- The card image is **changed and removed from the task page**: every image in the attachments list carries a star — the
+  current card image keeps its star on show, the others reveal one on hover or keyboard focus. Clicking the filled star
+  takes the card image away and leaves it away: a task is allowed to have none, and the automatic pick only ever fires
+  on a task's very first image, so attaching more attachments never quietly puts one back. Deleting the attachment
+  behind a card image clears it too.
+- The card image can be **dragged into place**, the way Notion's page covers are: **Reposition** on the task page
+  banner, drag the picture up or down, **Save position**. The position is stored on the attachment itself, so switching
+  the card image to another picture and back finds it where it was left, and the board card crops at the same spot. A
+  picture no taller than the banner has nothing hidden to reveal and offers no button.
+- Card images on the board and in the table are served from a **new `finisterre-card` conversion**, scaled to 600px wide
+  rather than the original file, so a board of photos is not a column of full-size downloads. It is not cropped, since
+  the crop happens in the browser at the dragged position. The banner on the task page is several cards wide and uses
+  the original, so it stays sharp. It is generated after the response instead of on a queue, so no worker is needed and
+  a file whose contents do not match its extension can no longer fail an upload. Attachments uploaded before this
+  version have no thumbnail yet and are served at full size until `php artisan media-library:regenerate` is run.
+- **New migration**, `add_cover_media_id_to_finisterre_tasks`: run `php artisan finisterre:update` (or publish the
+  migrations and `php artisan migrate`) after upgrading. Applications compiling the package's views also need a fresh
+  `npm run build`.
+- Files on a **private attachments disk are now only served to users who can see their task**. The routes behind
+  `/storage/finisterre-files` used to check one thing besides being logged in: that the user matched the assignee filter
+  (`authenticatable_filter_column`/`_value`). So any user passing it could open any task's files, users restricted to
+  their own tasks were refused the images in those tasks, and with the filter left empty nobody got anything. Each
+  request now goes through the task policy (`viewAny` and `view`), and users limited by `userCanViewOnlyTheirTasks()`
+  only see files from tasks they created. That covers attachments, their card thumbnails and rich editor images.
+- A **rich editor image now belongs to the task it was pasted into**, and is served only to users who can see that task.
+  Every upload is remembered in its uploader's session, and the first description or comment saved from that session
+  with it adds it to the task's new `editor_files` column. Before, any description or comment loading an image was
+  enough, so a user could write another task's image URL into a task of their own and be served it. Until it is saved
+  anywhere, only its uploader is shown it, so it appears in the editor straight away. **New migration**,
+  `add_editor_files_to_finisterre_tasks`. It gives the images already in descriptions and comments to every task loading
+  them, so nothing that could be seen before the upgrade stops loading.
+- The **private routes register themselves** whenever `attachments_disk` is not `public`, so switching the disk is the
+  only step. The `(new FilamentRouteController)()` call earlier versions asked for in `bootstrap/app.php` can stay: it
+  no longer registers the routes a second time. The routes point at controller methods now, so `route:cache` can cache
+  them. The README has a new **Private attachments** section, and the config comment no longer names a controller class
+  that does not exist.
+- New **`finisterre:privatize-attachments`** command for hosts that switched to a private disk after using the public
+  one. Task attachments uploaded before the switch stay on the public disk, and images pasted into descriptions and
+  comments still load from `/storage/…`, where anybody with the link can open them. The command moves the attachments
+  with their conversions, repointing their media rows without changing their ids so card images keep working. It moves
+  the pasted images too and rewrites the HTML to load them through the checked route. It is a dry run unless `--force`
+  is passed, `--keep-originals` copies instead of moving, and it writes straight to the tables, so no task change is
+  logged and nobody is notified. An attachment with a file that cannot be copied stays on the public disk, and the files
+  of it already copied are removed from the private disk rather than left behind untracked.
+- **`finisterre:install` asks whether to store attachments on a private disk**, and **`finisterre:update` offers the
+  switch** to applications still on the public disk. Either one adds a `finisterre` disk to `config/filesystems.php`,
+  found with PHP's tokenizer so comments and strings in the file don't throw it off. It also sets `attachments_disk` in
+  `config/finisterre.php`, publishing that file first if needed, and moves the files already uploaded. Once the disk is
+  private, `finisterre:update` also offers to move anything still left on the public disk. `finisterre:update --check`
+  counts a public disk, and files left behind on it, as outstanding.
+- Fixed the **private attachments disk 404ing anything media library stores in a subdirectory**. The
+  `storage/finisterre-files/{id}/{file}` route stopped at the first slash, so the conversions the card images are served
+  from — `{id}/conversions/{name}-finisterre-card.jpg` — could never be reached on a host using the private `finisterre`
+  disk.
+- Tasks can be **renamed in the panel from the config file**: the new `label` and `plural_label` keys replace the word
+  *Tasks* in the navigation entry, the board title, the breadcrumbs and the resource's own headings, so a host that
+  calls them tickets or incidents no longer has to override the package's translations. Both default to `null`, which
+  keeps the translated wording, and a value is run through the translator so it can be a translation key as well as a
+  literal string.
+- Fixed the **task resource's singular and plural labels rendering as `finisterre.task` / `finisterre.tasks`**: the two
+  lines looked the translation up without the package's `finisterre::` namespace, so the raw key was shown wherever
+  Filament used the resource's own label.
+- Fixed **saving the settings page with SMS notifications or subtask notifications turned off** failing with *Undefined
+  array key "sms_url"* (or `subtasks_notification_delay_minutes`). Fields hidden behind those toggles were left out of
+  the submitted form, so the save handler had nothing to read; they are now submitted hidden too, and keep their stored
+  values.
 
 ## 4.6.1 - 2026-09-08
 
-- `finisterre:install` now **publishes the `tags` and `media` migrations** of spatie/laravel-tags and spatie/laravel-medialibrary when the application has neither the tables nor a published migration for them. Tasks carry tags and attachments, but both packages ship their migration as a stub `migrate` never sees until it is published, so a host that had never used them on its own ended the install with every Finisterre migration run and the board dying on its first query with *relation "tags" does not exist*. Tables that exist count whatever created them, and a published file counts as pending, so nothing is published twice.
-- `finisterre:install` now **offers to create a Filament theme for every panel that has none**, through `php artisan make:filament-theme`, which also registers the theme in `vite.config.js` and on the panel provider. The package's views are compiled by the host's theme, so a panel without one showed the board unstyled no matter how many times `npm run build` ran — and the installer only printed a warning half-way through before declaring the install complete. A panel whose theme is declined is called out again at the end instead. The `@source` lines are now written relative to where each theme file sits, so a theme registered with `viteTheme()` outside `resources/css/filament/` gets the right path.
-- `finisterre:update` reports the two spatie migrations in its table, offers to publish them when their tables are missing, lists a published one that has not run among the pending migrations, and counts a panel without a theme — or a theme missing its `@source` lines — as outstanding under `--check`.
+- `finisterre:install` now **publishes the `tags` and `media` migrations** of spatie/laravel-tags and
+  spatie/laravel-medialibrary when the application has neither the tables nor a published migration for them. Tasks
+  carry tags and attachments, but both packages ship their migration as a stub `migrate` never sees until it is
+  published, so a host that had never used them on its own ended the install with every Finisterre migration run and the
+  board dying on its first query with *relation "tags" does not exist*. Tables that exist count whatever created them,
+  and a published file counts as pending, so nothing is published twice.
+- `finisterre:install` now **offers to create a Filament theme for every panel that has none**, through
+  `php artisan make:filament-theme`, which also registers the theme in `vite.config.js` and on the panel provider. The
+  package's views are compiled by the host's theme, so a panel without one showed the board unstyled no matter how many
+  times `npm run build` ran — and the installer only printed a warning half-way through before declaring the install
+  complete. A panel whose theme is declined is called out again at the end instead. The `@source` lines are now written
+  relative to where each theme file sits, so a theme registered with `viteTheme()` outside `resources/css/filament/`
+  gets the right path.
+- `finisterre:update` reports the two spatie migrations in its table, offers to publish them when their tables are
+  missing, lists a published one that has not run among the pending migrations, and counts a panel without a theme — or
+  a theme missing its `@source` lines — as outstanding under `--check`.
 
 ## 4.6.0 - 2026-09-08
 
-- **4.5.5 shipped 4.5.4's code and is skipped**: its tag was created on the commit the previous release already pointed at, so everything below was written for it but never left the repository. Upgrade straight to 4.6.0; there is nothing in 4.5.5 that is not here.
-- The **Manage tag** workflow can no longer make that mistake. The commit to tag is now optional and defaults to the tip of the branch the run dialog is pointed at, so there is no SHA to copy from the wrong page; and before the tag is written the run refuses a commit that already carries a tag, one that is not on the chosen branch, and one whose `CHANGELOG.md` does not open with the version being tagged. It also publishes the GitHub release itself, taking the title from the tag and the notes from that changelog entry, instead of leaving a release to be drafted by hand with a title borrowed from the commit subject.
-- The **creator avatar** on kanban cards is a little larger (24px instead of 20px), so the face tucked in behind the assignee is legible rather than a smudge.
-- Fixed the **N+1 the board reported on hosts that keep user avatars in a media library** (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). The cards resolved the people on them one lookup at a time, and reading the avatar of each then queried its media relation on its own. Everyone on the board is now fetched in a single query, with the media relation eager-loaded when the host's user model has one.
-- The **breadcrumb on the create form leads back to the board** instead of to the tasks table, like the ones on the task and edit pages already did.
-- The **filter panel on the board is folded away on a phone**, behind a *Filters* button that sits in the page header next to *Create task* and *Settings* and carries a badge with how many filters are on, so a filter left on is still visible while the panel is shut. Below the `lg` breakpoint the four fields stacked into four rows and pushed the columns off the screen; folding and unfolding happens in the browser, with no round trip. A folded panel leaves nothing behind either: the widget row it sits in is taken out of the page, so the board starts right under the header instead of after two stacked gaps. From `lg` up nothing changes: the panel is always open, the button is not rendered, and a tablet turned to landscape opens the panel again.
+- **4.5.5 shipped 4.5.4's code and is skipped**: its tag was created on the commit the previous release already pointed
+  at, so everything below was written for it but never left the repository. Upgrade straight to 4.6.0; there is nothing
+  in 4.5.5 that is not here.
+- The **Manage tag** workflow can no longer make that mistake. The commit to tag is now optional and defaults to the tip
+  of the branch the run dialog is pointed at, so there is no SHA to copy from the wrong page; and before the tag is
+  written the run refuses a commit that already carries a tag, one that is not on the chosen branch, and one whose
+  `CHANGELOG.md` does not open with the version being tagged. It also publishes the GitHub release itself, taking the
+  title from the tag and the notes from that changelog entry, instead of leaving a release to be drafted by hand with a
+  title borrowed from the commit subject.
+- The **creator avatar** on kanban cards is a little larger (24px instead of 20px), so the face tucked in behind the
+  assignee is legible rather than a smudge.
+- Fixed the **N+1 the board reported on hosts that keep user avatars in a media library**
+  (`Model: App\Models\FilamentUser => Relation: App\Models\Media`). The cards resolved the people on them one lookup at
+  a time, and reading the avatar of each then queried its media relation on its own. Everyone on the board is now
+  fetched in a single query, with the media relation eager-loaded when the host's user model has one.
+- The **breadcrumb on the create form leads back to the board** instead of to the tasks table, like the ones on the task
+  and edit pages already did.
+- The **filter panel on the board is folded away on a phone**, behind a *Filters* button that sits in the page header
+  next to *Create task* and *Settings* and carries a badge with how many filters are on, so a filter left on is still
+  visible while the panel is shut. Below the `lg` breakpoint the four fields stacked into four rows and pushed the
+  columns off the screen; folding and unfolding happens in the browser, with no round trip. A folded panel leaves
+  nothing behind either: the widget row it sits in is taken out of the page, so the board starts right under the header
+  instead of after two stacked gaps. From `lg` up nothing changes: the panel is always open, the button is not rendered,
+  and a tablet turned to landscape opens the panel again.
 
 ## 4.5.4 - 2026-09-03
 
-- `finisterre:update` no longer offers to publish the **first migrations in an application the package grew out of**. Those applications built the tasks tables from migrations of their own, under names of their own, so the package's names for them appear neither in the migrations table nor in the schema dump — and the command read that as "never published" and offered to publish and run migrations against tables that have been there for years. It now uses the order the migrations must run in: a later migration can only have run against the schema the earlier ones leave behind, so everything before the last one known to have run counts as applied. The table it prints labels those *in schema*, next to the *squashed* ones a schema dump accounts for by name.
+- `finisterre:update` no longer offers to publish the **first migrations in an application the package grew out of**.
+  Those applications built the tasks tables from migrations of their own, under names of their own, so the package's
+  names for them appear neither in the migrations table nor in the schema dump — and the command read that as "never
+  published" and offered to publish and run migrations against tables that have been there for years. It now uses the
+  order the migrations must run in: a later migration can only have run against the schema the earlier ones leave
+  behind, so everything before the last one known to have run counts as applied. The table it prints labels those *in
+  schema*, next to the *squashed* ones a schema dump accounts for by name.
 
 ## 4.5.2 - 2026-09-03
 
-- The package's Filament resources are now kept out of the panel's **global search** by default, so tasks no longer dilute the results of the host application's own resources. It is a stored setting like the rest: untick *Exclude tasks from global search* in the General section of the settings page, or set `exclude_from_global_search` to `false` in `config/finisterre.php`, to get the old behaviour back. Existing installations pick up the new setting row on the next `finisterre:update`.
-- The **comment form now preselects the task's creator** in the "notify" field, so whoever opened the task hears back about it without the commenter having to remember to pick them. It is a default, not a rule: it can be removed like any other selection, and it is skipped when the creator is the one commenting. The field is reset back to it after each comment is posted.
+- The package's Filament resources are now kept out of the panel's **global search** by default, so tasks no longer
+  dilute the results of the host application's own resources. It is a stored setting like the rest: untick *Exclude
+  tasks from global search* in the General section of the settings page, or set `exclude_from_global_search` to `false`
+  in `config/finisterre.php`, to get the old behaviour back. Existing installations pick up the new setting row on the
+  next `finisterre:update`.
+- The **comment form now preselects the task's creator** in the "notify" field, so whoever opened the task hears back
+  about it without the commenter having to remember to pick them. It is a default, not a rule: it can be removed like
+  any other selection, and it is skipped when the creator is the one commenting. The field is reset back to it after
+  each comment is posted.
 
 ## 4.5.1 - 2026-09-03
 
-- `finisterre:update` now understands **squashed migrations**. In an application that ran `schema:dump --prune`, the Finisterre migrations it swallowed have no file left in `database/migrations` — only a row in the migrations table and the `INSERT` that recreates it in `database/schema`. The command used to read those as never published, offer to publish them, and then offer to run the fresh copies against tables that already exist. It now matches migrations by base name against both the migrations table and the schema dump, lists them as *squashed* in the table it prints, and leaves them alone. When it does publish a genuinely missing migration, it throws away the copies `vendor:publish` makes of the squashed ones in the same pass.
-- `finisterre:update` also warns when a published migration already ran under a different file name — a copy published after the original was squashed away, which `migrate` would run a second time — and offers to delete it. `--check` counts it as outstanding.
-- The scheduled date on the **edit comment** form now shows in 24-hour format like the create form: it was falling back to Filament's native browser picker, which renders 12-hour AM/PM. It now uses the same non-native picker, calendar icon and `d/m/y H:i` display format.
+- `finisterre:update` now understands **squashed migrations**. In an application that ran `schema:dump --prune`, the
+  Finisterre migrations it swallowed have no file left in `database/migrations` — only a row in the migrations table and
+  the `INSERT` that recreates it in `database/schema`. The command used to read those as never published, offer to
+  publish them, and then offer to run the fresh copies against tables that already exist. It now matches migrations by
+  base name against both the migrations table and the schema dump, lists them as *squashed* in the table it prints, and
+  leaves them alone. When it does publish a genuinely missing migration, it throws away the copies `vendor:publish`
+  makes of the squashed ones in the same pass.
+- `finisterre:update` also warns when a published migration already ran under a different file name — a copy published
+  after the original was squashed away, which `migrate` would run a second time — and offers to delete it. `--check`
+  counts it as outstanding.
+- The scheduled date on the **edit comment** form now shows in 24-hour format like the create form: it was falling back
+  to Filament's native browser picker, which renders 12-hour AM/PM. It now uses the same non-native picker, calendar
+  icon and `d/m/y H:i` display format.
 
 ## 4.5.0 - 2026-09-02
 
-- Board cards now show **who created the task**, not just who it is assigned to: the assignee's circle leads the stack and a smaller, dimmed one for the creator tucks in behind its right edge. It only appears when the two are different people, so a self-assigned task's card looks exactly as it did before, and a task nobody is assigned to now shows its creator instead of no avatar at all. Both circles carry a labelled tooltip ("Created by: …" / "Assigned to: …") where the assignee used to show a bare name. The creator's name comes from a second correlated subselect in the board query, next to the existing one for the assignee, so the board still loads the whole column in one query.
-- The **create form now reads like the task page** it leads to: the title on top, then a row of three selectors where the page shows its badges (priority as inline coloured buttons in the same colours as its badge, assignee and tags with the same icons), and below them the description and attachments paired in one card, as on the task page. Priority is no longer a dropdown, so the four levels are one click away and the chosen one is coloured. Reporters, who may not assign, get that row in two columns so it still fills the width.
-- The description editor is no longer a one-line box: it opens about eight lines tall on both the create and the edit form, so there is room to write without dragging it open first.
-- The due date is gone from the create form: like the status, it is set from the task page, on the badge that shows it. New tasks are created without one.
-- The status and priority enums now declare their colour to Filament, so the badges in the tasks table are coloured like the ones on the task page and the board instead of all grey.
+- Board cards now show **who created the task**, not just who it is assigned to: the assignee's circle leads the stack
+  and a smaller, dimmed one for the creator tucks in behind its right edge. It only appears when the two are different
+  people, so a self-assigned task's card looks exactly as it did before, and a task nobody is assigned to now shows its
+  creator instead of no avatar at all. Both circles carry a labelled tooltip ("Created by: …" / "Assigned to: …") where
+  the assignee used to show a bare name. The creator's name comes from a second correlated subselect in the board query,
+  next to the existing one for the assignee, so the board still loads the whole column in one query.
+- The **create form now reads like the task page** it leads to: the title on top, then a row of three selectors where
+  the page shows its badges (priority as inline coloured buttons in the same colours as its badge, assignee and tags
+  with the same icons), and below them the description and attachments paired in one card, as on the task page. Priority
+  is no longer a dropdown, so the four levels are one click away and the chosen one is coloured. Reporters, who may not
+  assign, get that row in two columns so it still fills the width.
+- The description editor is no longer a one-line box: it opens about eight lines tall on both the create and the edit
+  form, so there is room to write without dragging it open first.
+- The due date is gone from the create form: like the status, it is set from the task page, on the badge that shows it.
+  New tasks are created without one.
+- The status and priority enums now declare their colour to Filament, so the badges in the tasks table are coloured like
+  the ones on the task page and the board instead of all grey.
 
 ## 4.4.2 - 2026-09-02
 
-- Fixed an urgent task sending three SMS instead of one: the retry loop around the SMS request had no exit on success, so it ran all three attempts every time.
-- The SMS now says who created the task ("[Urgent] task Fix the boiler. Created by: John Doe"). It uses its own `notification.sms` translation key, added in English, Spanish and Catalan, instead of borrowing the email subject line.
-- Fixed the test suite on the oldest supported Laravel 12: the subtask digest tests released the job's unique lock with `Cache::getStore()->flushLocks()`, which only exists in recent 12.x patches. They now release it through `UniqueLock`, exactly as a queue worker does.
-- Fixed the SMS test asserting on the creator's name: only the Filament suite boots the package service provider, so `__('finisterre::…')` came back as the raw key everywhere else and no notification text ever rendered. The base `TestCase` now registers the package translations.
+- Fixed an urgent task sending three SMS instead of one: the retry loop around the SMS request had no exit on success,
+  so it ran all three attempts every time.
+- The SMS now says who created the task ("[Urgent] task Fix the boiler. Created by: John Doe"). It uses its own
+  `notification.sms` translation key, added in English, Spanish and Catalan, instead of borrowing the email subject
+  line.
+- Fixed the test suite on the oldest supported Laravel 12: the subtask digest tests released the job's unique lock with
+  `Cache::getStore()->flushLocks()`, which only exists in recent 12.x patches. They now release it through `UniqueLock`,
+  exactly as a queue worker does.
+- Fixed the SMS test asserting on the creator's name: only the Filament suite boots the package service provider, so
+  `__('finisterre::…')` came back as the raw key everywhere else and no notification text ever rendered. The base
+  `TestCase` now registers the package translations.
 
 ## 4.4.1 - 2026-09-02
 
-- A task set to done outside the board (the status quick action on the task page, or the host application) now jumps to the top of the done column instead of keeping the position it had in its previous column: the most recently finished task is the first one you see. Dragging a card into the done column still leaves it exactly where it was dropped.
-- Fixed the attachments quick-action test replacing the modal's file state instead of adding to it, which read as removing the attachment the task already had and failed the suite (and with it `composer ci:check`, so every push).
-- Fixed a 500 (`trim(): Argument #1 ($string) must be of type string, array given`) when going back to the board from a task with the browser's back gesture. The board page kept its filters in a public `filters` property, and Filament forwards a page property with exactly that name to every widget as a `pageFilters` mount param; the filter widget has no such property, so on the fresh page load the array ended up as an HTML attribute of the widget's lazy-loading placeholder. The property is now `taskFilters`, which also keeps it clear of the `filters` query-string key flowforge's board already uses for its own table filters. Bookmarked board URLs carrying the old `filters[...]` parameter still open, they just start with no filters applied.
-- Going back to the board no longer unhides the archived tasks: the show-archived toggle arrives from the query string as the string `"false"`, which was read as truthy.
+- A task set to done outside the board (the status quick action on the task page, or the host application) now jumps to
+  the top of the done column instead of keeping the position it had in its previous column: the most recently finished
+  task is the first one you see. Dragging a card into the done column still leaves it exactly where it was dropped.
+- Fixed the attachments quick-action test replacing the modal's file state instead of adding to it, which read as
+  removing the attachment the task already had and failed the suite (and with it `composer ci:check`, so every push).
+- Fixed a 500 (`trim(): Argument #1 ($string) must be of type string, array given`) when going back to the board from a
+  task with the browser's back gesture. The board page kept its filters in a public `filters` property, and Filament
+  forwards a page property with exactly that name to every widget as a `pageFilters` mount param; the filter widget has
+  no such property, so on the fresh page load the array ended up as an HTML attribute of the widget's lazy-loading
+  placeholder. The property is now `taskFilters`, which also keeps it clear of the `filters` query-string key
+  flowforge's board already uses for its own table filters. Bookmarked board URLs carrying the old `filters[...]`
+  parameter still open, they just start with no filters applied.
+- Going back to the board no longer unhides the archived tasks: the show-archived toggle arrives from the query string
+  as the string `"false"`, which was read as truthy.
 
 ## 4.4.0 - 2026-09-02
 
-- Clicking a task now opens a **task page** instead of the edit form: the board card, the list row, the redirect after creating or saving a task and every notification link land there. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel, and the comments right below with the full width.
-- Each badge on the task page is a quick action: status, priority and assignee change with one click from a dropdown, while tags, due date and attachments open a small modal (tags can still be created on the spot, and the attachments modal both uploads new files and removes existing ones). They persist exactly like the form did (observer, `updated_at`, notifications), and the page updates in place, so the board reflects the change on the next load. Users without `update` rights, or reporters looking at their own issues, see the same strip without the actions.
-- Image attachments are shown as thumbnails on the task page and open in a lightbox built on Filament's own modal; other files keep their open and download links.
-- The edit form is trimmed to title, description and attachments; everything else lives on the task page. Saving returns to the task page. Archive and unarchive moved to the task page header next to Edit and Delete.
-- The package's notification links now target the `...resources.finisterre-tasks.view` route. The edit route still exists, so hosts that linked to it directly keep working.
-- Added the `edit_task` translation the edit page breadcrumb already referenced, plus the new labels, in English, Spanish and Catalan.
-- Development: a tracked `.githooks/pre-push` now runs the new `composer ci:check` (Pint in check mode, PHPStan, the test suite) before every push, so a push that CI would reject stops locally. `composer install` wires the clone up to it; `git push --no-verify` skips it.
+- Clicking a task now opens a **task page** instead of the edit form: the board card, the list row, the redirect after
+  creating or saving a task and every notification link land there. It shows the title as heading, a strip of badges for
+  status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks
+  panel, and the comments right below with the full width.
+- Each badge on the task page is a quick action: status, priority and assignee change with one click from a dropdown,
+  while tags, due date and attachments open a small modal (tags can still be created on the spot, and the attachments
+  modal both uploads new files and removes existing ones). They persist exactly like the form did (observer,
+  `updated_at`, notifications), and the page updates in place, so the board reflects the change on the next load. Users
+  without `update` rights, or reporters looking at their own issues, see the same strip without the actions.
+- Image attachments are shown as thumbnails on the task page and open in a lightbox built on Filament's own modal; other
+  files keep their open and download links.
+- The edit form is trimmed to title, description and attachments; everything else lives on the task page. Saving returns
+  to the task page. Archive and unarchive moved to the task page header next to Edit and Delete.
+- The package's notification links now target the `...resources.finisterre-tasks.view` route. The edit route still
+  exists, so hosts that linked to it directly keep working.
+- Added the `edit_task` translation the edit page breadcrumb already referenced, plus the new labels, in English,
+  Spanish and Catalan.
+- Development: a tracked `.githooks/pre-push` now runs the new `composer ci:check` (Pint in check mode, PHPStan, the
+  test suite) before every push, so a push that CI would reject stops locally. `composer install` wires the clone up to
+  it; `git push --no-verify` skips it.
 
 ## 4.3.0 - 2026-09-01
 
-- Subtask changes now notify the task's assignee when somebody else makes them. Edits are grouped: the first change opens a five-minute window (configurable, and editable from the settings page) and everything done inside it arrives as one digest instead of one email per subtask. Additions, renames, ticks and deletions are all covered. The digest reports the net change over the window — a subtask added and deleted, a tick undone, or a rename reverted is never mentioned — because it diffs a snapshot carried in the queued job against the live checklist, so no extra table is involved. Grouping requires a queue worker and a shared, lock-capable cache store; see the README.
-- Fixed `add_task_changes_table.php.stub` starting with a stray `The mi` before its opening PHP tag, which every host that published it emitted as inline output.
+- Subtask changes now notify the task's assignee when somebody else makes them. Edits are grouped: the first change
+  opens a five-minute window (configurable, and editable from the settings page) and everything done inside it arrives
+  as one digest instead of one email per subtask. Additions, renames, ticks and deletions are all covered. The digest
+  reports the net change over the window — a subtask added and deleted, a tick undone, or a rename reverted is never
+  mentioned — because it diffs a snapshot carried in the queued job against the live checklist, so no extra table is
+  involved. Grouping requires a queue worker and a shared, lock-capable cache store; see the README.
+- Fixed `add_task_changes_table.php.stub` starting with a stray `The mi` before its opening PHP tag, which every host
+  that published it emitted as inline output.
 - `finisterre:uninstall` now also drops the `finisterre_subtasks` table, which it had never included.
 
 ## 4.2.1 - 2026-08-25
 
-- Fixed the subtasks section showing up on the task create form: its `->hidden()` call was overwriting the preceding `->hiddenOn('create')`, so both conditions now live in a single callback.
+- Fixed the subtasks section showing up on the task create form: its `->hidden()` call was overwriting the preceding
+  `->hiddenOn('create')`, so both conditions now live in a single callback.
 
 ## 4.2.0 - 2026-08-24
 
-- New `php artisan finisterre:update` command for upgrades: it tables every migration the package ships against the file you published for it and whether it has run, then offers to publish the missing ones, run them, seed settings added by the new version, re-publish the Filament assets and rebuild the theme. It also reports added/dropped config keys and theme files missing their `@source` lines. `--check` reports without changing anything and exits non-zero when something is outstanding.
+- New `php artisan finisterre:update` command for upgrades: it tables every migration the package ships against the file
+  you published for it and whether it has run, then offers to publish the missing ones, run them, seed settings added by
+  the new version, re-publish the Filament assets and rebuild the theme. It also reports added/dropped config keys and
+  theme files missing their `@source` lines. `--check` reports without changing anything and exits non-zero when
+  something is outstanding.
 - The `finisterre:install` and `finisterre:uninstall` commands now use Laravel Prompts for every question and message.
 
 ## 4.1.1 - 2026-08-24
 
-- Fixed a parse error in `tests/Feature/ConfigDeepMergeTest.php` that broke the test suite on PHP 8.3; parenthesisless `new` chaining is PHP 8.4 only.
+- Fixed a parse error in `tests/Feature/ConfigDeepMergeTest.php` that broke the test suite on PHP 8.3; parenthesisless
+  `new` chaining is PHP 8.4 only.
 
 ## 4.1.0 - 2026-08-21
 
-Subtasks moved from a `subtasks` json column on `finisterre_tasks` to their own `finisterre_subtasks` table, exposed as a `FinisterreSubtask` model and a `subtasks()` HasMany relation on `FinisterreTask`. They remain one level deep — a subtask has no children of its own.
+Subtasks moved from a `subtasks` json column on `finisterre_tasks` to their own `finisterre_subtasks` table, exposed as
+a `FinisterreSubtask` model and a `subtasks()` HasMany relation on `FinisterreTask`. They remain one level deep — a
+subtask has no children of its own.
 
-- The custom `SubtasksField` form component and its Alpine view are gone, replaced by a dedicated `FinisterreSubtasksComponent` Livewire panel embedded in the task form. Every change — adding, ticking, renaming, deleting and drag-reordering — is written to the database immediately, so subtasks no longer depend on saving the task. The old field entangled the whole array and mutated it in place, which could silently drop edits, and it persisted a blank row for every "add" click that was never filled in; blank titles are now rejected outright.
+- The custom `SubtasksField` form component and its Alpine view are gone, replaced by a dedicated
+  `FinisterreSubtasksComponent` Livewire panel embedded in the task form. Every change — adding, ticking, renaming,
+  deleting and drag-reordering — is written to the database immediately, so subtasks no longer depend on saving the
+  task. The old field entangled the whole array and mutated it in place, which could silently drop edits, and it
+  persisted a blank row for every "add" click that was never filled in; blank titles are now rejected outright.
 - A completed subtask's title is struck through as soon as the box is ticked.
-- The subtasks panel lives in its own collapsible "Subtasks" section, folded shut when the task has none and open when it does. Its header carries a done/total badge — hidden while there are no subtasks — that keeps counting along as boxes are ticked, without reopening the task.
-- The subtasks panel is hidden while creating a task, since there is no task yet to attach them to; it appears once the task is saved.
-- The kanban card shows a done/total counter beside the attachment and comment counters, and nothing at all when a task has no subtasks.
+- The subtasks panel lives in its own collapsible "Subtasks" section, folded shut when the task has none and open when
+  it does. Its header carries a done/total badge — hidden while there are no subtasks — that keeps counting along as
+  boxes are ticked, without reopening the task.
+- The subtasks panel is hidden while creating a task, since there is no task yet to attach them to; it appears once the
+  task is saved.
+- The kanban card shows a done/total counter beside the attachment and comment counters, and nothing at all when a task
+  has no subtasks.
 - New `finisterre.subtasks.table_name` config key.
 
-Upgrading: run `php artisan vendor:publish --tag=finisterre-migrations` and `php artisan migrate`. The new migration copies every existing json subtask into the new table (skipping blank ones) before dropping the column, and its `down()` reverses both.
+Upgrading: run `php artisan vendor:publish --tag=finisterre-migrations` and `php artisan migrate`. The new migration
+copies every existing json subtask into the new table (skipping blank ones) before dropping the column, and its `down()`
+reverses both.
 
-Note for anyone reading or writing subtasks outside the task form: `$task->subtasks` now returns a `Collection` of `FinisterreSubtask` models instead of a plain array, and `subtasks` is no longer fillable or cast on `FinisterreTask`.
+Note for anyone reading or writing subtasks outside the task form: `$task->subtasks` now returns a `Collection` of
+`FinisterreSubtask` models instead of a plain array, and `subtasks` is no longer fillable or cast on `FinisterreTask`.
 
 ## 4.0.5 - 2026-07-10
 
-Fix the "task created" notification email never arriving for tasks saved without a description. `toMail()` only renders the description on creation (an update renders the changes list instead), and it passed the nullable `description` straight into `embedImages()`, which was typed `string` — so the queued notification died with a `TypeError` and landed in `failed_jobs`. `embedImages()` now accepts `?string` and returns an empty string for blank input, and `toMail()` omits the description line entirely when there is no description.
+Fix the "task created" notification email never arriving for tasks saved without a description. `toMail()` only renders
+the description on creation (an update renders the changes list instead), and it passed the nullable `description`
+straight into `embedImages()`, which was typed `string` — so the queued notification died with a `TypeError` and landed
+in `failed_jobs`. `embedImages()` now accepts `?string` and returns an empty string for blank input, and `toMail()`
+omits the description line entirely when there is no description.
 
 ## 4.0.4 - 2026-07-08
 
-Extracted the comment actions out of `FinisterreCommentsComponent` into their own classes, `Filament\Actions\EditCommentAction` and `Filament\Actions\PostponeCommentAction`.
+Extracted the comment actions out of `FinisterreCommentsComponent` into their own classes,
+`Filament\Actions\EditCommentAction` and `Filament\Actions\PostponeCommentAction`.
 
-Added a hidden `alt+y` shortcut on the comment composer that postpones the comment's notification to a random minute 4-5 hours out, clamped to working hours: past 21:00 it rolls to 07:00 the next morning, before 07:00 it starts from 07:00 the same day, and it never lands exactly on the hour.
+Added a hidden `alt+y` shortcut on the comment composer that postpones the comment's notification to a random minute 4-5
+hours out, clamped to working hours: past 21:00 it rolls to 07:00 the next morning, before 07:00 it starts from 07:00
+the same day, and it never lands exactly on the hour.
 
 ## 4.0.3 - 2026-07-06
 
-Config published by a host app is now merged recursively over the package defaults, so an app only has to declare the keys it actually overrides — including nested ones such as `finisterre.comments.icons.delete` — instead of redeclaring every sibling. `FinisterreServiceProvider::registerPackageConfigs()` overrides spatie/laravel-package-tools' shallow merge for this. List arrays and scalars are still replaced wholesale, so a shorter published list no longer inherits the package's trailing entries the way Laravel's own `replaceConfigRecursivelyFrom()` would.
+Config published by a host app is now merged recursively over the package defaults, so an app only has to declare the
+keys it actually overrides — including nested ones such as `finisterre.comments.icons.delete` — instead of redeclaring
+every sibling. `FinisterreServiceProvider::registerPackageConfigs()` overrides spatie/laravel-package-tools' shallow
+merge for this. List arrays and scalars are still replaced wholesale, so a shorter published list no longer inherits the
+package's trailing entries the way Laravel's own `replaceConfigRecursivelyFrom()` would.
 
 ## 4.0.2 - 2026-07-05
 
@@ -164,34 +398,64 @@ Added the package logo and displayed it in the README.
 
 ## 4.0.0 - 2026-07-01
 
-**Breaking:** Renamed the package from `buzkall/finisterre` to `arzcode/finisterre` and the PHP namespace from `Buzkall\Finisterre` to `Arzcode\Finisterre`. Consumers must update their `composer require` to `arzcode/finisterre` and replace any `use Buzkall\Finisterre\…` imports (plugin, traits, contracts, policies, actions) with `Arzcode\Finisterre\…`. Also update the Tailwind `@source` line to `vendor/arzcode/finisterre/resources/views`. All other references (homepage, author, published asset paths under `public/css|js/arzcode/finisterre`) were updated to match.
+**Breaking:** Renamed the package from `buzkall/finisterre` to `arzcode/finisterre` and the PHP namespace from
+`Buzkall\Finisterre` to `Arzcode\Finisterre`. Consumers must update their `composer require` to `arzcode/finisterre` and
+replace any `use Buzkall\Finisterre\…` imports (plugin, traits, contracts, policies, actions) with
+`Arzcode\Finisterre\…`. Also update the Tailwind `@source` line to `vendor/arzcode/finisterre/resources/views`. All
+other references (homepage, author, published asset paths under `public/css|js/arzcode/finisterre`) were updated to
+match.
 
-Documentation: replaced the placeholder tagline with a real package description, added a **Settings page** section documenting the in-app configuration page (and the `userCanConfigureFinisterre()` gate), and trimmed duplicated `filament:assets` / config-publish instructions from the README.
+Documentation: replaced the placeholder tagline with a real package description, added a **Settings page** section
+documenting the in-app configuration page (and the `userCanConfigureFinisterre()` gate), and trimmed duplicated
+`filament:assets` / config-publish instructions from the README.
 
 ## 3.2.2 - 2026-07-01
 
-Task notification emails now include the related record (the polymorphic `subject`) when a task was reported against one, showing its resource type, label, and a deep link when available — the same information already displayed in the task view. `FinisterreTask::subjectReportLink()` now resolves the Filament resource defensively so it renders safely inside queued notifications where no panel is bootstrapped.
+Task notification emails now include the related record (the polymorphic `subject`) when a task was reported against
+one, showing its resource type, label, and a deep link when available — the same information already displayed in the
+task view. `FinisterreTask::subjectReportLink()` now resolves the Filament resource defensively so it renders safely
+inside queued notifications where no panel is bootstrapped.
 
 Fix two CI failures:
 
-- **PHPStan**: `Call to an undefined method Illuminate\Database\Eloquent\Model::notify()` on `FinisterreTaskComment::deliver()`. The `creator()` relation targets the configurable `finisterre.authenticatable` model, which PHPStan resolves to the base `Eloquent\Model` (the `notify()` method comes from the app user's `Notifiable` trait). Added the same `@phpstan-ignore-line method.notFound` annotation already used in `FinisterreTaskObserver`.
-- **run-tests**: dependency install failed on the Windows + Laravel 13 + `prefer-stable` job. The Windows runner stripped the `^` from the `pestphp/pest*` version constraints passed to `composer require`, turning `^4.0` into `4.0` (i.e. `4.0.*`) and pinning `pest-plugin-laravel` to `4.0.0`, which has no Laravel 13 support. Since these constraints are identical across the whole matrix and already declared in `composer.json` `require-dev`, removed them from the CI `composer require` line (and the matrix `include`) so `composer update` resolves them from `composer.json` instead.
+- **PHPStan**: `Call to an undefined method Illuminate\Database\Eloquent\Model::notify()` on
+  `FinisterreTaskComment::deliver()`. The `creator()` relation targets the configurable `finisterre.authenticatable`
+  model, which PHPStan resolves to the base `Eloquent\Model` (the `notify()` method comes from the app user's
+  `Notifiable` trait). Added the same `@phpstan-ignore-line method.notFound` annotation already used in
+  `FinisterreTaskObserver`.
+- **run-tests**: dependency install failed on the Windows + Laravel 13 + `prefer-stable` job. The Windows runner
+  stripped the `^` from the `pestphp/pest*` version constraints passed to `composer require`, turning `^4.0` into `4.0`
+  (i.e. `4.0.*`) and pinning `pest-plugin-laravel` to `4.0.0`, which has no Laravel 13 support. Since these constraints
+  are identical across the whole matrix and already declared in `composer.json` `require-dev`, removed them from the CI
+  `composer require` line (and the matrix `include`) so `composer update` resolves them from `composer.json` instead.
 
 ## 3.2.1 - 2026-06-22
 
-Fix the **"Asignada a" (assignee)** select showing no options when the assignable-users filter value was configured with more than one value through the settings page. The settings page stores `authenticatable_filter_value` as a comma-separated string (e.g. `super_admin,admin_l1`), but `AuthenticatableFilter::values()` wrapped the whole string in a single-element array, producing `whereIn('role', ['super_admin,admin_l1'])` which matched zero rows. It now splits comma-separated strings into individual, trimmed values. Added a helper text to the settings field documenting the comma-separated format.
+Fix the **"Asignada a" (assignee)** select showing no options when the assignable-users filter value was configured with
+more than one value through the settings page. The settings page stores `authenticatable_filter_value` as a
+comma-separated string (e.g. `super_admin,admin_l1`), but `AuthenticatableFilter::values()` wrapped the whole string in
+a single-element array, producing `whereIn('role', ['super_admin,admin_l1'])` which matched zero rows. It now splits
+comma-separated strings into individual, trimmed values. Added a helper text to the settings field documenting the
+comma-separated format.
 
 ## 3.2.0 - 2026-06-17
 
-When a scheduled (programmed) comment is delivered, its author now receives a confirmation email that the programmed message has been sent, in addition to the recipients' comment notification.
+When a scheduled (programmed) comment is delivered, its author now receives a confirmation email that the programmed
+message has been sent, in addition to the recipients' comment notification.
 
-Fix the `SettingsMigrationTest` failure on the `prefer-lowest` CI matrix. The test loaded the spatie/laravel-settings stub via `base_path()`, which under Testbench resolves to the skeleton app (`vendor/orchestra/testbench-core/laravel`) rather than the package root. Switched to a `__DIR__`-relative path, matching the other migration includes in the suite.
+Fix the `SettingsMigrationTest` failure on the `prefer-lowest` CI matrix. The test loaded the spatie/laravel-settings
+stub via `base_path()`, which under Testbench resolves to the skeleton app (`vendor/orchestra/testbench-core/laravel`)
+rather than the package root. Switched to a `__DIR__`-relative path, matching the other migration includes in the suite.
 
 ## 3.1.1 - 2026-06-16
 
-Rename the `FinisterrePlugin::canConfigureFinisterre(bool|Closure)` config callback to `userCanConfigureFinisterre(bool|Closure)` to match the `userCan*` naming of the other plugin callbacks.
+Rename the `FinisterrePlugin::canConfigureFinisterre(bool|Closure)` config callback to
+`userCanConfigureFinisterre(bool|Closure)` to match the `userCan*` naming of the other plugin callbacks.
 
-Fix the CI test suite, which failed on every run with exit code 1 and no test output. The `<coverage><report>` block in `phpunit.xml.dist` forced Pest 4 to collect code coverage on every run, which aborts when no coverage driver is installed (CI sets up PHP with `coverage: none`). Removed the report outputs from the config; `<source>` is kept so `--coverage` still works when a driver is available.
+Fix the CI test suite, which failed on every run with exit code 1 and no test output. The `<coverage><report>` block in
+`phpunit.xml.dist` forced Pest 4 to collect code coverage on every run, which aborts when no coverage driver is
+installed (CI sets up PHP with `coverage: none`). Removed the report outputs from the config; `<source>` is kept so
+`--coverage` still works when a driver is available.
 
 ## 3.1.0 - 2026-06-13
 
@@ -207,7 +471,8 @@ half-installed plugin no longer activates and 500s the panel on its not-yet-regi
 an existing route in the host panel (its page route then isn't registered) the board is hidden instead of crashing the
 whole panel — re-run the installer to pick a free slug. The settings page is no longer shown in the navigation menu —
 it's opened from a **Settings** header action on the Kanban board instead. New
-`FinisterrePlugin::userCanConfigureFinisterre(bool|Closure)` config callback gates both that header action and access to the
+`FinisterrePlugin::userCanConfigureFinisterre(bool|Closure)` config callback gates both that header action and access to
+the
 settings page (`canConfigure()`), defaulting to `true`.
 
 Make the installer self-healing for the settings rows. The settings migration only seeds the `finisterre.*` rows the
@@ -254,8 +519,8 @@ gated by `FinisterrePlugin::canViewAllTasks()` and is always registered (even wh
 re-enabled from the UI. The plugin now **always registers** its routes (settings page, task resource and Kanban board)
 and lets `active` gate access/navigation via each `canAccess()` (read at request time once config is hydrated) instead
 of gating route registration — registering on a DB read was fragile and could make `filament.admin.pages.tasks`
-undefined, 500-ing any panel that references that route. The installer now publishes/runs the settings migration (
-skipping it when the host already has a `settings` table), prompts for the task-board URL path (probing the registered
+undefined, 500-ing any panel that references that route. The installer now publishes/runs the settings migration
+(skipping it when the host already has a `settings` table), prompts for the task-board URL path (probing the registered
 routes for a free path so it suggests the canonical `admin/tasks`, falling back to `admin/finisterre` and then
 `admin/finisterre-2`, `admin/finisterre-3`, … when the host already serves the earlier ones — rather than the stored
 slug, which `SettingsConfig` would resurface from a prior install; the probe ignores Finisterre's own routes so a
@@ -403,8 +668,8 @@ interference.
 
 Show all tags on the kanban board cards instead of only the first one.
 
-Fix PostgreSQL error when editing a task with tags. The Filament tags `Select` no longer relies on `->relationship()` (
-which triggers `select distinct tags.*` over json columns on PG); options load and tag sync are handled explicitly.
+Fix PostgreSQL error when editing a task with tags. The Filament tags `Select` no longer relies on `->relationship()`
+(which triggers `select distinct tags.*` over json columns on PG); options load and tag sync are handled explicitly.
 
 ## 2.0.18 - 2026-05-12
 

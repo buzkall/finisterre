@@ -45,6 +45,8 @@ class TasksKanbanBoard extends BoardPage
     #[Url]
     public ?array $taskFilters = null;
 
+    protected string $view = 'finisterre::filament.pages.tasks-kanban-board';
+
     protected static string|null|BackedEnum $navigationIcon = Heroicon::OutlinedExclamationTriangle;
     protected $listeners = [
         'commentCreated' => '$refresh',
