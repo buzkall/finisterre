@@ -133,14 +133,16 @@ class UpdateCommand extends Command
      * Tasks carry tags and attachments, so the tables of spatie/laravel-tags
      * and spatie/laravel-medialibrary have to exist too. Their migrations are
      * stubs `migrate` only sees once published; a host that never used those
-     * packages on its own may never have done so.
+     * packages on its own may never have done so. The same goes for Laravel's
+     * notifications table, which the panel notifications tasks send are
+     * stored in.
      */
     protected function handleDependencyMigrations(bool $check): int
     {
         $missing = DependencyMigrations::missing();
 
         if ($missing === []) {
-            info('The tags and media tables Finisterre relies on are in place, or their migrations are published.');
+            info('The tags, media and notifications tables Finisterre relies on are in place, or their migrations are published.');
 
             return 0;
         }

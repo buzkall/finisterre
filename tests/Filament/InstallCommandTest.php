@@ -25,7 +25,7 @@ beforeEach(function() {
     // The suite creates these by hand so the pages under test can query them.
     // Drop them here: an application installing Finisterre for the first time
     // has neither the tables nor the migrations that create them.
-    foreach (['taggables', 'tags', 'media'] as $table) {
+    foreach (['taggables', 'tags', 'media', 'notifications'] as $table) {
         Schema::dropIfExists($table);
     }
 
@@ -83,7 +83,7 @@ it('switches attachments to a private disk when asked', function() {
     }
 });
 
-it('publishes the spatie tags and media migrations an application does not have yet', function() {
+it('publishes the tags, media and notifications migrations an application does not have yet', function() {
     ($this->install)()
         ->expectsConfirmation('The admin panel has no theme at resources/css/filament/admin/theme.css. Create one now with `php artisan make:filament-theme admin`?', 'no')
         ->expectsConfirmation('Would you like to run `npm run build` now?', 'no')
@@ -91,16 +91,18 @@ it('publishes the spatie tags and media migrations an application does not have 
 
     expect(PackageMigrations::publishedFile('create_tag_tables'))->not->toBeNull()
         ->and(PackageMigrations::publishedFile('create_media_table'))->not->toBeNull()
+        ->and(PackageMigrations::publishedFile('create_notifications_table'))->not->toBeNull()
         ->and(DependencyMigrations::missing())->toBe([]);
 });
 
-it('leaves the spatie migrations alone when the tables are already there', function() {
+it('leaves the dependency migrations alone when the tables are already there', function() {
     Schema::create('tags', fn($table) => $table->id());
     Schema::create('taggables', fn($table) => $table->id());
     Schema::create('media', fn($table) => $table->id());
+    Schema::create('notifications', fn($table) => $table->id());
 
     ($this->install)()
-        ->expectsOutputToContain('The tags and media tables Finisterre relies on are in place')
+        ->expectsOutputToContain('The tags, media and notifications tables Finisterre relies on are in place')
         ->expectsConfirmation('The admin panel has no theme at resources/css/filament/admin/theme.css. Create one now with `php artisan make:filament-theme admin`?', 'no')
         ->expectsConfirmation('Would you like to run `npm run build` now?', 'no')
         ->assertSuccessful();

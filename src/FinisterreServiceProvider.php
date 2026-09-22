@@ -270,14 +270,16 @@ class FinisterreServiceProvider extends PackageServiceProvider
      * and spatie/laravel-medialibrary have to exist too. Both packages ship
      * their migration as a stub that `migrate` only sees once published, and a
      * host that never used them has no reason to have done so — publish what
-     * neither the database nor database/migrations already accounts for.
+     * neither the database nor database/migrations already accounts for. The
+     * same goes for Laravel's notifications table, which the panel
+     * notifications tasks send are stored in.
      */
     protected function publishDependencyMigrations(InstallCommand $command): void
     {
         $missing = DependencyMigrations::missing();
 
         if ($missing === []) {
-            note('The tags and media tables Finisterre relies on are in place, or their migrations are already published.');
+            note('The tags, media and notifications tables Finisterre relies on are in place, or their migrations are already published.');
 
             return;
         }
@@ -832,12 +834,25 @@ class FinisterreServiceProvider extends PackageServiceProvider
         return str_starts_with($absolutePath, $base) ? substr($absolutePath, strlen($base)) : $absolutePath;
     }
 
+    /**
+     * Laravel's notifications table, published only when the host has none —
+     * see DependencyMigrations.
+     */
+    public function registerNotificationsMigration(): void
+    {
+        $this->publishes([
+            __DIR__ . '/../database/dependencies/create_notifications_table.php.stub' => database_path('migrations/' . date('Y_m_d_His') . '_create_notifications_table.php'),
+        ], DependencyMigrations::NOTIFICATIONS_TAG);
+    }
+
     public function packageBooted(): void
     {
         // Make the package's settings migration discoverable by `migrate` and
         // register the settings class so spatie/laravel-settings can cache it.
         $this->loadMigrationsFrom(__DIR__ . '/../database/settings');
         config()->push('settings.settings', FinisterreSettings::class);
+
+        $this->registerNotificationsMigration();
 
         // Let the database settings override the config-file defaults.
         SettingsConfig::apply();

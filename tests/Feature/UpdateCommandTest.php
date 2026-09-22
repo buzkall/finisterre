@@ -15,16 +15,16 @@ beforeEach(function() {
     // command on its own — that is all these tests exercise.
     $this->app[Kernel::class]->registerCommand(new UpdateCommand);
 
-    // The spatie tables tasks lean on. Present unless a test drops them, so
+    // The tables tasks lean on. Present unless a test drops them, so
     // the checks below only see what each test is about.
-    foreach (['tags', 'taggables', 'media'] as $table) {
+    foreach (['tags', 'taggables', 'media', 'notifications'] as $table) {
         if (! Schema::hasTable($table)) {
             Schema::create($table, fn(Blueprint $table) => $table->id());
         }
     }
 
     $this->dropDependencyTables = function(): void {
-        foreach (['tags', 'taggables', 'media'] as $table) {
+        foreach (['tags', 'taggables', 'media', 'notifications'] as $table) {
             Schema::dropIfExists($table);
         }
     };
@@ -233,13 +233,13 @@ it('keeps a republished copy when the prompt is declined', function() {
     expect(file_exists($duplicate))->toBeTrue();
 });
 
-it('fails the check when the tags and media tables are missing with no migration published', function() {
+it('fails the check when the tags, media and notifications tables are missing with no migration published', function() {
     ($this->dropDependencyTables)();
     ($this->squashEverything)();
 
     $this->artisan('finisterre:update', ['--check' => true])
         ->expectsOutputToContain('Finisterre relies on are missing')
-        ->expectsOutputToContain('media — spatie/laravel-medialibrary (task attachments)')
+        ->expectsOutputToContain('notifications — laravel/framework (panel notifications)')
         ->assertFailed();
 });
 
@@ -248,6 +248,7 @@ it('does not ask for a dependency migration that is published but not run yet', 
     ($this->squashEverything)();
     file_put_contents($this->migrationsPath . '/2026_01_01_000000_create_tag_tables.php', "<?php\n");
     file_put_contents($this->migrationsPath . '/2026_01_01_000001_create_media_table.php', "<?php\n");
+    file_put_contents($this->migrationsPath . '/2026_01_01_000002_create_notifications_table.php', "<?php\n");
 
     $this->artisan('finisterre:update', ['--check' => true])
         ->doesntExpectOutputToContain('Finisterre relies on are missing')
@@ -264,6 +265,7 @@ it('publishes the dependency migrations when asked', function() {
     // test app leaves them out like it leaves Finisterre's own provider out.
     $this->app->register(TagsServiceProvider::class);
     $this->app->register(MediaLibraryServiceProvider::class);
+    (new FinisterreServiceProvider($this->app))->registerNotificationsMigration();
 
     $this->artisan('finisterre:update')
         ->expectsConfirmation('Publish the missing dependency migrations now?', 'yes')
@@ -274,6 +276,7 @@ it('publishes the dependency migrations when asked', function() {
 
     expect(PackageMigrations::publishedFile('create_tag_tables'))->not->toBeNull()
         ->and(PackageMigrations::publishedFile('create_media_table'))->not->toBeNull()
+        ->and(PackageMigrations::publishedFile('create_notifications_table'))->not->toBeNull()
         ->and(DependencyMigrations::missing())->toBe([]);
 });
 
@@ -288,5 +291,5 @@ it('leaves the dependency migrations unpublished when the prompt is declined', f
         ->expectsConfirmation('Run `npm run build` now?', 'no')
         ->assertSuccessful();
 
-    expect(DependencyMigrations::missing())->toHaveCount(2);
+    expect(DependencyMigrations::missing())->toHaveCount(3);
 });

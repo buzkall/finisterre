@@ -15,7 +15,7 @@ beforeEach(function() {
         unlink($file);
     }
 
-    foreach (['tags', 'taggables', 'media'] as $table) {
+    foreach (['tags', 'taggables', 'media', 'notifications'] as $table) {
         Schema::dropIfExists($table);
     }
 });
@@ -26,14 +26,14 @@ afterEach(function() {
     }
 });
 
-it('reports the tags and media migrations as missing when neither the tables nor a file exist', function() {
+it('reports the tags, media and notifications migrations as missing when neither the tables nor a file exist', function() {
     expect(array_column(DependencyMigrations::missing(), 'name'))
-        ->toBe(['create_tag_tables', 'create_media_table'])
+        ->toBe(['create_tag_tables', 'create_media_table', 'create_notifications_table'])
         ->and(DependencyMigrations::pending())->toBe([]);
 });
 
 it('is satisfied by tables that exist, whatever migration created them', function() {
-    foreach (['tags', 'taggables', 'media'] as $table) {
+    foreach (['tags', 'taggables', 'media', 'notifications'] as $table) {
         Schema::create($table, fn(Blueprint $table) => $table->id());
     }
 
@@ -44,6 +44,7 @@ it('is satisfied by tables that exist, whatever migration created them', functio
 it('still reports the tags migration while only one of its tables exists', function() {
     Schema::create('tags', fn(Blueprint $table) => $table->id());
     Schema::create('media', fn(Blueprint $table) => $table->id());
+    Schema::create('notifications', fn(Blueprint $table) => $table->id());
 
     expect(array_column(DependencyMigrations::missing(), 'name'))->toBe(['create_tag_tables']);
 });
@@ -51,7 +52,7 @@ it('still reports the tags migration while only one of its tables exists', funct
 it('treats a published migration file as pending rather than missing', function() {
     file_put_contents($this->migrationsPath . '/2026_01_01_000000_create_tag_tables.php', "<?php\n");
 
-    expect(array_column(DependencyMigrations::missing(), 'name'))->toBe(['create_media_table'])
+    expect(array_column(DependencyMigrations::missing(), 'name'))->toBe(['create_media_table', 'create_notifications_table'])
         ->and(DependencyMigrations::pending())->toBe(['2026_01_01_000000_create_tag_tables']);
 });
 

@@ -2,13 +2,14 @@
 
 namespace Arzcode\Finisterre\Support;
 
+use Arzcode\Finisterre\FinisterreServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 use Spatie\Tags\TagsServiceProvider;
 use Throwable;
 
 /**
- * The migrations Finisterre needs from the spatie packages it builds on.
+ * The migrations Finisterre needs from the packages it builds on.
  *
  * Tasks carry tags (spatie/laravel-tags) and attachments
  * (spatie/laravel-medialibrary). Both packages ship their migration as a stub
@@ -17,6 +18,16 @@ use Throwable;
  * the board died on its first query with "relation tags does not exist" while
  * every migration Finisterre ships had run.
  *
+ * Tasks also notify their users in the panel, through Filament database
+ * notifications, which live in Laravel's notifications table. A host that never
+ * notified through the database has none, so every assignment or comment
+ * failed with "relation notifications does not exist". Laravel creates that
+ * migration with `make:notifications-table`; Finisterre ships its own copy,
+ * published under NOTIFICATIONS_TAG, so it goes through the same step as the
+ * spatie ones. Its `data` column is json rather than Laravel's text: Filament's
+ * notification bell reads it with JSON operators, which PostgreSQL only
+ * allows on json columns.
+ *
  * A dependency is settled when its tables are in the database (whatever
  * migration created them — squashed, renamed, or the host's own) or when a
  * migration file is published and waiting for `migrate`. Only the rest has to
@@ -24,8 +35,10 @@ use Throwable;
  */
 class DependencyMigrations
 {
+    public const NOTIFICATIONS_TAG = 'finisterre-notifications-migration';
+
     /**
-     * One entry per spatie package, keyed by the base name of its migration.
+     * One entry per package, keyed by the base name of its migration.
      *
      * @return list<array{package: string, purpose: string, name: string, tables: list<string>, provider: string, tag: string}>
      */
@@ -47,6 +60,14 @@ class DependencyMigrations
                 'tables'   => ['media'],
                 'provider' => MediaLibraryServiceProvider::class,
                 'tag'      => 'medialibrary-migrations',
+            ],
+            [
+                'package'  => 'laravel/framework',
+                'purpose'  => 'panel notifications',
+                'name'     => 'create_notifications_table',
+                'tables'   => ['notifications'],
+                'provider' => FinisterreServiceProvider::class,
+                'tag'      => self::NOTIFICATIONS_TAG,
             ],
         ];
     }
