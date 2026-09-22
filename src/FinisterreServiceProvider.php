@@ -23,6 +23,7 @@ use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\SettingsConfig;
 use Arzcode\Finisterre\Traits\FinisterreUserTrait;
+use Carbon\Carbon;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule;
@@ -841,7 +842,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
     public function registerNotificationsMigration(): void
     {
         $this->publishes([
-            __DIR__ . '/../database/dependencies/create_notifications_table.php.stub' => database_path('migrations/' . date('Y_m_d_His') . '_create_notifications_table.php'),
+            __DIR__ . '/../database/dependencies/create_notifications_table.php.stub' => database_path('migrations/' . Carbon::now()->format('Y_m_d_His') . '_create_notifications_table.php'),
         ], DependencyMigrations::NOTIFICATIONS_TAG);
     }
 
