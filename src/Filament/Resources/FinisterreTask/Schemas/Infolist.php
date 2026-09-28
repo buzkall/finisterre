@@ -57,17 +57,36 @@ class Infolist
                     ])
                     ->visible(fn(FinisterreTask $record) => filled($record->coverUrl())),
 
-                Actions::make(self::quickActions($userIsReporterOnly))
-                    ->key('quick_actions')
-                    ->visible($canQuickEdit),
+                // The badges on the left, when the task was created and last changed on the right.
+                Flex::make([
+                    Actions::make(self::quickActions($userIsReporterOnly))
+                        ->key('quick_actions')
+                        ->visible($canQuickEdit),
 
-                // Same values, no actions, for users who may only look.
-                ViewEntry::make('read_only_strip')
-                    ->key('read_only_strip')
-                    ->hiddenLabel()
-                    ->view('finisterre::tasks.read-only-badges')
-                    ->viewData(fn(FinisterreTask $record) => ['showDueDate' => ! $userIsReporterOnly])
-                    ->hidden($canQuickEdit),
+                    // Same values, no actions, for users who may only look.
+                    ViewEntry::make('read_only_strip')
+                        ->key('read_only_strip')
+                        ->hiddenLabel()
+                        ->view('finisterre::tasks.read-only-badges')
+                        ->viewData(fn(FinisterreTask $record) => ['showDueDate' => ! $userIsReporterOnly])
+                        ->hidden($canQuickEdit),
+
+                    TextEntry::make('dates')
+                        ->hiddenLabel()
+                        ->hintIcon('heroicon-o-clock')
+                        // Creation date, then how long ago it last changed; the labels live in the tooltips.
+                        ->hint(fn(FinisterreTask $record) => new HtmlString(
+                            '<span title="' . e(__('finisterre::finisterre.created_at')) . '">' .
+                            $record->created_at->format('d/m/y H:i:s') .
+                            '</span> · <span title="' . e(__('finisterre::finisterre.updated_at') . ' ' . $record->updated_at->format('d/m/y H:i:s')) . '">' .
+                            e($record->updated_at->diffForHumans()) .
+                            '</span>'
+                        ))
+                        ->alignEnd()
+                        ->grow(false),
+                ])
+                    ->from('md')
+                    ->verticallyAlignStart(),
 
                 Section::make()
                     ->compact()
@@ -81,37 +100,15 @@ class Infolist
                             ->placeholder(__('finisterre::finisterre.no_description')),
                     ]),
 
-                // Attachments on the left, who created the task and when on the right.
-                Flex::make([
-                    ViewEntry::make('attachments')
-                        ->hiddenLabel()
-                        ->view('finisterre::tasks.attachments')
-                        ->viewData(fn(FinisterreTask $record) => [
-                            'media'        => $record->getMedia('tasks'),
-                            'coverMediaId' => $record->cover_media_id,
-                            'canSetCover'  => $canQuickEdit($record),
-                        ])
-                        ->visible(fn(FinisterreTask $record) => $record->getMedia('tasks')->isNotEmpty()),
-
-                    TextEntry::make('dates')
-                        ->hiddenLabel()
-                        ->hintIcon('heroicon-o-clock')
-                        ->hint(fn(FinisterreTask $record) => new HtmlString(
-                            __('finisterre::finisterre.created_by') . ': ' .
-                            '&nbsp;&nbsp;&nbsp;&nbsp;' .
-                            $record->creatorName() .
-                            '<br />' .
-                            __('finisterre::finisterre.created_at') . ': ' .
-                            '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' .
-                            $record->created_at->format('d/m/y H:i:s') .
-                            '<br />' .
-                            __('finisterre::finisterre.updated_at') . ': ' . $record->updated_at->format('d/m/y H:i:s')
-                        ))
-                        ->alignEnd()
-                        ->grow(false),
-                ])
-                    ->from('md')
-                    ->verticallyAlignStart(),
+                ViewEntry::make('attachments')
+                    ->hiddenLabel()
+                    ->view('finisterre::tasks.attachments')
+                    ->viewData(fn(FinisterreTask $record) => [
+                        'media'        => $record->getMedia('tasks'),
+                        'coverMediaId' => $record->cover_media_id,
+                        'canSetCover'  => $canQuickEdit($record),
+                    ])
+                    ->visible(fn(FinisterreTask $record) => $record->getMedia('tasks')->isNotEmpty()),
 
                 Section::make(__('finisterre::finisterre.subtasks.label'))
                     ->icon('heroicon-o-check-circle')
@@ -215,6 +212,14 @@ class Infolist
                 ->dropdownWidth(Width::ExtraSmall)
                 // Reporters could never reassign on the form either.
                 ->hidden($userIsReporterOnly),
+
+            // Not editable: shown here only so it reads next to the assignee.
+            Action::make('creator')
+                ->badge()
+                ->color('gray')
+                ->icon(Heroicon::OutlinedPencilSquare)
+                ->label(fn(FinisterreTask $record) => __('finisterre::finisterre.created_by') . ': ' . $record->creatorName())
+                ->extraAttributes(['style' => 'pointer-events: none']),
 
             Action::make('quick_due_at')
                 ->badge()

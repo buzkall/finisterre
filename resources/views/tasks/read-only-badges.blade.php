@@ -17,6 +17,10 @@
         {{ $getRecord()->assigneeName() ?? __('finisterre::finisterre.unassigned') }}
     </x-filament::badge>
 
+    <x-filament::badge color="gray" icon="heroicon-o-pencil-square">
+        {{ __('finisterre::finisterre.created_by') }}: {{ $getRecord()->creatorName() }}
+    </x-filament::badge>
+
     @foreach ($getRecord()->tags as $tag)
         <x-filament::badge color="success">
             #{{ $tag->name }}

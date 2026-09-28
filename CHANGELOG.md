@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.9.1 - 2026-09-28
+
+- The task page now shows **who created the task** as a badge next to the assignee, and the creation date with how
+  long ago it was last updated at the top right, beside the badges, instead of under the description.
+
 ## 4.9.0 - 2026-09-28
 
 - Fixed the **task changes email listing raw column names and values** (`status: doing`, `order_column: 10`). Fields
