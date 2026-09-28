@@ -4,8 +4,13 @@ namespace Arzcode\Finisterre\Notifications;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
+use Arzcode\Finisterre\Notifications\Concerns\RendersTaskHistory;
+use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
+use DateTimeInterface;
 use Exception;
+use Filament\Support\Contracts\HasLabel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -14,7 +19,7 @@ use Illuminate\Support\HtmlString;
 
 class TaskNotification extends Notification implements ShouldQueue
 {
-    use EmbedsPrivateImages, Queueable;
+    use EmbedsPrivateImages, Queueable, RendersTaskHistory, UsesFinisterreMailLayout;
 
     protected bool $wasRecentlyCreated = false;
 
@@ -30,12 +35,12 @@ class TaskNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $visibleComments = $this->task->comments->reject(fn($comment) => $comment->isPending());
+        // a new task's email already shows the description above the history
+        $history = $this->taskHistoryHtml($this->task, withDescription: $this->taskChanges !== []);
 
         $relatedRecord = $this->task->subjectReportLink();
 
-        $mail = (new MailMessage)
-            ->theme('finisterre::themes.finisterre')
+        $mail = $this->newMailMessage($this->task)
             ->subject(__(
                 'finisterre::finisterre.notification.subject',
                 ['priority' => $this->task->priority->getLabel(), 'title' => $this->task->title]
@@ -56,23 +61,13 @@ class TaskNotification extends Notification implements ShouldQueue
                 ),
                 function(MailMessage $mail) {
                     $mail->line(__('finisterre::finisterre.notification.changes'));
-                    $mail->line(new HtmlString('<ul>' . collect($this->taskChanges)
-                        ->reject(fn($change, $key) => $key == 'updated_at')
-                        ->map(fn($value, $key) => '<li>' . __($key) . ': ' . $value . '</li>')
-                        ->implode('') . '</ul>'));
+                    $mail->line(new HtmlString('<ul>' . $this->changeLines() . '</ul>'));
                 },
             )
             ->when($this->task->tags->isNotEmpty(), function(MailMessage $mail) {
                 $mail->line(new HtmlString($this->task->tags->map(fn($tag) => '<span style="display:inline-block;background-color:#e5e7eb;color:#374151;padding:2px 10px;margin:2px 4px 2px 0;border-radius:9999px;font-size:13px;line-height:1.6;">#' . e($tag->name) . '</span>')->implode('')));
             })
-            ->when($visibleComments->isNotEmpty(), function(MailMessage $mail) use ($visibleComments) {
-                $mail->line(__('finisterre::finisterre.comments.title') . ':');
-                $mail->line(new HtmlString($visibleComments
-                    ->sortByDesc(fn($comment) => $comment->scheduled_for ?? $comment->created_at)
-                    ->map(fn($comment) => $this->embedImages($comment->comment) . ' ' .
-                        ($comment->scheduled_for ?? $comment->created_at)->format('d-m-y H:i:s'))
-                    ->implode('<br><hr/>')));
-            })
+            ->when($history, fn(MailMessage $mail) => $mail->line($history))
             ->action(
                 __('finisterre::finisterre.notification.cta'),
                 route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $this->task)
@@ -80,6 +75,56 @@ class TaskNotification extends Notification implements ShouldQueue
             ->salutation(' ');
 
         return $this->withInlineImages($mail);
+    }
+
+    /**
+     * The changed fields as list items, with translated labels and readable values.
+     * Changes hold raw column values, so they are read back through a model to get
+     * the enums and dates its casts produce.
+     */
+    protected function changeLines(): string
+    {
+        $changes = collect($this->taskChanges)
+            ->except(['updated_at', 'order_column', 'cover_media_id', 'editor_files', 'subject_type', 'subject_id']);
+
+        $casted = (new FinisterreTask)->setRawAttributes($changes->all());
+
+        return $changes
+            ->map(fn($value, string $key) => '<li>' . e($this->changeLabel($key)) .
+                // the description is rich text: its label says enough
+                ($key === 'description' ? '' : ': ' . e($this->changeValue($key, $casted))) . '</li>')
+            ->implode('');
+    }
+
+    protected function changeLabel(string $key): string
+    {
+        return trans()->has('finisterre::finisterre.' . $key) ? __('finisterre::finisterre.' . $key) : __($key);
+    }
+
+    protected function changeValue(string $key, FinisterreTask $casted): string
+    {
+        $value = $casted->getAttribute($key);
+
+        return match (true) {
+            in_array($key, ['assignee_id', 'creator_id']) => $this->userName($value),
+            $value === null                               => '-',
+            $value instanceof HasLabel                    => (string)$value->getLabel(),
+            $value instanceof DateTimeInterface           => $value->format('d-m-y H:i'),
+            is_bool($value)                               => __('finisterre::finisterre.' . ($value ? 'yes' : 'no')),
+            default                                       => (string)$value,
+        };
+    }
+
+    protected function userName(mixed $id): string
+    {
+        if (blank($id)) {
+            return __('finisterre::finisterre.unassigned');
+        }
+
+        /** @var Authenticatable|null $user */
+        $user = config('finisterre.authenticatable')::find($id);
+
+        return $user?->getUserDisplayName() ?? 'N/A';
     }
 
     public function toSms(object $notifiable): void

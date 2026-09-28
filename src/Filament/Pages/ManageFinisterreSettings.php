@@ -68,6 +68,7 @@ class ManageFinisterreSettings extends Page
             'exclude_from_global_search'          => $settings->exclude_from_global_search,
             'subtasks_notify'                     => $settings->subtasks_notify,
             'subtasks_notification_delay_minutes' => $settings->subtasks_notification_delay_minutes,
+            'mail_history_entries'                => $settings->mail_history_entries,
             'comments_display_avatars'            => $settings->comments_display_avatars,
             'comments_icon_action'                => $settings->comments_icon_action,
             'comments_icon_delete'                => $settings->comments_icon_delete,
@@ -157,6 +158,16 @@ class ManageFinisterreSettings extends Page
                             ->columnSpanFull(),
                     ]),
 
+                Section::make(__('finisterre::finisterre.settings.section_mail'))
+                    ->schema([
+                        TextInput::make('mail_history_entries')
+                            ->label(__('finisterre::finisterre.settings.mail_history_entries'))
+                            ->helperText(__('finisterre::finisterre.settings.mail_history_entries_help'))
+                            ->integer()
+                            ->minValue(0)
+                            ->columnSpanFull(),
+                    ]),
+
                 Section::make(__('finisterre::finisterre.settings.section_comments'))
                     ->schema([
                         Toggle::make('comments_display_avatars')
@@ -231,6 +242,7 @@ class ManageFinisterreSettings extends Page
         $settings->exclude_from_global_search = (bool)$data['exclude_from_global_search'];
         $settings->subtasks_notify = (bool)$data['subtasks_notify'];
         $settings->subtasks_notification_delay_minutes = (int)$data['subtasks_notification_delay_minutes'];
+        $settings->mail_history_entries = filled($data['mail_history_entries']) ? (int)$data['mail_history_entries'] : null;
         $settings->comments_display_avatars = (bool)$data['comments_display_avatars'];
         $settings->comments_icon_action = $data['comments_icon_action'];
         $settings->comments_icon_delete = $data['comments_icon_delete'];

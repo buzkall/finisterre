@@ -18,6 +18,7 @@ class FinisterreSettings extends Settings
     public bool $exclude_from_global_search;
     public bool $subtasks_notify;
     public int $subtasks_notification_delay_minutes;
+    public ?int $mail_history_entries = null;
     public bool $comments_display_avatars;
     public string $comments_icon_action;
     public string $comments_icon_delete;

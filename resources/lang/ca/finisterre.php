@@ -53,6 +53,10 @@ return [
     'no_due_date'       => 'Sense data límit',
     'no_tags'           => 'Sense etiquetes',
     'unassigned'        => 'Sense assignar',
+    'archived'          => 'Arxivada',
+    'creator_id'        => 'Creada per',
+    'yes'               => 'Sí',
+    'no'                => 'No',
     'download'          => 'Descarregar',
     'quick_update'      => [
         'saved' => 'Tasca actualitzada',
@@ -86,6 +90,7 @@ return [
         'greeting_changes' => 'Canvis a la tasca :title',
         'cta'              => 'Veure tasca',
         'changes'          => 'Canvis',
+        'history'          => 'Historial',
     ],
     'comment_notification' => [
         'subject'  => 'Comentari a: :title',
@@ -171,6 +176,9 @@ return [
         'comments_icon_delete'                     => "Icona d'eliminar",
         'comments_icon_empty'                      => "Icona d'estat buit",
         'section_sms'                              => 'Notificacions SMS',
+        'section_mail'                             => 'Notificacions per correu',
+        'mail_history_entries'                     => "Entrades de l'historial de la tasca",
+        'mail_history_entries_help'                => "Quantes de les darreres entrades de l'historial de la tasca (descripció i comentaris, de la més recent a la més antiga) inclouen els correus de notificació. Deixa-ho buit per incloure tot l'historial, o posa 0 per no incloure'l.",
         'sms_enabled'                              => 'Habilitar notificacions SMS',
         'sms_url'                                  => "URL de l'API",
         'sms_auth_key'                             => 'Clau d\'autenticació',

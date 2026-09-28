@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Notifications;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -16,7 +17,7 @@ use Illuminate\Support\HtmlString;
  */
 class SubtaskChangesNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, UsesFinisterreMailLayout;
 
     /**
      * @param  list<string>  $entries
@@ -30,8 +31,7 @@ class SubtaskChangesNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->theme('finisterre::themes.finisterre')
+        return $this->newMailMessage($this->task)
             ->subject(__('finisterre::finisterre.subtask_changes.subject', ['title' => $this->task->title]))
             ->greeting(__('finisterre::finisterre.subtask_changes.greeting', ['title' => $this->task->title]))
             // Subtask titles are user input and the lines are plain text, so

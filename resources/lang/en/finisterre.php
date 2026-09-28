@@ -53,6 +53,10 @@ return [
     'no_due_date'       => 'No due date',
     'no_tags'           => 'No tags',
     'unassigned'        => 'Unassigned',
+    'archived'          => 'Archived',
+    'creator_id'        => 'Created by',
+    'yes'               => 'Yes',
+    'no'                => 'No',
     'download'          => 'Download',
     'quick_update'      => [
         'saved' => 'Task updated',
@@ -86,6 +90,7 @@ return [
         'greeting_changes' => 'Changes in task :title',
         'cta'              => 'View task',
         'changes'          => 'Changes',
+        'history'          => 'History',
     ],
     'comment_notification' => [
         'subject'  => 'New comment in task :title',
@@ -171,6 +176,9 @@ return [
         'comments_icon_delete'                     => 'Delete icon',
         'comments_icon_empty'                      => 'Empty state icon',
         'section_sms'                              => 'SMS notifications',
+        'section_mail'                             => 'Email notifications',
+        'mail_history_entries'                     => 'Task history entries',
+        'mail_history_entries_help'                => 'How many of the latest entries of the task history (description and comments, newest first) the notification emails include. Leave it empty for the whole history, or set 0 to leave it out.',
         'sms_enabled'                              => 'Enable SMS notifications',
         'sms_url'                                  => 'API URL',
         'sms_auth_key'                             => 'Auth key',

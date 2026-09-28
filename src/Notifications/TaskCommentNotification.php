@@ -4,6 +4,8 @@ namespace Arzcode\Finisterre\Notifications;
 
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
+use Arzcode\Finisterre\Notifications\Concerns\RendersTaskHistory;
+use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,7 +14,7 @@ use Illuminate\Support\HtmlString;
 
 class TaskCommentNotification extends Notification implements ShouldQueue
 {
-    use EmbedsPrivateImages, Queueable;
+    use EmbedsPrivateImages, Queueable, RendersTaskHistory, UsesFinisterreMailLayout;
 
     public function __construct(public FinisterreTaskComment $comment) {}
 
@@ -24,9 +26,9 @@ class TaskCommentNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $task = $this->comment->task;
+        $history = $this->taskHistoryHtml($task, comment: $this->comment);
 
-        $mail = (new MailMessage)
-            ->theme('finisterre::themes.finisterre')
+        $mail = $this->newMailMessage($task)
             ->subject(__(
                 'finisterre::finisterre.comment_notification.subject',
                 ['title' => $task->title]
@@ -37,6 +39,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
             ->when($task->tags->isNotEmpty(), function(MailMessage $mail) use ($task) {
                 $mail->line(new HtmlString($task->tags->map(fn($tag) => '<span style="display:inline-block;background-color:#e5e7eb;color:#374151;padding:2px 10px;margin:2px 4px 2px 0;border-radius:9999px;font-size:13px;line-height:1.6;">#' . e($tag->name) . '</span>')->implode('')));
             })
+            ->when($history, fn(MailMessage $mail) => $mail->line($history))
             ->action(
                 __('finisterre::finisterre.notification.cta'),
                 route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $task)

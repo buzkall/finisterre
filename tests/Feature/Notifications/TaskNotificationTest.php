@@ -1,6 +1,7 @@
 <?php
 
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Illuminate\Database\Schema\Blueprint;
@@ -268,4 +269,42 @@ it('sends the sms only once when the request succeeds', function() {
     (new TaskNotification($task))->toSms(User::factory()->create());
 
     Http::assertSentCount(1);
+});
+
+it('lists the changes with translated labels and readable values', function() {
+    $assignee = User::factory()->create(['name' => 'Ana Assignee']);
+    $task = FinisterreTask::factory()->create();
+
+    $changes = [
+        'status'       => 'doing',
+        'priority'     => 'high',
+        'assignee_id'  => $assignee->id,
+        'due_at'       => '2026-10-01 09:30:00',
+        'order_column' => 10,
+        'updated_at'   => '2026-09-28 10:00:00',
+    ];
+
+    $body = collect((new TaskNotification($task, $changes))->toMail(User::factory()->create())->introLines)
+        ->map(fn($line) => (string)$line)->implode("\n");
+
+    expect($body)
+        ->toContain('<li>' . __('finisterre::finisterre.status') . ': ' . TaskStatusEnum::Doing->getLabel() . '</li>')
+        ->toContain('<li>' . __('finisterre::finisterre.priority') . ': ' . TaskPriorityEnum::High->getLabel() . '</li>')
+        ->toContain('<li>' . __('finisterre::finisterre.assignee_id') . ': Ana Assignee</li>')
+        ->toContain('<li>' . __('finisterre::finisterre.due_at') . ': 01-10-26 09:30</li>')
+        ->not->toContain('order_column')
+        ->not->toContain('updated_at');
+});
+
+it('escapes changed values and leaves out the rich text of the description', function() {
+    $task = FinisterreTask::factory()->create();
+
+    $body = collect((new TaskNotification($task, ['title' => '<b>Bold</b>', 'description' => '<p>Long text</p>']))
+        ->toMail(User::factory()->create())->introLines)
+        ->map(fn($line) => (string)$line)->implode("\n");
+
+    expect($body)
+        ->toContain('&lt;b&gt;Bold&lt;/b&gt;')
+        ->toContain('<li>' . __('finisterre::finisterre.description') . '</li>')
+        ->not->toContain('Long text');
 });

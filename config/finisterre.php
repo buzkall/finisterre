@@ -61,6 +61,13 @@ return [
     //        ],
     'attachments_disk' => 'public', // finisterre
 
+    'mail' => [
+        // How many of the task's latest history entries (its description and
+        // comments, newest first) the notification emails include. Null includes
+        // the whole history, 0 leaves it out. Editable from the settings page.
+        'history_entries' => null,
+    ],
+
     'task_changes_table_name' => 'finisterre_task_changes',
 
     'subtasks' => [

@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Notifications;
 
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
+use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,7 +13,7 @@ use Illuminate\Support\HtmlString;
 
 class ScheduledCommentSentNotification extends Notification implements ShouldQueue
 {
-    use EmbedsPrivateImages, Queueable;
+    use EmbedsPrivateImages, Queueable, UsesFinisterreMailLayout;
 
     public function __construct(public FinisterreTaskComment $comment) {}
 
@@ -25,8 +26,7 @@ class ScheduledCommentSentNotification extends Notification implements ShouldQue
     {
         $task = $this->comment->task;
 
-        $mail = (new MailMessage)
-            ->theme('finisterre::themes.finisterre')
+        $mail = $this->newMailMessage($task)
             ->subject(__(
                 'finisterre::finisterre.scheduled_comment_sent.subject',
                 ['title' => $task->title]

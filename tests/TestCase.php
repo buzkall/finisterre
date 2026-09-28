@@ -69,6 +69,8 @@ class TestCase extends Orchestra
         // package's own translations have to be registered here or every
         // __('finisterre::…') in a notification comes back as the raw key.
         $app['translator']->addNamespace('finisterre', __DIR__ . '/../resources/lang');
+        // Same for the views the notification emails render.
+        $app['view']->addNamespace('finisterre', __DIR__ . '/../resources/views');
 
         // Set up the finisterre config for testing
         config()->set('finisterre.authenticatable', User::class);

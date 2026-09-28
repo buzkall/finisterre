@@ -26,6 +26,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property array|null $notify_user_ids
  * @property int $creator_id
  * @property int $task_id
+ * @property Carbon|null $created_at
  * @property FinisterreTask $task
  */
 #[ObservedBy(FinisterreTaskCommentObserver::class)]

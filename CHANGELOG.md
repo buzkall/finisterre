@@ -2,6 +2,23 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.9.0 - 2026-09-28
+
+- Fixed the **task changes email listing raw column names and values** (`status: doing`, `order_column: 10`). Fields
+  now use their translated labels, and statuses, priorities, users, dates and yes/no show readable values in the
+  application's language. Board positions, card images and the linked record are left out, and the description is listed
+  without dumping its rich text.
+- Finisterre emails now show the **panel's brand logo** in the header when the panel has one set as an image URL, and
+  keep the application name otherwise.
+- The task and comment emails now include the **task history**: the description and the visible comments, newest
+  first, each in its own card with its author and date. A new task's email leaves out the description it already
+  shows, and a comment's email leaves out that comment and anything newer. The new *Task history entries* setting (in
+  the new *Email notifications* section of the settings page, or `mail.history_entries` in the config) limits it to the
+  latest entries: empty includes the whole history, 0 leaves it out. **Run `php artisan finisterre:update` after
+  upgrading** to seed the new setting; until then Finisterre stays inactive.
+- Every email about a task now carries the same `In-Reply-To`/`References` thread root, so mail clients that thread by
+  headers group a task's emails into one conversation, and asks auto-responders not to answer them.
+
 ## 4.8.3 - 2026-09-22
 
 - Fixed the **last card of a long board column being out of reach**. The board was sized to the screen as if nothing sat

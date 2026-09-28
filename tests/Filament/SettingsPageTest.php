@@ -33,6 +33,7 @@ beforeEach(function() {
         'exclude_from_global_search'          => true,
         'subtasks_notify'                     => true,
         'subtasks_notification_delay_minutes' => 5,
+        'mail_history_entries'                => null,
         'comments_display_avatars'            => true,
         'comments_icon_action'                => 'heroicon-o-chat-bubble-left-right',
         'comments_icon_delete'                => 'heroicon-o-trash',
@@ -75,4 +76,20 @@ it('saves with subtask notifications off and keeps the stored delay', function()
 
     expect($settings->subtasks_notify)->toBeFalse()
         ->and($settings->subtasks_notification_delay_minutes)->toBe(5);
+});
+
+it('saves the number of history entries in emails, and an empty field as the whole history', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.mail_history_entries', '3')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(app(FinisterreSettings::class)->mail_history_entries)->toBe(3);
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.mail_history_entries', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(app(FinisterreSettings::class)->mail_history_entries)->toBeNull();
 });

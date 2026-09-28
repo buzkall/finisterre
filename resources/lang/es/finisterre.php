@@ -53,6 +53,10 @@ return [
     'no_due_date'       => 'Sin fecha límite',
     'no_tags'           => 'Sin etiquetas',
     'unassigned'        => 'Sin asignar',
+    'archived'          => 'Archivada',
+    'creator_id'        => 'Creada por',
+    'yes'               => 'Sí',
+    'no'                => 'No',
     'download'          => 'Descargar',
     'quick_update'      => [
         'saved' => 'Tarea actualizada',
@@ -86,6 +90,7 @@ return [
         'greeting_changes' => 'Cambios en la tarea :title',
         'cta'              => 'Ver tarea',
         'changes'          => 'Cambios',
+        'history'          => 'Historial',
     ],
     'comment_notification' => [
         'subject'  => 'Comentario en: :title',
@@ -171,6 +176,9 @@ return [
         'comments_icon_delete'                     => 'Icono de eliminar',
         'comments_icon_empty'                      => 'Icono de estado vacío',
         'section_sms'                              => 'Notificaciones SMS',
+        'section_mail'                             => 'Notificaciones por email',
+        'mail_history_entries'                     => 'Entradas del historial de la tarea',
+        'mail_history_entries_help'                => 'Cuántas de las últimas entradas del historial de la tarea (descripción y comentarios, de más reciente a más antigua) incluyen los emails de notificación. Déjalo vacío para incluir todo el historial, o pon 0 para no incluirlo.',
         'sms_enabled'                              => 'Habilitar notificaciones SMS',
         'sms_url'                                  => 'URL de la API',
         'sms_auth_key'                             => 'Clave de autenticación',
