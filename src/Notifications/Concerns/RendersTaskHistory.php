@@ -23,7 +23,7 @@ trait RendersTaskHistory
      */
     protected function taskHistoryHtml(FinisterreTask $task, bool $withDescription = true, ?FinisterreTaskComment $comment = null): ?HtmlString
     {
-        $until = $comment ? ($comment->scheduled_for ?? $comment->created_at) : null;
+        $until = $comment instanceof FinisterreTaskComment ? ($comment->scheduled_for ?? $comment->created_at) : null;
 
         $entries = $task->loadMissing('comments.creator')->comments
             ->reject(fn(FinisterreTaskComment $entry) => $entry->isPending() || $entry->is($comment))

@@ -106,12 +106,12 @@ class TaskNotification extends Notification implements ShouldQueue
         $value = $casted->getAttribute($key);
 
         return match (true) {
-            in_array($key, ['assignee_id', 'creator_id']) => $this->userName($value),
-            $value === null                               => '-',
-            $value instanceof HasLabel                    => (string)$value->getLabel(),
-            $value instanceof DateTimeInterface           => $value->format('d-m-y H:i'),
-            is_bool($value)                               => __('finisterre::finisterre.' . ($value ? 'yes' : 'no')),
-            default                                       => (string)$value,
+            in_array($key, ['assignee_id', 'creator_id'], true) => $this->userName($value),
+            $value === null                                     => '-',
+            $value instanceof HasLabel                          => (string)$value->getLabel(),
+            $value instanceof DateTimeInterface                 => $value->format('d-m-y H:i'),
+            is_bool($value)                                     => __('finisterre::finisterre.' . ($value ? 'yes' : 'no')),
+            default                                             => (string)$value,
         };
     }
 
