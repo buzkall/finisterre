@@ -20,6 +20,7 @@ use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
+use Arzcode\Finisterre\Support\BoardSlug;
 use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
@@ -343,8 +344,8 @@ class FinisterreServiceProvider extends PackageServiceProvider
             // suggests a colliding default. We can't read config('finisterre.slug')
             // here: SettingsConfig::apply() has already overridden it at boot with the
             // stored value, which would resurface a stale slug from a prior installation.
-            // pathHasRoute() ignores Finisterre's own routes, so on a re-install the
-            // board path it registered last time isn't treated as a collision.
+            // BoardSlug::isTaken() ignores the board's own route, so on a re-install the
+            // path it registered last time isn't treated as a collision.
             $suggested = $this->firstFreeBoardSlug($panelSlug);
             $default = $panelSlug . '/' . $suggested;
 
@@ -374,7 +375,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
                     return;
                 }
 
-                if (! $this->pathHasRoute($panelSlug, $slug)) {
+                if (! BoardSlug::isTaken($panelSlug, $slug)) {
                     break;
                 }
 
@@ -393,48 +394,24 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     /**
      * The first free board path: the canonical `tasks`, then `finisterre`, then
-     * numbered `finisterre-2`, `finisterre-3`, … — skipping any path a non-Finisterre
-     * route already serves.
+     * numbered `finisterre-2`, `finisterre-3`, … — skipping any path another route
+     * already serves.
      */
     protected function firstFreeBoardSlug(string $panelSlug): string
     {
         foreach ([self::DEFAULT_BOARD_SLUG, self::FALLBACK_BOARD_SLUG] as $candidate) {
-            if (! $this->pathHasRoute($panelSlug, $candidate)) {
+            if (! BoardSlug::isTaken($panelSlug, $candidate)) {
                 return $candidate;
             }
         }
 
         $suffix = 2;
 
-        while ($this->pathHasRoute($panelSlug, self::FALLBACK_BOARD_SLUG . '-' . $suffix)) {
+        while (BoardSlug::isTaken($panelSlug, self::FALLBACK_BOARD_SLUG . '-' . $suffix)) {
             $suffix++;
         }
 
         return self::FALLBACK_BOARD_SLUG . '-' . $suffix;
-    }
-
-    /**
-     * Whether a route NOT belonging to Finisterre already serves /{panelSlug}/{slug}
-     * (the board path itself or any of its sub-paths). Finisterre's own routes are
-     * skipped so a re-install doesn't flag the board it registered last time.
-     */
-    protected function pathHasRoute(string $panelSlug, string $slug): bool
-    {
-        $target = trim($panelSlug . '/' . $slug, '/');
-
-        foreach (app('router')->getRoutes()->getRoutes() as $route) {
-            if (str_starts_with(ltrim($route->getActionName(), '\\'), 'Arzcode\\Finisterre\\')) {
-                continue;
-            }
-
-            $uri = trim($route->uri(), '/');
-
-            if ($uri === $target || str_starts_with($uri, $target . '/')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     protected function publishFilamentAssets(InstallCommand $command): void

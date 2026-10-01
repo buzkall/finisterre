@@ -101,8 +101,8 @@ class InboundMessageHandler
 
     /**
      * The From header is whatever the sender typed, so a reply is only trusted when the
-     * receiving server didn't find it spoofed. Only the topmost Authentication-Results
-     * counts, the one the receiving server added; a missing one can't be judged.
+     * receiving server didn't find it spoofed. The drivers hand over only that server's
+     * Authentication-Results (see AuthenticationResults); a missing one can't be judged.
      */
     private function failsAuthentication(InboundMessage $message): bool
     {

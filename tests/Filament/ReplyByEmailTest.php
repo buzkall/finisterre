@@ -6,6 +6,7 @@ use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
+use Arzcode\Finisterre\Support\InboundEmail\AuthenticationResults;
 use Arzcode\Finisterre\Support\InboundEmail\InboundMessage;
 use Arzcode\Finisterre\Support\InboundEmail\InboundMessageHandler;
 use Arzcode\Finisterre\Support\InboundEmail\ReplyParser;
@@ -71,10 +72,13 @@ function replyTo(FinisterreTask $task, array $overrides = []): InboundMessage
 it('sends task emails with the reply address, a signed Message-ID and the reply line', function() {
     $mail = (new TaskNotification($this->task->fresh()))->toMail($this->assignee);
     $messageId = sentHeaders($mail)->getHeaders()->get('Message-ID')->getBodyAsString();
+    $html = (string)$mail->render();
 
     expect($mail->replyTo)->toBe([['tasks@example.com', null]])
         ->and(ReplyToken::findTaskId([$messageId]))->toBe($this->task->id)
-        ->and((string)$mail->render())->toContain(__('finisterre::finisterre.mail.reply_above'));
+        ->and($html)->toContain(__('finisterre::finisterre.mail.reply_above'))
+        // Above the logo: a reply quotes the email from its top, right under what was written.
+        ->and(strpos($html, 'finisterre-reply-above'))->toBeLessThan(strpos($html, 'class="header"'));
 });
 
 it('puts the signed task in the reply address with plus addressing', function() {
@@ -154,6 +158,10 @@ it('takes replies the receiving server authenticated', function(string $results)
 })->with([
     'dmarc pass'           => 'mx.example.com; dkim=pass header.d=example.com; dmarc=pass header.from=example.com',
     'no dmarc, spf passed' => 'mx.example.com; spf=pass smtp.mailfrom=example.com; dmarc=none',
+    'several headers'      => AuthenticationResults::ofReceivingServer([
+        'mx.example.com; x-csa=none; x-ptr=pass smtp.helo=mail.example.com',
+        'mx.example.com; dkim=pass header.d=example.com; dmarc=pass header.from=example.com',
+    ]),
 ]);
 
 it('skips replies from users the comment policy does not let comment', function() {

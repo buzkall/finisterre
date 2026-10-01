@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Controllers;
 
+use Arzcode\Finisterre\Support\InboundEmail\AuthenticationResults;
 use Arzcode\Finisterre\Support\InboundEmail\InboundMessage;
 use Arzcode\Finisterre\Support\InboundEmail\InboundMessageHandler;
 use Arzcode\Finisterre\Support\Typed;
@@ -104,10 +105,9 @@ class ResendInboundController extends Controller
     {
         $headers = collect(Arr::wrap($email['headers'] ?? []))
             ->mapWithKeys(fn($value, $name) => [strtolower((string)$name) => match (true) {
-                // Only the topmost one, added by the receiving server: the sender can write any below it.
-                is_array($value) && strtolower((string)$name) === 'authentication-results' => Typed::string(Arr::first($value)),
-                is_array($value)                                                           => implode(' ', Typed::strings($value)),
-                default                                                                    => Typed::string($value),
+                strtolower((string)$name) === 'authentication-results' => AuthenticationResults::ofReceivingServer(Typed::strings(Arr::wrap($value))),
+                is_array($value)                                       => implode(' ', Typed::strings($value)),
+                default                                                => Typed::string($value),
             }])
             ->all();
 

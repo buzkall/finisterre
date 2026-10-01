@@ -283,7 +283,8 @@ opened from a header action (⚙️) on the Kanban board — it is intentionally
 gated by `userCanConfigureFinisterre()` (allowed for everyone by default; see the closure above).
 
 Values are stored in the database and take precedence over `config/finisterre.php` at runtime, so admins can change them
-without a deploy. The page covers:
+without a deploy. Saving a change runs `queue:restart`, since queue workers read the settings only when they start; like
+on a deploy, the workers need a process manager (Supervisor, Horizon) to come back up. The page covers:
 
 - **General** — active environments, the Filament panel slug, and whether tasks are excluded from global search.
 - **Tasks** — statuses to hide from the board, and the fallback user notified when a task has no assignee.

@@ -3,6 +3,13 @@
 <x-mail::layout>
 {{-- Header --}}
 <x-slot:header>
+{{-- Where a reply by email is cut: everything from here down is the quoted email. It opens the
+     email, above the logo, so in a reply it sits right under what the person is writing --}}
+@if ($acceptsReplies ?? false)
+<tr>
+<td id="finisterre-reply-above" align="center" style="padding: 12px 16px; border-bottom: 1px dashed #d1d5db; color: #9ca3af; font-size: 12px; line-height: 1.5; text-align: center;">{{ __('finisterre::finisterre.mail.reply_above') }}</td>
+</tr>
+@endif
 <x-mail::header :url="config('app.url')">
 @if (filled($logo ?? null))
 <img src="{{ $logo }}" alt="{{ config('app.name') }}" style="max-height: 60px; max-width: 220px; height: auto; width: auto;">
@@ -12,11 +19,6 @@
 </x-mail::header>
 </x-slot:header>
 
-{{-- Where a reply by email is cut: everything from here down is the quoted email --}}
-@if ($acceptsReplies ?? false)
-<div id="finisterre-reply-above" style="color: #9ca3af; font-size: 12px; margin-bottom: 16px;">{{ __('finisterre::finisterre.mail.reply_above') }}</div>
-
-@endif
 {{-- Greeting --}}
 @if (! empty($greeting))
 # {{ $greeting }}

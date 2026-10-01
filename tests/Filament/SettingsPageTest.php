@@ -3,6 +3,8 @@
 use Arzcode\Finisterre\Filament\Pages\ManageFinisterreSettings;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
 
@@ -59,6 +61,9 @@ beforeEach(function() {
     ]);
 });
 
+// A stub route cache left behind by a failed test would break every test after it.
+afterEach(fn() => File::delete(app()->getCachedRoutesPath()));
+
 it('offers the global search toggle filled from the stored settings', function() {
     Livewire::test(ManageFinisterreSettings::class)
         ->assertFormFieldExists('exclude_from_global_search')
@@ -76,6 +81,48 @@ it('saves with sms disabled and keeps the stored sms values', function() {
     expect($settings->slug)->toBe('my-tasks')
         ->and($settings->sms_enabled)->toBeFalse()
         ->and($settings->sms_url)->toBe('https://example.test/sms');
+});
+
+it('rejects a board slug another page of the panel already uses', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.slug', 'finisterre-tasks')
+        ->call('save')
+        ->assertHasErrors(['data.slug']);
+
+    expect(app(FinisterreSettings::class)->slug)->toBe('tasks');
+});
+
+it('clears the route cache when the board slug changes, and only then', function() {
+    File::put(app()->getCachedRoutesPath(), '<?php');
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.exclude_from_global_search', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(File::exists(app()->getCachedRoutesPath()))->toBeTrue();
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.slug', 'my-tasks')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(File::exists(app()->getCachedRoutesPath()))->toBeFalse();
+});
+
+it('restarts the queue workers when a setting changes, and only then', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Cache::get('illuminate:queue:restart'))->toBeNull();
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.mail_history_entries', '3')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Cache::get('illuminate:queue:restart'))->not->toBeNull();
 });
 
 it('saves with subtask notifications off and keeps the stored delay', function() {

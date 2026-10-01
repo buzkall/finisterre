@@ -2,6 +2,25 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.10.1 - 2026-10-01
+
+- Reply by email no longer skips genuine replies as spoofed (*sender failed SPF, DKIM or DMARC* in the log) on mailboxes
+  that spread their verdict over several `Authentication-Results` headers, as Fastmail does: only the topmost header was
+  read, and it held neither SPF, DKIM nor DMARC. Every header written by the receiving server now counts; the ones a
+  sender adds under another server's name are still ignored.
+- The settings page no longer accepts a board URL slug that another page already uses, which left the board without a
+  route and so out of the navigation menu. That includes Finisterre's own pages: `finisterre-tasks` (the task list) and
+  `finisterre-settings`. The installer's slug prompt now warns about those two as well.
+- Changing the board URL slug from the settings page clears the route cache (`route:clear`), so the new address works
+  straight away on a site that caches its routes. The routes stay uncached until your next `route:cache` or
+  `optimize`.
+- Saving a change in the settings page restarts the queue workers (`queue:restart`). They read the settings once, when
+  they start, so until now a task email sent after turning on reply by email still went out without its `Reply-To`, and
+  any other setting changed from the page was ignored by the emails until the workers were restarted by hand. As with
+  any `queue:restart`, the workers need a process manager (Supervisor, Horizon) to come back up.
+- The *reply above this line* marker of task emails moved from inside the card to the very top of the email, above the
+  logo, with a dashed rule under it: in a reply it now sits right below what you are writing.
+
 ## 4.10.0 - 2026-10-01
 
 - **Reply by email**: replying to a task email adds the reply as a comment on the task, written by the user whose

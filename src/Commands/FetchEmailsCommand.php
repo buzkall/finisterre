@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Commands;
 
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\InboundEmail\AuthenticationResults;
 use Arzcode\Finisterre\Support\InboundEmail\InboundMessage;
 use Arzcode\Finisterre\Support\InboundEmail\InboundMessageHandler;
 use Arzcode\Finisterre\Support\Typed;
@@ -125,8 +126,7 @@ class FetchEmailsCommand extends Command
             text: $message->getTextBody(),
             headers: collect(['in-reply-to', 'references', 'auto-submitted', 'x-autoreply', 'x-autorespond', 'precedence', 'return-path'])
                 ->mapWithKeys(fn(string $name) => [$name => $value($name)])
-                // Only the topmost one, added by the receiving server: the sender can write any below it.
-                ->put('authentication-results', $header instanceof Header ? trim(Typed::string($header->get('authentication-results')->first())) : '')
+                ->put('authentication-results', $header instanceof Header ? AuthenticationResults::fromRawHeaders($header->raw) : '')
                 ->all(),
         );
     }

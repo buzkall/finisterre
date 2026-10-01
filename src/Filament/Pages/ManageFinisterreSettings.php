@@ -7,10 +7,12 @@ use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Support\BoardSlug;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Traits\HasIconOptions;
 use BackedEnum;
+use Closure;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -25,6 +27,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Artisan;
 
 /**
  * @property-read Schema $form
@@ -114,7 +117,14 @@ class ManageFinisterreSettings extends Page
                         TextInput::make('slug')
                             ->label(__('finisterre::finisterre.settings.slug'))
                             ->helperText(__('finisterre::finisterre.settings.slug_help'))
-                            ->required(),
+                            ->required()
+                            ->rule(fn(): Closure => function(string $attribute, mixed $value, Closure $fail): void {
+                                $path = BoardSlug::takenPath(Typed::string($value));
+
+                                if ($path !== null) {
+                                    $fail(Typed::string(__('finisterre::finisterre.settings.slug_taken', ['path' => $path])));
+                                }
+                            }),
 
                         Toggle::make('exclude_from_global_search')
                             ->label(__('finisterre::finisterre.settings.exclude_from_global_search'))
@@ -343,6 +353,8 @@ class ManageFinisterreSettings extends Page
         $data = $this->form->getState();
 
         $settings = app(FinisterreSettings::class);
+        $stored = $settings->toArray();
+        $slugChanged = $settings->slug !== Typed::string($data['slug']);
 
         $settings->environments = Typed::string($data['environments']);
         $settings->slug = Typed::string($data['slug']);
@@ -378,6 +390,18 @@ class ManageFinisterreSettings extends Page
         $settings->inbound_resend_webhook_secret = Typed::nullableString($data['inbound_resend_webhook_secret'] ?? null) ?? $settings->inbound_resend_webhook_secret;
 
         $settings->save();
+
+        // The board's path is part of the routes: a cached route file would keep
+        // serving the old one, and leave the board out of the navigation.
+        if ($slugChanged) {
+            Artisan::call('route:clear');
+        }
+
+        // Queue workers read the settings once, when they boot, and the task emails
+        // are sent from them: without a restart they keep working with the old ones.
+        if ($settings->toArray() !== $stored) {
+            Artisan::call('queue:restart');
+        }
 
         Notification::make()
             ->title(__('finisterre::finisterre.settings.saved'))

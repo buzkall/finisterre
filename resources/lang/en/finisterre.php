@@ -154,6 +154,7 @@ return [
         'environments_help'                        => 'Comma-separated list of environments where Finisterre is active (e.g. local,production). Leave empty to enable it everywhere.',
         'slug'                                     => 'Board URL slug',
         'slug_help'                                => 'The URL segment for the Kanban board page.',
+        'slug_taken'                               => 'Another page already uses /:path. Choose a different slug.',
         'exclude_from_global_search'               => 'Exclude tasks from global search',
         'exclude_from_global_search_help'          => "Keep Finisterre tasks out of the panel's global search, so they do not dilute your own resources' results.",
         'section_tasks'                            => 'Tasks',
