@@ -29,7 +29,7 @@ class AttachmentsDisk
 
     public static function name(): string
     {
-        return config('finisterre.attachments_disk') ?? 'public';
+        return Typed::nullableString(config('finisterre.attachments_disk')) ?? 'public';
     }
 
     public static function isPublic(): bool
@@ -172,8 +172,8 @@ class AttachmentsDisk
     public static function htmlColumns(): array
     {
         return [
-            [config('finisterre.table_name', 'finisterre_tasks'), 'description', 'id'],
-            [config('finisterre.comments.table_name', 'finisterre_task_comments'), 'comment', 'task_id'],
+            [Typed::string(config('finisterre.table_name', 'finisterre_tasks')), 'description', 'id'],
+            [Typed::string(config('finisterre.comments.table_name', 'finisterre_task_comments')), 'comment', 'task_id'],
         ];
     }
 
@@ -188,7 +188,7 @@ class AttachmentsDisk
                 ->where($column, 'like', '%/storage/%')
                 ->orderBy('id')
                 ->each(function(object $row) use ($column, $storage, &$rows): void {
-                    preg_match_all(self::PUBLIC_IMAGE, (string)$row->{$column}, $matches);
+                    preg_match_all(self::PUBLIC_IMAGE, Typed::string($row->{$column}), $matches);
 
                     if (collect($matches[2])->contains(fn(string $file): bool => $storage->exists($file))) {
                         $rows++;
@@ -283,7 +283,7 @@ class AttachmentsDisk
         return [
             'driver'     => 'local',
             'root'       => storage_path('app/finisterre-files'),
-            'url'        => rtrim((string)config('app.url', 'http://localhost'), '/') . '/storage/finisterre-files',
+            'url'        => rtrim(Typed::string(config('app.url', 'http://localhost')), '/') . '/storage/finisterre-files',
             'visibility' => 'public',
             'throw'      => false,
         ];

@@ -6,6 +6,7 @@ use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Arzcode\Finisterre\Notifications\Concerns\RendersTaskHistory;
 use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -18,6 +19,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
 
     public function __construct(public FinisterreTaskComment $comment) {}
 
+    /** @return list<string> */
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -42,7 +44,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
             ->when($history, fn(MailMessage $mail) => $mail->line($history))
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $task)
+                route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $task)
             )
             ->salutation(' ');
 

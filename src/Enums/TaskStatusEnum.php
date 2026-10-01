@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Enums;
 
+use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Traits\HasEnumFunctions;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
@@ -37,21 +38,25 @@ enum TaskStatusEnum: string implements HasColor, HasLabel
         };
     }
 
+    /** @return Collection<int, self::*> */
     public static function filteredCases(): Collection
     {
+        $hidden = Typed::array(config('finisterre.hidden_statuses'));
+
         return collect(self::cases())
             ->when(
-                config('finisterre.hidden_statuses') !== [],
-                fn($collection) => $collection
-                    ->reject(fn($status) => in_array($status->value, config('finisterre.hidden_statuses')))
+                $hidden !== [],
+                fn(Collection $collection) => $collection
+                    ->reject(fn(self $status) => in_array($status->value, $hidden))
                     ->values()
             );
     }
 
+    /** @return array<string, string> */
     public static function options(): array
     {
         return self::filteredCases()
-            ->mapWithKeys(fn($item) => [$item->value => $item->getLabel()])
-            ->toArray();
+            ->mapWithKeys(fn(self $item) => [$item->value => $item->getLabel()])
+            ->all();
     }
 }

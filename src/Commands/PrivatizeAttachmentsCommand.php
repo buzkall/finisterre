@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Commands;
 use Arzcode\Finisterre\Controllers\FilamentRouteController;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
@@ -64,7 +65,7 @@ class PrivatizeAttachmentsCommand extends Command
     public function handle(): int
     {
         $this->force = (bool)$this->option('force');
-        $this->from = (string)$this->option('from');
+        $this->from = is_string($from = $this->option('from')) ? $from : 'public';
         $this->to = AttachmentsDisk::name();
 
         intro('Finisterre: privatize attachments' . ($this->force ? '' : ' (dry run)'));
@@ -185,7 +186,7 @@ class PrivatizeAttachmentsCommand extends Command
             ->flatMap(fn(string $directory): array => $this->source->files(rtrim($directory, '/')))
             ->filter(fn(string $file): bool => str_starts_with(basename($file), $name . '-') || str_starts_with(basename($file), $name . '___'));
 
-        return collect([$media->getPathRelativeToRoot()])->merge($derived)->unique()->values()->all();
+        return array_values(collect([$media->getPathRelativeToRoot()])->merge($derived)->unique()->all());
     }
 
     /**
@@ -203,7 +204,7 @@ class PrivatizeAttachmentsCommand extends Command
             ->where($column, 'like', '%/storage/%')
             ->chunkById(200, function(Collection $rows) use ($table, $column, $taskKey, &$changed): void {
                 foreach ($rows as $row) {
-                    $html = (string)$row->{$column};
+                    $html = Typed::string($row->{$column});
                     $private = [];
 
                     $rewritten = (string)preg_replace_callback(AttachmentsDisk::PUBLIC_IMAGE, function(array $match) use (&$private): string {
@@ -225,8 +226,10 @@ class PrivatizeAttachmentsCommand extends Command
                     if ($this->force) {
                         DB::table($table)->where('id', $row->id)->update([$column => $rewritten]);
 
-                        if ($row->{$taskKey} !== null) {
-                            EditorFiles::grant($private, $row->{$taskKey});
+                        $taskId = $row->{$taskKey};
+
+                        if (is_int($taskId) || is_string($taskId)) {
+                            EditorFiles::grant($private, $taskId);
                         }
                     }
                 }
@@ -284,7 +287,7 @@ class PrivatizeAttachmentsCommand extends Command
      */
     protected function report(array $rows): void
     {
-        $images = collect($this->images)->countBy();
+        $images = array_count_values($this->images);
         $moved = $this->force ? "Moved from '{$this->from}'" : "To move from '{$this->from}'";
 
         table(['Task attachments', 'Count'], [
@@ -296,10 +299,10 @@ class PrivatizeAttachmentsCommand extends Command
         table(['Column', $this->force ? 'Rows rewritten' : 'Rows to rewrite'], $rows);
 
         table(['Pasted images', 'Count'], [
-            [$moved, (string)$images->get('moved', 0)],
-            ["Already on '{$this->to}'", (string)$images->get('private', 0)],
-            ['Missing on both disks (left as they were)', (string)$images->get('missing', 0)],
-            ['Could not be copied (left as they were)', (string)$images->get('failed', 0)],
+            [$moved, (string)($images['moved'] ?? 0)],
+            ["Already on '{$this->to}'", (string)($images['private'] ?? 0)],
+            ['Missing on both disks (left as they were)', (string)($images['missing'] ?? 0)],
+            ['Could not be copied (left as they were)', (string)($images['failed'] ?? 0)],
         ]);
 
         $this->listImages('missing', 'Missing images');

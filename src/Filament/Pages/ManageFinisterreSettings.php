@@ -6,6 +6,8 @@ use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Traits\HasIconOptions;
 use BackedEnum;
 use Filament\Forms\Components\CheckboxList;
@@ -20,6 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 /**
  * @property-read Schema $form
@@ -31,6 +34,8 @@ class ManageFinisterreSettings extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Cog6Tooth;
     protected static ?string $slug = 'finisterre-settings';
     protected string $view = 'finisterre::filament.pages.finisterre-settings';
+
+    /** @var array<string, mixed>|null */
     public ?array $data = [];
 
     public static function canAccess(): bool
@@ -233,26 +238,26 @@ class ManageFinisterreSettings extends Page
 
         $settings = app(FinisterreSettings::class);
 
-        $settings->environments = (string)$data['environments'];
-        $settings->slug = $data['slug'];
-        $settings->hidden_statuses = $data['hidden_statuses'] ?? [];
-        $settings->fallback_notifiable_id = (int)$data['fallback_notifiable_id'];
-        $settings->authenticatable_filter_column = (string)$data['authenticatable_filter_column'];
-        $settings->authenticatable_filter_value = (string)$data['authenticatable_filter_value'];
+        $settings->environments = Typed::string($data['environments']);
+        $settings->slug = Typed::string($data['slug']);
+        $settings->hidden_statuses = Typed::strings($data['hidden_statuses'] ?? []);
+        $settings->fallback_notifiable_id = Typed::int($data['fallback_notifiable_id']);
+        $settings->authenticatable_filter_column = Typed::string($data['authenticatable_filter_column']);
+        $settings->authenticatable_filter_value = Typed::string($data['authenticatable_filter_value']);
         $settings->exclude_from_global_search = (bool)$data['exclude_from_global_search'];
         $settings->subtasks_notify = (bool)$data['subtasks_notify'];
-        $settings->subtasks_notification_delay_minutes = (int)$data['subtasks_notification_delay_minutes'];
-        $settings->mail_history_entries = filled($data['mail_history_entries']) ? (int)$data['mail_history_entries'] : null;
+        $settings->subtasks_notification_delay_minutes = Typed::int($data['subtasks_notification_delay_minutes']);
+        $settings->mail_history_entries = filled($data['mail_history_entries']) ? Typed::int($data['mail_history_entries']) : null;
         $settings->comments_display_avatars = (bool)$data['comments_display_avatars'];
-        $settings->comments_icon_action = $data['comments_icon_action'];
-        $settings->comments_icon_delete = $data['comments_icon_delete'];
-        $settings->comments_icon_empty = $data['comments_icon_empty'];
+        $settings->comments_icon_action = Typed::string($data['comments_icon_action']);
+        $settings->comments_icon_delete = Typed::string($data['comments_icon_delete']);
+        $settings->comments_icon_empty = Typed::string($data['comments_icon_empty']);
         $settings->sms_enabled = (bool)$data['sms_enabled'];
-        $settings->sms_url = $data['sms_url'];
-        $settings->sms_auth_key = $data['sms_auth_key'] ?: null;
-        $settings->sms_sender = $data['sms_sender'] ?: null;
-        $settings->sms_notify_to = $data['sms_notify_to'] ?: null;
-        $settings->sms_notify_priorities = $data['sms_notify_priorities'] ?? [];
+        $settings->sms_url = Typed::string($data['sms_url']);
+        $settings->sms_auth_key = Typed::nullableString($data['sms_auth_key']);
+        $settings->sms_sender = Typed::nullableString($data['sms_sender']);
+        $settings->sms_notify_to = Typed::nullableString($data['sms_notify_to']);
+        $settings->sms_notify_priorities = Typed::strings($data['sms_notify_priorities'] ?? []);
 
         $settings->save();
 
@@ -267,18 +272,14 @@ class ManageFinisterreSettings extends Page
      */
     protected function authenticatableOptions(): array
     {
-        /** @var class-string<Model> $model */
-        $model = config('finisterre.authenticatable');
+        $column = Typed::strings(Arr::wrap(config('finisterre.authenticatable_attribute', 'name')))[0] ?? 'name';
 
-        $attribute = (array)config('finisterre.authenticatable_attribute', 'name');
-        $column = $attribute[0] ?? 'name';
-
-        return $model::query()
+        return UserModel::class()::query()
             ->get()
             ->mapWithKeys(fn(Model $user): array => [
-                $user->getKey() => method_exists($user, 'getUserDisplayName')
-                    ? $user->getUserDisplayName()
-                    : (string)$user->getAttribute($column),
+                Typed::string($user->getKey()) => method_exists($user, 'getUserDisplayName')
+                    ? UserModel::displayName($user)
+                    : Typed::string($user->getAttribute($column)),
             ])
             ->all();
     }

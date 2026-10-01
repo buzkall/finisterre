@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Filament\Livewire;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreSubtask;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -67,7 +68,7 @@ class FinisterreSubtasksComponent extends Component
 
     public function add(): void
     {
-        $this->guard();
+        $task = $this->guard();
 
         $title = trim($this->newTitle);
 
@@ -77,10 +78,10 @@ class FinisterreSubtasksComponent extends Component
             return;
         }
 
-        $this->record->subtasks()->create([
+        $task->subtasks()->create([
             'title'        => $title,
             'completed'    => false,
-            'order_column' => ((int)$this->record->subtasks()->max('order_column')) + self::ORDER_STEP,
+            'order_column' => Typed::int($task->subtasks()->max('order_column')) + self::ORDER_STEP,
         ]);
 
         $this->newTitle = '';
@@ -94,7 +95,7 @@ class FinisterreSubtasksComponent extends Component
      */
     public function updatedSubtasks(mixed $value, string $key): void
     {
-        $this->guard();
+        $task = $this->guard();
 
         [$rowKey, $field] = array_pad(explode('.', $key, 2), 2, null);
 
@@ -102,7 +103,7 @@ class FinisterreSubtasksComponent extends Component
             return;
         }
 
-        $subtask = $this->subtaskAt($rowKey);
+        $subtask = $this->subtaskAt($task, $rowKey);
 
         if (! $subtask instanceof FinisterreSubtask) {
             return;
@@ -116,7 +117,7 @@ class FinisterreSubtasksComponent extends Component
             return;
         }
 
-        $title = trim((string)$value);
+        $title = trim(Typed::string($value));
 
         // An emptied title is a slip, not a delete — put the stored one back.
         if ($title === '' || mb_strlen($title) > 255) {
@@ -131,9 +132,9 @@ class FinisterreSubtasksComponent extends Component
 
     public function delete(string $rowKey): void
     {
-        $this->guard();
+        $task = $this->guard();
 
-        $this->subtaskAt($rowKey)?->delete();
+        $this->subtaskAt($task, $rowKey)?->delete();
 
         $this->loadSubtasks();
         $this->dispatchCounts();
@@ -144,18 +145,18 @@ class FinisterreSubtasksComponent extends Component
      */
     public function reorder(array $ids): void
     {
-        $this->guard();
+        $task = $this->guard();
 
         // Only ids that really belong to this task, in the order given.
-        $owned = $this->record->subtasks()->pluck('id')->all();
+        $owned = $task->subtasks()->pluck('id')->all();
         $ordered = array_values(array_filter(
             array_map(intval(...), $ids),
             fn(int $id) => in_array($id, $owned, true)
         ));
 
-        DB::transaction(function() use ($ordered) {
+        DB::transaction(function() use ($task, $ordered) {
             foreach ($ordered as $position => $id) {
-                $this->record->subtasks()
+                $task->subtasks()
                     ->whereKey($id)
                     ->update(['order_column' => ($position + 1) * self::ORDER_STEP]);
             }
@@ -166,7 +167,7 @@ class FinisterreSubtasksComponent extends Component
             // ago" stale. Touching only moves updated_at, which
             // FinisterreTaskObserver::saved() ignores — no assignee is notified.
             if ($ordered !== []) {
-                $this->record->touch();
+                $task->touch();
             }
         });
 
@@ -204,21 +205,25 @@ class FinisterreSubtasksComponent extends Component
         return view('finisterre::subtasks.subtasks');
     }
 
-    protected function guard(): void
+    protected function guard(): FinisterreTask
     {
-        abort_unless($this->canManage(), 403, __('finisterre::finisterre.subtasks.forbidden'));
+        $task = $this->record;
+
+        abort_unless($task instanceof FinisterreTask && $this->canManage(), 403, __('finisterre::finisterre.subtasks.forbidden'));
+
+        return $task;
     }
 
     /** Resolve a row through the bound array, scoped to this task's own rows. */
-    protected function subtaskAt(?string $rowKey): ?FinisterreSubtask
+    protected function subtaskAt(FinisterreTask $task, ?string $rowKey): ?FinisterreSubtask
     {
-        $id = $this->subtasks[$rowKey]['id'] ?? null;
+        $id = $rowKey === null ? null : ($this->subtasks[$rowKey]['id'] ?? null);
 
         if ($id === null) {
             return null;
         }
 
-        return $this->record->subtasks()->whereKey($id)->first();
+        return $task->subtasks()->whereKey($id)->first();
     }
 
     protected function loadSubtasks(): void

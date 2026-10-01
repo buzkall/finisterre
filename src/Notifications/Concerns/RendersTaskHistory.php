@@ -4,7 +4,8 @@ namespace Arzcode\Finisterre\Notifications\Concerns;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
-use Illuminate\Contracts\Auth\Authenticatable;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
 
@@ -43,7 +44,7 @@ trait RendersTaskHistory
 
         $entries = $entries
             ->sortByDesc(fn(array $entry) => $entry['date'] ?? Carbon::createFromTimestamp(0))
-            ->take(filled($limit) ? (int)$limit : $entries->count())
+            ->take(Typed::nullableInt($limit) ?? $entries->count())
             ->map(fn(array $entry) => [...$entry, 'body' => $this->embedImages((string)$entry['body'])])
             ->values();
 
@@ -56,9 +57,8 @@ trait RendersTaskHistory
 
     protected function commentAuthor(FinisterreTaskComment $comment): string
     {
-        /** @var Authenticatable|null $creator */
         $creator = $comment->creator;
 
-        return $creator?->getUserDisplayName() ?? '';
+        return $creator ? UserModel::displayName($creator) : '';
     }
 }

@@ -6,6 +6,8 @@ use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
@@ -36,8 +38,8 @@ class FinisterreTaskObserver
     public function creating(FinisterreTask $task): void
     {
         $task->status ??= TaskStatusEnum::Open;
-        $task->creator_id ??= auth()->id();
-        $task->assignee_id ??= config('finisterre.fallback_notifiable_id');
+        $task->creator_id ??= UserModel::authId();
+        $task->assignee_id ??= Typed::nullableInt(config('finisterre.fallback_notifiable_id'));
     }
 
     public function created(FinisterreTask $task): void
@@ -76,7 +78,7 @@ class FinisterreTaskObserver
     public function saved(FinisterreTask $task): void
     {
         if ($task->isDirty('description')) {
-            EditorFiles::claim($task->description, $task->getKey());
+            EditorFiles::claim($task->description, $task->id);
         }
 
         // Skip notification when nothing meaningful changed. updated_at alone means the task
@@ -94,7 +96,7 @@ class FinisterreTaskObserver
             // don't notify myself, and don't notify when task is moved to done
             if ($assignee && $assignee->getKey() !== auth()->id() && $task->status !== TaskStatusEnum::Done) {
                 $taskChanges = $task->getChanges();
-                $assignee->notify(new TaskNotification($task, $taskChanges)); // @phpstan-ignore-line method.notFound
+                UserModel::notify($assignee, new TaskNotification($task, $taskChanges));
 
                 Notification::make()
                     ->title(__(
@@ -108,7 +110,7 @@ class FinisterreTaskObserver
                         Action::make('view')
                             ->label(__('finisterre::finisterre.comment_notification.cta'))
                             ->button()
-                            ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $task)),
+                            ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $task)),
                     ])->sendToDatabase($assignee);
             }
         });
@@ -141,7 +143,7 @@ class FinisterreTaskObserver
             // card to beat whatever the column looks like. Its missing position casts
             // to 0, which falls into the renumber below.
             $first = (clone $siblings)->toBase()->first(['order_column']);
-            $firstPosition = (int)($first->order_column ?? 0);
+            $firstPosition = Typed::int($first->order_column ?? 0);
 
             if ($first === null || $firstPosition > 1) {
                 $position = $first === null ? 10 : $firstPosition - 1;
@@ -165,6 +167,7 @@ class FinisterreTaskObserver
         });
 
         // Keep the in-memory model in sync without marking it dirty again.
-        $task->setAttribute('order_column', $position)->syncOriginalAttribute('order_column');
+        $task->setAttribute('order_column', $position);
+        $task->syncOriginalAttribute('order_column');
     }
 }

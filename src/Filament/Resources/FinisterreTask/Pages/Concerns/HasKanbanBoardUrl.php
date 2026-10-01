@@ -27,9 +27,8 @@ trait HasKanbanBoardUrl
 
         try {
             $panel = Filament::getCurrentOrDefaultPanel();
-            $routeName = 'filament.' . $panel->getId() . '.pages.' . TasksKanbanBoard::getSlug($panel);
 
-            if (Route::has($routeName)) {
+            if ($panel && Route::has('filament.' . $panel->getId() . '.pages.' . TasksKanbanBoard::getSlug($panel))) {
                 return TasksKanbanBoard::getUrl();
             }
         } catch (Throwable) {

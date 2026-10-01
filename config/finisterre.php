@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\User;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Policies\FinisterreTaskCommentPolicy;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
@@ -30,7 +29,7 @@ return [
 
     'model_policy' => FinisterreTaskPolicy::class,
 
-    'authenticatable'            => User::class, // @phpstan-ignore-line
+    'authenticatable'            => 'App\Models\User',
     'authenticatable_table_name' => 'users',
     'authenticatable_attribute'  => 'name', // string column, or array like ['name', 'lastname'] for full-name display
     'guard'                      => 'web', // filament

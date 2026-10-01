@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Policies;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 class FinisterreTaskPolicy
@@ -31,7 +32,7 @@ class FinisterreTaskPolicy
 
     public function delete(Authenticatable $user, FinisterreTask $finisterreTask): bool
     {
-        return $user->id === $finisterreTask->creator_id; // @phpstan-ignore-line
+        return Typed::nullableInt($user->getAuthIdentifier()) === $finisterreTask->creator_id;
     }
 
     public function deleteAny(Authenticatable $user): bool

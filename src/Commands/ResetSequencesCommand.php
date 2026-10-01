@@ -2,8 +2,10 @@
 
 namespace Arzcode\Finisterre\Commands;
 
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 class ResetSequencesCommand extends Command
 {
@@ -32,15 +34,20 @@ class ResetSequencesCommand extends Command
         SQL);
 
         foreach ($sequences as $seq) {
-            $table = '"' . str_replace('"', '""', $seq->table_name) . '"';
-            $column = '"' . str_replace('"', '""', $seq->column_name) . '"';
+            if (! $seq instanceof stdClass) {
+                continue;
+            }
+
+            $table = '"' . str_replace('"', '""', Typed::string($seq->table_name)) . '"';
+            $column = '"' . str_replace('"', '""', Typed::string($seq->column_name)) . '"';
+            $sequence = Typed::string($seq->sequence_name);
 
             DB::statement(
                 "SELECT setval(?, COALESCE((SELECT MAX($column) FROM $table), 1), (SELECT MAX($column) IS NOT NULL FROM $table))",
-                [$seq->sequence_name]
+                [$sequence]
             );
 
-            $this->line("Reset {$seq->sequence_name}");
+            $this->line("Reset {$sequence}");
         }
 
         $this->info(count($sequences) . ' sequence(s) reset.');

@@ -6,17 +6,22 @@ use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Facades\Finisterre;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
+use Arzcode\Finisterre\Models\FinisterreSubtask;
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Arzcode\Finisterre\Support\PanelLabel;
+use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserAvatar;
+use Arzcode\Finisterre\Support\UserModel;
 use BackedEnum;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Panel;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,6 +30,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
+use LogicException;
 use Relaticle\Flowforge\Board;
 use Relaticle\Flowforge\BoardPage;
 use Relaticle\Flowforge\Column;
@@ -41,19 +47,25 @@ class TasksKanbanBoard extends BoardPage
      * the widget's lazy-loading placeholder and blew up with "trim(): Argument
      * #1 ($string) must be of type string, array given". The name also has to
      * stay clear of flowforge's `#[Url(as: 'filters')] $tableFilters`.
+     *
+     * @var array<string, mixed>|null
      */
     #[Url]
     public ?array $taskFilters = null;
 
     protected string $view = 'finisterre::filament.pages.tasks-kanban-board';
     protected static string|null|BackedEnum $navigationIcon = Heroicon::OutlinedExclamationTriangle;
+
+    /** @var array<string, string> */
     protected $listeners = [
         'commentCreated' => '$refresh',
     ];
 
     public static function getSlug(?Panel $panel = null): string
     {
-        return config('finisterre.slug') ?? parent::getSlug();
+        $slug = config('finisterre.slug');
+
+        return is_string($slug) ? $slug : parent::getSlug();
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -136,6 +148,7 @@ class TasksKanbanBoard extends BoardPage
         ])->filter()->count();
     }
 
+    /** @param  array<string, mixed>  $filters */
     #[On('filtersUpdated')]
     public function updateFilters(array $filters): void
     {
@@ -151,7 +164,7 @@ class TasksKanbanBoard extends BoardPage
             ->positionIdentifier('order_column')
             ->columns($this->getColumns())
             ->cardSchema(
-                fn($schema) => $schema
+                fn(Schema $schema) => $schema
                     ->components([
                         ViewEntry::make('card_info')
                             ->view('finisterre::tasks.task-card-info')
@@ -227,6 +240,11 @@ class TasksKanbanBoard extends BoardPage
                 $query = $board->getQuery();
                 $positionField = $board->getPositionIdentifierAttribute();
                 $columnField = $board->getColumnIdentifierAttribute();
+
+                if (! $query instanceof Builder || $positionField === null || $columnField === null) {
+                    throw new LogicException('The kanban board needs a query, a column and a position attribute.');
+                }
+
                 $keyName = $query->getModel()->getKeyName();
 
                 // Lock every card in the target column so concurrent moves can't race.
@@ -239,7 +257,7 @@ class TasksKanbanBoard extends BoardPage
 
                 // Drop the moved card from the list (on a cross-column move it lives elsewhere).
                 $others = $columnCards
-                    ->reject(fn($item) => (string)$item->getKey() === (string)$card->getKey())
+                    ->reject(fn(Model $item) => Typed::string($item->getKey()) === Typed::string($card->getKey()))
                     ->values();
 
                 // Resolve where the moved card lands from its new neighbours.
@@ -247,7 +265,7 @@ class TasksKanbanBoard extends BoardPage
                     $afterCardId === null  => 0,
                     $beforeCardId === null => $others->count(),
                     default                => ($afterIndex = $others->search(
-                        fn($item) => (string)$item->getKey() === $afterCardId
+                        fn(Model $item) => Typed::string($item->getKey()) === $afterCardId
                     )) === false ? $others->count() : $afterIndex + 1,
                 };
 
@@ -266,7 +284,7 @@ class TasksKanbanBoard extends BoardPage
                 foreach ($ordered as $index => $item) {
                     $position = ($index + 1) * 10;
 
-                    if ((string)$item->getKey() === (string)$card->getKey()) {
+                    if (Typed::string($item->getKey()) === Typed::string($card->getKey())) {
                         $card->fill([$columnField => $columnValue, $positionField => $position]);
 
                         // Only a real column change is worth a new updated_at; a drag inside
@@ -276,9 +294,10 @@ class TasksKanbanBoard extends BoardPage
                         $card->timestamps = true;
 
                         $newPosition = (string)$position;
-                    } elseif ((int)$item->getAttribute($positionField) !== $position) {
+                    } elseif (Typed::int($item->getAttribute($positionField)) !== $position) {
                         $item->timestamps = false;
-                        $item->update([$positionField => $position]);
+                        $item->setAttribute($positionField, $position);
+                        $item->save();
                         $item->timestamps = true;
                     }
                 }
@@ -288,41 +307,41 @@ class TasksKanbanBoard extends BoardPage
         return $newPosition;
     }
 
+    /** @return Builder<FinisterreTask> */
     protected function getFilteredQuery(): Builder
     {
-        $userModel = app(config('finisterre.authenticatable'));
+        $table = Typed::string(config('finisterre.table_name'));
+        $userTable = UserModel::class()::query()->getModel()->getTable();
+        $userQuery = fn(string $column) => UserModel::class()::query()
+            ->select(UserModel::nameSelectExpression())
+            ->whereColumn($userTable . '.id', $table . '.' . $column)
+            ->limit(1);
 
         return FinisterreTask::query()
             // The card image is rendered on every card, so the relation comes along
             // with the board query — the counts below are subqueries and load no rows.
             ->with('coverMedia')
             ->withCount([
-                'comments' => fn($q) => $q->where(fn($q) => $q->whereNull('scheduled_for')->orWhereNotNull('sent_at')),
+                'comments' => fn(Builder $q) => $q->where(fn(Builder $q) => $q->whereNull('scheduled_for')->orWhereNotNull('sent_at')),
                 'media',
                 'subtasks',
-                'subtasks as completed_subtasks_count' => fn($q) => $q->where('completed', true),
-                'taskChanges as has_changes'           => fn($q) => $q->where('user_id', auth()->id()),
+                'subtasks as completed_subtasks_count' => self::onlyCompleted(...),
+                'taskChanges as has_changes'           => self::onlyMine(...),
             ])
             ->addSelect([
-                config('finisterre.table_name') . '.*',
-                'assignee_name' => $userModel->newQuery()
-                    ->select($userModel::getUserNameSelectExpression())
-                    ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.assignee_id')
-                    ->limit(1),
-                'creator_name' => $userModel->newQuery()
-                    ->select($userModel::getUserNameSelectExpression())
-                    ->whereColumn($userModel->getTable() . '.id', config('finisterre.table_name') . '.creator_id')
-                    ->limit(1),
+                $table . '.*',
+                'assignee_name' => $userQuery('assignee_id'),
+                'creator_name'  => $userQuery('creator_id'),
             ])
             ->when(
                 $this->taskFilters['filter_tags'] ?? null,
-                fn($query, $tagIds) => $query->withAnyTags(FinisterreTag::findMany($tagIds))
+                fn($query, $tagIds) => $query->withAnyTags(FinisterreTag::findMany(Typed::array($tagIds)))
             )
             ->when(
                 $this->taskFilters['filter_text'] ?? null,
                 fn($query, $text) => $query->where(fn($query) => $query
-                    ->where('title', 'like', "%$text%")
-                    ->orWhere('description', 'like', "%$text%"))
+                    ->where('title', 'like', '%' . Typed::string($text) . '%')
+                    ->orWhere('description', 'like', '%' . Typed::string($text) . '%'))
             )
             ->when(
                 $this->taskFilters['filter_assignee'] ?? null,
@@ -338,9 +357,22 @@ class TasksKanbanBoard extends BoardPage
             );
     }
 
+    /** @param  Builder<FinisterreSubtask>  $query */
+    protected static function onlyCompleted(Builder $query): void
+    {
+        $query->where('completed', true);
+    }
+
+    /** @param  Builder<FinisterreTaskChange>  $query */
+    protected static function onlyMine(Builder $query): void
+    {
+        $query->where('user_id', auth()->id());
+    }
+
+    /** @return array<int, Column> */
     protected function getColumns(): array
     {
-        $hiddenStatuses = config('finisterre.hidden_statuses', []);
+        $hiddenStatuses = Typed::array(config('finisterre.hidden_statuses', []));
 
         return collect(TaskStatusEnum::cases())
             ->reject(fn($status) => in_array($status->value, $hiddenStatuses))
@@ -350,7 +382,7 @@ class TasksKanbanBoard extends BoardPage
                     ->color($status->getColor())
             )
             ->values()
-            ->toArray();
+            ->all();
     }
 
     /**
@@ -391,7 +423,7 @@ class TasksKanbanBoard extends BoardPage
      */
     protected function loadCardUsers(): void
     {
-        $table = config('finisterre.table_name');
+        $table = Typed::string(config('finisterre.table_name'));
 
         $ids = $this->getFilteredQuery()
             ->reorder()
@@ -412,7 +444,7 @@ class TasksKanbanBoard extends BoardPage
             return;
         }
 
-        $query = app(config('finisterre.authenticatable'))->newQuery();
+        $query = UserModel::class()::query();
 
         // Hosts whose user model answers getFilamentAvatarUrl() from a media
         // library would query that relation once per user unless it comes along.
@@ -420,7 +452,7 @@ class TasksKanbanBoard extends BoardPage
             $query->with('media');
         }
 
-        $this->cardUsers = $query->findMany($ids)->keyBy(fn(Model $user) => $user->getKey())->all();
+        $this->cardUsers = $query->findMany($ids)->keyBy(fn(Model $user) => Typed::int($user->getKey()))->all();
     }
 
     protected static function getInitials(?string $name): ?string

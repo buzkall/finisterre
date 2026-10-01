@@ -5,7 +5,10 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -15,6 +18,9 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 /**
  * The create form is laid out like the task page it leads to: the title as
@@ -58,10 +64,10 @@ class Form
                     ->relationship(
                         'assignee',
                         FinisterrePlugin::get()->getAuthUser()?->getUserNameColumn(),
-                        fn($query) => $query->assignableUsers()
+                        fn(Builder $query) => UserModel::scopeAssignable($query)
                     )
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record->getUserDisplayName())
-                    ->searchable((array)config('finisterre.authenticatable_attribute', 'name'))
+                    ->getOptionLabelFromRecordUsing(fn(Model $record) => UserModel::displayName($record))
+                    ->searchable(Typed::strings(Arr::wrap(config('finisterre.authenticatable_attribute', 'name'))))
                     ->preload()
                     ->default(config('finisterre.fallback_notifiable_id'))
                     // Reporters could never assign their own issues.
@@ -72,7 +78,7 @@ class Form
                     ->placeholder(__('finisterre::finisterre.no_tags'))
                     ->dehydrated(false)
                     ->saveRelationshipsUsing(function(FinisterreTask $record, $state): void {
-                        $record->tags()->sync($state ?? []);
+                        $record->tags()->sync(Typed::array($state));
                     }),
             ])
                 // Two columns for a reporter, whose row has no assignee in it.
@@ -86,7 +92,7 @@ class Form
                 ->schema([
                     RichEditor::make('description')
                         ->label(__('finisterre::finisterre.description'))
-                        ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                        ->fileAttachmentsDisk(AttachmentsDisk::name())
                         ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                         // The editor ships a 3rem body, barely one line. Its content
                         // area is flex-1 inside this wrapper, so growing the wrapper
@@ -98,7 +104,7 @@ class Form
                     SpatieMediaLibraryFileUpload::make('attachments')
                         ->label(__('finisterre::finisterre.attachments'))
                         ->multiple()
-                        ->disk(config('finisterre.attachments_disk') ?? 'public')
+                        ->disk(AttachmentsDisk::name())
                         ->collection('tasks')
                         ->openable()
                         ->downloadable()

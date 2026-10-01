@@ -22,6 +22,7 @@ use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 use Carbon\Carbon;
 use Filament\Support\Assets\Css;
@@ -131,11 +132,11 @@ class FinisterreServiceProvider extends PackageServiceProvider
             return $this;
         }
 
-        $config = $this->app['config'];
+        $config = config();
 
         $config->set('finisterre', $this->deepMergeConfig(
-            require __DIR__ . '/../config/finisterre.php',
-            $config->get('finisterre', []),
+            Typed::array(require __DIR__ . '/../config/finisterre.php'),
+            Typed::array($config->get('finisterre', [])),
         ));
 
         return $this;
@@ -149,9 +150,9 @@ class FinisterreServiceProvider extends PackageServiceProvider
      * scalars are replaced wholesale — otherwise a shorter published list would
      * inherit the package's trailing entries via index-based merging.
      *
-     * @param  array<string, mixed>  $defaults
-     * @param  array<string, mixed>  $overrides
-     * @return array<string, mixed>
+     * @param  array<mixed>  $defaults
+     * @param  array<mixed>  $overrides
+     * @return array<mixed>
      */
     protected function deepMergeConfig(array $defaults, array $overrides): array
     {
@@ -331,7 +332,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         try {
             $settings = app(FinisterreSettings::class);
             $stored = $settings->slug;
-            $panelSlug = config('finisterre.panel_slug', 'admin');
+            $panelSlug = Typed::string(config('finisterre.panel_slug', 'admin'));
 
             // Probe the registered routes for a free board path, so the prompt never
             // suggests a colliding default. We can't read config('finisterre.slug')
@@ -872,8 +873,8 @@ class FinisterreServiceProvider extends PackageServiceProvider
             });
         }
 
-        Gate::policy(FinisterreTask::class, config('finisterre.model_policy', FinisterreTaskPolicy::class));
-        Gate::policy(FinisterreTaskComment::class, config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class));
+        Gate::policy(FinisterreTask::class, Typed::string(config('finisterre.model_policy', FinisterreTaskPolicy::class)));
+        Gate::policy(FinisterreTaskComment::class, Typed::string(config('finisterre.comments.model_policy', FinisterreTaskCommentPolicy::class)));
 
         // A private attachments disk sits outside public/, so its files are served
         // by routes that check the viewer may see the task they belong to.
@@ -939,7 +940,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     protected function hostOverridesBoardCard(): bool
     {
-        foreach ((array)config('view.paths', []) as $path) {
+        foreach (Typed::strings(config('view.paths', [])) as $path) {
             if (is_file($path . '/vendor/flowforge/livewire/card.blade.php')) {
                 return true;
             }

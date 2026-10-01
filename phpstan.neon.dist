@@ -2,12 +2,14 @@ includes:
     - phpstan-baseline.neon
 
 parameters:
-    level: 4
+    level: 10
     paths:
         - src
         - config
         - database
     tmpDir: build/phpstan
+    bootstrapFiles:
+        - phpstan-bootstrap.php
     checkOctaneCompatibility: true
     checkModelProperties: true
     ignoreErrors:
@@ -21,9 +23,4 @@ parameters:
             paths:
                 - src/Traits/FinisterreUserTrait.php
                 - src/Traits/InteractsWithFinisterreReports.php
-        # The "finisterre::" view namespace isn't registered during analysis, so larastan
-        # can't confirm this existing package view literal is a valid view-string.
-        -
-            identifier: property.defaultValue
-            path: src/Filament/Widgets/FilterTasksWidget.php
 

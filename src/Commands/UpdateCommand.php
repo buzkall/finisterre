@@ -7,6 +7,7 @@ use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Support\Typed;
 use Composer\InstalledVersions;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -443,8 +444,8 @@ class UpdateCommand extends Command
             return 0;
         }
 
-        $packageKeys = $this->configKeys(require __DIR__ . '/../../config/finisterre.php');
-        $publishedKeys = $this->configKeys(require $path);
+        $packageKeys = $this->configKeys(Typed::array(require __DIR__ . '/../../config/finisterre.php'));
+        $publishedKeys = $this->configKeys(Typed::array(require $path));
 
         $added = array_values(array_diff($packageKeys, $publishedKeys));
         $removed = array_values(array_diff($publishedKeys, $packageKeys));
@@ -478,7 +479,7 @@ class UpdateCommand extends Command
      * Dotted keys of a config array. Recursion stops at list arrays, whose
      * numeric indexes say nothing about which keys a config file declares.
      *
-     * @param  array<string, mixed>  $config
+     * @param  array<mixed>  $config
      * @return list<string>
      */
     protected function configKeys(array $config, string $prefix = ''): array

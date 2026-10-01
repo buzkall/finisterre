@@ -4,12 +4,14 @@ namespace Arzcode\Finisterre\Models;
 
 use Arzcode\Finisterre\Database\Factories\FinisterreSubtaskFactory;
 use Arzcode\Finisterre\Observers\FinisterreSubtaskObserver;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @property int $id
  * @property string $title
  * @property bool $completed
  * @property ?int $order_column
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[ObservedBy(FinisterreSubtaskObserver::class)]
 class FinisterreSubtask extends Model
 {
+    /** @use HasFactory<FinisterreSubtaskFactory> */
     use HasFactory;
 
     protected $fillable = ['task_id', 'title', 'completed', 'order_column'];
@@ -26,11 +29,12 @@ class FinisterreSubtask extends Model
     // Keep the parent's updated_at honest so the kanban card's "updated X ago"
     // reflects subtask edits. FinisterreTaskObserver::saved() ignores changes
     // limited to updated_at, so this never triggers an assignee notification.
+    /** @var list<string> */
     protected $touches = ['task'];
 
     public function getTable(): string
     {
-        return config('finisterre.subtasks.table_name', 'finisterre_subtasks');
+        return Typed::string(config('finisterre.subtasks.table_name', 'finisterre_subtasks'));
     }
 
     protected static function newFactory(): FinisterreSubtaskFactory
@@ -38,6 +42,7 @@ class FinisterreSubtask extends Model
         return FinisterreSubtaskFactory::new();
     }
 
+    /** @return BelongsTo<FinisterreTask, $this> */
     public function task(): BelongsTo
     {
         return $this->belongsTo(FinisterreTask::class, 'task_id');

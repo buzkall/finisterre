@@ -4,6 +4,8 @@ namespace Arzcode\Finisterre\Filament\Livewire;
 
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -12,6 +14,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -25,6 +28,7 @@ class FilterTasks extends Component implements HasForms
     #[Url]
     public ?string $filter_text = null;
 
+    /** @var list<int|string> */
     #[Url]
     public array $filter_tags = [];
 
@@ -38,11 +42,11 @@ class FilterTasks extends Component implements HasForms
     {
         // Load from session if URL params are empty
         if (empty($this->filter_text) && $this->filter_tags === [] && empty($this->filter_assignee)) {
-            $sessionFilters = session('finisterre.filters', []);
-            $this->filter_text = $sessionFilters['filter_text'] ?? null;
-            $this->filter_tags = $sessionFilters['filter_tags'] ?? [];
-            $this->filter_assignee = $sessionFilters['filter_assignee'] ?? null;
-            $this->filter_show_archived = $sessionFilters['filter_show_archived'] ?? false;
+            $sessionFilters = Typed::array(session('finisterre.filters', []));
+            $this->filter_text = Typed::nullableString($sessionFilters['filter_text'] ?? null);
+            $this->filter_tags = Typed::ids($sessionFilters['filter_tags'] ?? []);
+            $this->filter_assignee = Typed::nullableInt($sessionFilters['filter_assignee'] ?? null);
+            $this->filter_show_archived = (bool)($sessionFilters['filter_show_archived'] ?? false);
         }
 
         $filters = $this->getFilters();
@@ -50,6 +54,9 @@ class FilterTasks extends Component implements HasForms
         $this->dispatch('filtersUpdated', $filters);
     }
 
+    /**
+     * @return array{filter_text: ?string, filter_tags: list<int|string>, filter_assignee: ?int, filter_show_archived: bool}
+     */
     private function getFilters(): array
     {
         return [
@@ -87,8 +94,9 @@ class FilterTasks extends Component implements HasForms
                                 ->distinct('assignee_id')
                                 ->with('assignee')
                                 ->get()
-                                ->filter(fn($task) => $task->assignee)
-                                ->mapWithKeys(fn($task) => [$task->assignee->getKey() => $task->assignee->getUserDisplayName()]) // @phpstan-ignore-line method.notFound
+                                ->map(fn(FinisterreTask $task) => $task->assignee)
+                                ->filter()
+                                ->mapWithKeys(fn(Model $assignee) => [Typed::string($assignee->getKey()) => UserModel::displayName($assignee)])
                         )
                         ->live()
                         ->afterStateUpdated(fn() => $this->dispatchFilters())

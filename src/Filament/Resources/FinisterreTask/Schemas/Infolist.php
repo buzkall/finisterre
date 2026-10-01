@@ -9,6 +9,9 @@ use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ViewFinisterreTask;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -26,6 +29,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -168,11 +172,10 @@ class Infolist
                 )))
             ->all();
 
-        $assigneeActions = config('finisterre.authenticatable')::query()
-            ->assignableUsers()
+        $assigneeActions = UserModel::assignableQuery()
             ->get()
-            ->map(fn($user): Action => Action::make('assignee_' . $user->getKey())
-                ->label($user->getUserDisplayName())
+            ->map(fn(Model $user): Action => Action::make('assignee_' . Typed::string($user->getKey()))
+                ->label(UserModel::displayName($user))
                 ->icon(fn(FinisterreTask $record) => $record->assignee_id === $user->getKey() ? Heroicon::Check : null)
                 ->action(fn(FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
                     $livewire,
@@ -256,7 +259,7 @@ class Infolist
                 ])
                 ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
                     $livewire,
-                    fn() => TagsSelect::persist($record, $data['tags'] ?? [])
+                    fn() => TagsSelect::persist($record, Typed::ids($data['tags'] ?? []))
                 )),
 
             Action::make('quick_attachments')
@@ -277,7 +280,7 @@ class Infolist
                     SpatieMediaLibraryFileUpload::make('attachments')
                         ->hiddenLabel()
                         ->multiple()
-                        ->disk(config('finisterre.attachments_disk') ?? 'public')
+                        ->disk(AttachmentsDisk::name())
                         ->collection('tasks')
                         ->openable()
                         ->downloadable(),

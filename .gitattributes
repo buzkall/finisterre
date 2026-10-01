@@ -17,8 +17,10 @@
 /UPGRADING.md       export-ignore
 /phpstan.neon.dist  export-ignore
 /phpstan-baseline.neon  export-ignore
+/phpstan-bootstrap.php  export-ignore
 /package.json       export-ignore
 /package-lock.json  export-ignore
 /pint.json          export-ignore
 /rector.php         export-ignore
 /CHANGELOG.md       export-ignore
+/CLAUDE.md          export-ignore

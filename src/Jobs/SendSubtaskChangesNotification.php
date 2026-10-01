@@ -5,6 +5,8 @@ namespace Arzcode\Finisterre\Jobs;
 use Arzcode\Finisterre\Enums\SubtaskChangeActionEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\SubtaskChangesNotification;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Bus\Queueable;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 /**
  * Reports how a task's checklist changed over the notification window.
@@ -55,7 +58,7 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
      */
     public function uniqueFor(): int
     {
-        return (int)config('finisterre.subtasks.notification_delay_minutes', 5) * 60 + 1800;
+        return Typed::int(config('finisterre.subtasks.notification_delay_minutes', 5)) * 60 + 1800;
     }
 
     public function handle(): void
@@ -126,13 +129,13 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
      */
     protected function checklist(): array
     {
-        return DB::table(config('finisterre.subtasks.table_name', 'finisterre_subtasks'))
+        return DB::table(Typed::string(config('finisterre.subtasks.table_name', 'finisterre_subtasks')))
             ->where('task_id', $this->taskId)
             ->orderBy('order_column')
             ->orderBy('id')
             ->get(['id', 'title', 'completed'])
-            ->mapWithKeys(fn($row) => [(int)$row->id => [
-                'title'     => (string)$row->title,
+            ->mapWithKeys(fn(stdClass $row) => [Typed::int($row->id) => [
+                'title'     => Typed::string($row->title),
                 'completed' => (bool)$row->completed,
             ]])
             ->all();
@@ -143,7 +146,7 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
      */
     protected function notify(FinisterreTask $task, Model $assignee, array $entries): void
     {
-        $assignee->notify(new SubtaskChangesNotification($task, $entries)); // @phpstan-ignore-line method.notFound
+        UserModel::notify($assignee, new SubtaskChangesNotification($task, $entries));
 
         Notification::make()
             ->title(__('finisterre::finisterre.subtask_changes.subject', ['title' => $task->title]))
@@ -153,7 +156,7 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
                     ->label(__('finisterre::finisterre.subtask_changes.cta'))
                     ->button()
                     ->url(route(
-                        'filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view',
+                        'filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view',
                         $task
                     )),
             ])

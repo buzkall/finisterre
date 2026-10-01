@@ -28,6 +28,6 @@ class UserAvatar
         // Filament's second lookup, for hosts that keep the URL in a column and
         // never implement the contract. Read from the raw attributes so a model
         // without the column does not trip preventAccessingMissingAttributes().
-        return $user->getAttributes()['avatar_url'] ?? null;
+        return Typed::nullableString($user->getAttributes()['avatar_url'] ?? null);
     }
 }

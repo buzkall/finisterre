@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Commands;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Arzcode\Finisterre\Support\PackageMigrations;
+use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -215,10 +216,10 @@ class UninstallCommand extends Command
 
         // Children first: every one of these has a cascading FK to the tasks table.
         $tables = [
-            config('finisterre.subtasks.table_name', 'finisterre_subtasks'),
-            config('finisterre.task_changes_table_name', 'finisterre_task_changes'),
-            config('finisterre.comments.table_name', 'finisterre_task_comments'),
-            config('finisterre.table_name', 'finisterre_tasks'),
+            Typed::string(config('finisterre.subtasks.table_name', 'finisterre_subtasks')),
+            Typed::string(config('finisterre.task_changes_table_name', 'finisterre_task_changes')),
+            Typed::string(config('finisterre.comments.table_name', 'finisterre_task_comments')),
+            Typed::string(config('finisterre.table_name', 'finisterre_tasks')),
         ];
 
         foreach ($tables as $table) {

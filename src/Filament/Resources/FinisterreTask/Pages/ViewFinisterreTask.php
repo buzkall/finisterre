@@ -7,6 +7,7 @@ use Arzcode\Finisterre\Filament\Resources\FinisterreTaskResource;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
@@ -115,7 +116,7 @@ class ViewFinisterreTask extends ViewRecord
         abort_unless($task instanceof FinisterreTask, 404);
 
         $loaded = collect([$task->description])
-            ->merge($task->comments()->visibleTo(auth()->id())->pluck('comment'))
+            ->merge($task->comments()->visibleTo(UserModel::authId())->pluck('comment'))
             ->contains(fn(?string $html): bool => in_array($file, EditorFiles::imagesOnDisk($html), true));
 
         abort_unless($loaded, 404);
@@ -169,7 +170,7 @@ class ViewFinisterreTask extends ViewRecord
      */
     public function refreshRecord(): void
     {
-        $this->record = $this->record->fresh(['tags', 'assignee', 'subtasks', 'media', 'coverMedia']);
+        $this->record = $this->record->fresh(['tags', 'assignee', 'subtasks', 'media', 'coverMedia']) ?? abort(404);
     }
 
     /**

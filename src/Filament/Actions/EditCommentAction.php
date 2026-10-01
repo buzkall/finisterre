@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Filament\Actions;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
@@ -26,7 +27,7 @@ class EditCommentAction extends Action
             ->color('warning')
             ->modalHeading(__('finisterre::finisterre.comments.edit_heading'))
             ->fillForm(function(array $arguments): array {
-                $comment = FinisterreTaskComment::find($arguments['comment_id']);
+                $comment = FinisterreTaskComment::whereKey($arguments['comment_id'])->first();
 
                 return [
                     'comment'       => $comment?->comment,
@@ -36,7 +37,7 @@ class EditCommentAction extends Action
             ->schema([
                 RichEditor::make('comment')
                     ->hiddenLabel()
-                    ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                    ->fileAttachmentsDisk(AttachmentsDisk::name())
                     ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                     ->extraInputAttributes(['style' => 'min-height: 6rem'])
                     ->required(),
@@ -51,9 +52,9 @@ class EditCommentAction extends Action
                     ->minDate(today()),
             ])
             ->action(function(array $arguments, array $data) {
-                $comment = FinisterreTaskComment::find($arguments['comment_id']);
+                $comment = FinisterreTaskComment::whereKey($arguments['comment_id'])->first();
 
-                if (! $comment || ! auth()->user()->can('update', $comment)) {
+                if (! $comment || ! auth()->user()?->can('update', $comment)) {
                     return;
                 }
 

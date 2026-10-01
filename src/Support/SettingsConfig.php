@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Support;
 
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Illuminate\Support\Arr;
 use Spatie\LaravelSettings\Migrations\SettingsMigrator;
 use Throwable;
 
@@ -20,15 +21,15 @@ class SettingsConfig
     public static function defaults(): array
     {
         return [
-            'finisterre.environments'                        => (string)config('finisterre.environments', ''),
+            'finisterre.environments'                        => Typed::string(config('finisterre.environments', '')),
             'finisterre.slug'                                => config('finisterre.slug', 'tasks'),
             'finisterre.hidden_statuses'                     => config('finisterre.hidden_statuses', []),
-            'finisterre.fallback_notifiable_id'              => (int)config('finisterre.fallback_notifiable_id', 1),
+            'finisterre.fallback_notifiable_id'              => Typed::int(config('finisterre.fallback_notifiable_id', 1)),
             'finisterre.authenticatable_filter_column'       => config('finisterre.authenticatable_filter_column', ''),
             'finisterre.authenticatable_filter_value'        => config('finisterre.authenticatable_filter_value', ''),
             'finisterre.exclude_from_global_search'          => (bool)config('finisterre.exclude_from_global_search', true),
             'finisterre.subtasks_notify'                     => (bool)config('finisterre.subtasks.notify', true),
-            'finisterre.subtasks_notification_delay_minutes' => (int)config('finisterre.subtasks.notification_delay_minutes', 5),
+            'finisterre.subtasks_notification_delay_minutes' => Typed::int(config('finisterre.subtasks.notification_delay_minutes', 5)),
             'finisterre.mail_history_entries'                => config('finisterre.mail.history_entries'),
             'finisterre.comments_display_avatars'            => (bool)config('finisterre.comments.display_avatars', true),
             'finisterre.comments_icon_action'                => config('finisterre.comments.icons.action', 'heroicon-o-chat-bubble-left-right'),
@@ -39,7 +40,7 @@ class SettingsConfig
             'finisterre.sms_auth_key'                        => config('finisterre.sms_notification.auth_key'),
             'finisterre.sms_sender'                          => config('finisterre.sms_notification.sender'),
             'finisterre.sms_notify_to'                       => config('finisterre.sms_notification.notify_to'),
-            'finisterre.sms_notify_priorities'               => collect(config('finisterre.sms_notification.notify_priorities', [TaskPriorityEnum::Urgent]))
+            'finisterre.sms_notify_priorities'               => collect(Arr::wrap(config('finisterre.sms_notification.notify_priorities', [TaskPriorityEnum::Urgent])))
                 ->map(fn($priority) => $priority instanceof TaskPriorityEnum ? $priority->value : $priority)
                 ->values()
                 ->all(),
@@ -140,7 +141,7 @@ class SettingsConfig
             // means "not configured", not "active everywhere" (that only applies
             // once the settings row exists), so we don't activate a half-installed
             // plugin and 500 the panel on its not-yet-registered routes.
-            $environments = (string)config('finisterre.environments', '');
+            $environments = Typed::string(config('finisterre.environments', ''));
 
             config(['finisterre.active' => $environments !== '' && self::isActiveForEnvironments($environments)]);
         }

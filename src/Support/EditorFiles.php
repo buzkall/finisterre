@@ -33,9 +33,9 @@ class EditorFiles
      */
     public static function store(TemporaryUploadedFile $file, RichEditor $component): mixed
     {
-        $path = $file->store($component->getFileAttachmentsDirectory(), $component->getFileAttachmentsDiskName());
+        $path = $file->store($component->getFileAttachmentsDirectory() ?? '', $component->getFileAttachmentsDiskName());
 
-        if ($component->getFileAttachmentsVisibility() === 'public') {
+        if (is_string($path) && $component->getFileAttachmentsVisibility() === 'public') {
             rescue(fn() => $component->getFileAttachmentsDisk()->setVisibility($path, 'public'), report: false);
         }
 
@@ -86,11 +86,11 @@ class EditorFiles
             return;
         }
 
-        $table = config('finisterre.table_name', 'finisterre_tasks');
+        $table = Typed::string(config('finisterre.table_name', 'finisterre_tasks'));
 
         DB::transaction(function() use ($table, $paths, $taskId): void {
             $current = DB::table($table)->where('id', $taskId)->lockForUpdate()->value(self::COLUMN);
-            $files = array_values(array_unique([...(json_decode((string)$current, true) ?: []), ...$paths]));
+            $files = array_values(array_unique([...Typed::strings(json_decode(Typed::string($current), true)), ...$paths]));
 
             DB::table($table)->where('id', $taskId)->update([self::COLUMN => json_encode($files)]);
         });
@@ -137,7 +137,7 @@ class EditorFiles
      */
     public static function columnExists(): bool
     {
-        return Schema::hasColumn(config('finisterre.table_name', 'finisterre_tasks'), self::COLUMN);
+        return Schema::hasColumn(Typed::string(config('finisterre.table_name', 'finisterre_tasks')), self::COLUMN);
     }
 
     /**
@@ -145,6 +145,6 @@ class EditorFiles
      */
     protected static function sessionUploads(): array
     {
-        return array_values((array)rescue(fn() => session()->get(self::SESSION_KEY, []), [], report: false));
+        return Typed::strings(rescue(fn() => session()->get(self::SESSION_KEY, []), [], report: false));
     }
 }

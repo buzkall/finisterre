@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\Typed;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -31,7 +32,7 @@ class TagsSelect
                     ->required(),
             ])
             ->createOptionUsing(
-                fn(array $data) => FinisterreTag::findOrCreateFromString($data['name'], 'tasks')->getKey()
+                fn(array $data) => FinisterreTag::findOrCreateFromString(Typed::string($data['name']), 'tasks')->getKey()
             )
             ->createOptionAction(fn(Action $action) => $action->extraModalFooterActions([]));
     }

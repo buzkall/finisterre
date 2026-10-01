@@ -5,7 +5,9 @@ namespace Arzcode\Finisterre\Controllers;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\Typed;
 use Filament\Facades\Filament;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -45,7 +47,7 @@ class FilamentRouteController extends Controller
      */
     public static function registerForPrivateDisk(): void
     {
-        if ((config('finisterre.attachments_disk') ?? 'public') === 'public') {
+        if (AttachmentsDisk::name() === 'public') {
             return;
         }
 
@@ -133,7 +135,7 @@ class FilamentRouteController extends Controller
             ->pluck('id')
             ->merge(FinisterreTaskComment::query()
                 // A comment still waiting to be sent is only visible to its author.
-                ->visibleTo($user->getAuthIdentifier())
+                ->visibleTo(Typed::nullableInt($user->getAuthIdentifier()))
                 ->where('comment', 'like', $like)
                 ->get(['task_id', 'comment'])
                 ->filter(fn(FinisterreTaskComment $comment) => $this->loads($comment->comment, $file))
@@ -153,7 +155,7 @@ class FilamentRouteController extends Controller
 
     protected function authenticate(): Authenticatable
     {
-        $guard = config('finisterre.guard');
+        $guard = Typed::nullableString(config('finisterre.guard'));
         $user = auth()->guard($guard)->user();
 
         abort_if($user === null, 403);
@@ -162,7 +164,7 @@ class FilamentRouteController extends Controller
         // one: the plugin's callbacks and the policies call auth()->user() and look
         // the plugin up on the current panel.
         Auth::shouldUse($guard);
-        rescue(fn() => Filament::setCurrentPanel(Filament::getPanel(config('finisterre.panel_slug'))), report: false);
+        rescue(fn() => Filament::setCurrentPanel(Filament::getPanel(Typed::string(config('finisterre.panel_slug')))), report: false);
 
         return $user;
     }
@@ -184,7 +186,7 @@ class FilamentRouteController extends Controller
             }
 
             return ! FinisterrePlugin::get()->canViewOnlyTheirTasks()
-                || (string)$task->creator_id === (string)$user->getAuthIdentifier();
+                || (string)$task->creator_id === Typed::string($user->getAuthIdentifier());
         }, false);
     }
 
@@ -212,7 +214,7 @@ class FilamentRouteController extends Controller
 
     protected function serve(string $path): BinaryFileResponse
     {
-        $disk = Storage::disk(config('finisterre.attachments_disk') ?? 'public');
+        $disk = Storage::disk(AttachmentsDisk::name());
 
         abort_unless(rescue(fn() => $disk->exists($path), false, report: false), 404);
 

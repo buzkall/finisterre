@@ -8,8 +8,10 @@ use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
-use Arzcode\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -24,11 +26,13 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema as DatabaseSchema;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Livewire\Features\SupportEvents\Event;
 use Spatie\MediaLibrary\HasMedia;
 
 /**
@@ -39,7 +43,9 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
     use InteractsWithActions;
     use InteractsWithForms;
 
+    /** @var array<string, mixed>|null */
     public ?array $data = [];
+
     public ?FinisterreTask $record = null;
 
     public function mount(): void
@@ -58,13 +64,15 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
     /**
      * The task creator is notified by default, so whoever opened the task hears
      * back about it without having to remember to pick them.
+     *
+     * @return array<int, int|string>
      */
     private function getDefaultNotifyIds(): array
     {
         $options = $this->getNotifyOptions();
 
         if ($options->count() === 1) {
-            return $options->keys()->toArray();
+            return $options->keys()->all();
         }
 
         $creatorId = $this->record?->creator_id;
@@ -74,30 +82,22 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     private function isAllNotifySelected(Get $get): bool
     {
-        $selected = $get('notify') ?? [];
-
-        return count($selected) >= $this->getNotifyOptions()->count();
+        return count(Typed::array($get('notify'))) >= $this->getNotifyOptions()->count();
     }
 
-    private function getNotifyOptions()
+    /** @return Collection<string, string> */
+    private function getNotifyOptions(): Collection
     {
-        $options = config('finisterre.authenticatable')::query()
-            ->where('id', '!=', auth()->id())
-            ->when(
-                config('finisterre.authenticatable_filter_column'),
-                fn($query) => $query->whereIn(config('finisterre.authenticatable_filter_column'), AuthenticatableFilter::values())
-            )
-            ->when(
-                DatabaseSchema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
-                fn($query) => $query->where('active', true)
-            )
+        $options = UserModel::assignableQuery()
+            ->whereKeyNot(auth()->id())
             ->get()
-            ->mapWithKeys(fn($user) => [$user->getKey() => $user->getUserDisplayName()]);
+            ->mapWithKeys(fn(Model $user) => [Typed::string($user->getKey()) => UserModel::displayName($user)]);
 
         // Append task creator if not the authenticated user and not already in options
-        if ($this->record->creator->getKey() !== auth()->id() &&
-            ! $options->has($this->record->creator->getKey())) {
-            $options->put($this->record->creator->getKey(), $this->record->creatorName());
+        $creator = $this->record?->creator;
+
+        if ($creator && $creator->getKey() !== auth()->id() && ! $options->has(Typed::string($creator->getKey()))) {
+            $options->put(Typed::string($creator->getKey()), UserModel::displayName($creator));
         }
 
         return $options;
@@ -105,7 +105,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     public function form(Schema $schema): Schema
     {
-        if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
+        if (! auth()->user()?->can('create', FinisterreTaskComment::class)) {
             return $schema;
         }
 
@@ -156,7 +156,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         return $schema->components([
             RichEditor::make('comment')
                 ->hiddenLabel()
-                ->fileAttachmentsDisk(config('finisterre.attachments_disk') ?? 'public')
+                ->fileAttachmentsDisk(AttachmentsDisk::name())
                 ->saveUploadedFileAttachmentUsing(EditorFiles::store(...))
                 ->extraInputAttributes(['style' => 'min-height: 6rem'])
                 ->required()
@@ -168,7 +168,9 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
     public function create(): void
     {
-        if (! auth()->user()->can('create', FinisterreTaskComment::class)) {
+        $task = $this->record;
+
+        if (! $task instanceof FinisterreTask || ! auth()->user()?->can('create', FinisterreTaskComment::class)) {
             return;
         }
 
@@ -177,10 +179,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         $data = $this->form->getState();
 
         $canSchedule = FinisterrePlugin::get()->canScheduleComments();
-        $scheduledFor = $canSchedule && ! empty($data['scheduled_for']) ? Carbon::parse($data['scheduled_for']) : null;
-        $notifyIds = ! empty($data['notify']) ? $data['notify'] : [$this->record->assignee_id];
+        $scheduledFor = $canSchedule && ! empty($data['scheduled_for']) ? Carbon::parse(Typed::string($data['scheduled_for'])) : null;
+        $selectedIds = array_values(array_filter(array_map(Typed::nullableInt(...), Typed::array($data['notify'] ?? []))));
+        $notifyIds = $selectedIds ?: array_filter([$task->assignee_id]);
 
-        $comment = $this->record->comments()->create([
+        $comment = $task->comments()->create([
             'comment'         => $data['comment'],
             'creator_id'      => auth()->id(),
             'scheduled_for'   => $scheduledFor,
@@ -195,12 +198,12 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
                 ->success()
                 ->send();
         } else {
-            $comment->setRelation('task', $this->record);
+            $comment->setRelation('task', $task);
             $comment->notify_user_ids = $notifyIds;
             $notified = $comment->deliver();
             $comment->update(['notify_user_ids' => null]);
 
-            $names = $notified->map(fn($user) => $user->getUserDisplayName());
+            $names = $notified->map(UserModel::displayName(...));
 
             Notification::make()
                 ->title($names->isEmpty() ?
@@ -212,7 +215,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $this->fillWithDefaults();
 
-        $this->dispatch('commentCreated')->to(TasksKanbanBoard::class);
+        $event = $this->dispatch('commentCreated');
+
+        if ($event instanceof Event) {
+            $event->to(TasksKanbanBoard::class);
+        }
     }
 
     public function postponeCommentAction(): Action
@@ -229,7 +236,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
     {
         $comment = FinisterreTaskComment::find($id);
 
-        if (! $comment || ! auth()->guard(config('finisterre.guard'))->user()->can('delete', $comment)) {
+        if (! $comment || ! auth()->guard(Typed::nullableString(config('finisterre.guard')))->user()?->can('delete', $comment)) {
             return;
         }
 
@@ -241,17 +248,22 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->send();
     }
 
+    /** @return Collection<int, FinisterreTaskComment> */
     #[Computed]
-    public function comments()
+    public function comments(): Collection
     {
         // record will be empty on the kanban load. We'll get the value from the view
         // when the modal is opened
-        return $this->record?->comments()
-            ->visibleTo(auth()->id())
+        if (! $this->record instanceof FinisterreTask) {
+            return new Collection;
+        }
+
+        return $this->record->comments()
+            ->visibleTo(UserModel::authId())
             // Each comment shows its creator's avatar; hosts that keep avatars in a
             // media library would query that relation once per creator unless it
             // comes along.
-            ->with(['creator' => fn(BelongsTo $query) => $query->getRelated() instanceof HasMedia
+            ->with(['creator' => fn(Relation $query) => $query->getRelated() instanceof HasMedia
                 ? $query->with('media')
                 : $query])
             // A scheduled comment shows its scheduled time, so it takes its place in
@@ -259,7 +271,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             // posted before it was published stay below it.
             ->orderByRaw('coalesce(scheduled_for, created_at) desc')
             ->orderByDesc('id')
-            ->get() ?? collect();
+            ->get();
     }
 
     public function render(): View

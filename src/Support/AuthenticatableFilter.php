@@ -11,7 +11,7 @@ class AuthenticatableFilter
      * unwrapping any backed enums. Accepts an array, a single value, or a
      * comma-separated string (as stored by the settings page).
      *
-     * @return array<int, mixed>
+     * @return list<mixed>
      */
     public static function values(): array
     {
@@ -24,10 +24,10 @@ class AuthenticatableFilter
             ));
         }
 
-        return array_map(
+        return array_values(array_map(
             self::scalar(...),
             is_array($value) ? $value : [$value],
-        );
+        ));
     }
 
     /**

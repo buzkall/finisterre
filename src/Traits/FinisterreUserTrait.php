@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Traits;
 use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Arzcode\Finisterre\Support\AuthenticatableFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,10 @@ trait FinisterreUserTrait
         return (bool)config('finisterre.active');
     }
 
+    /**
+     * @param  Builder<Model>  $query
+     * @return Builder<Model>
+     */
     public function scopeUserIsActive(Builder $query): Builder
     {
         return $query->when(
@@ -25,6 +30,10 @@ trait FinisterreUserTrait
         );
     }
 
+    /**
+     * @param  Builder<Model>  $query
+     * @return Builder<Model>
+     */
     public function scopeAssignableUsers(Builder $query): Builder
     {
         $filterColumn = config('finisterre.authenticatable_filter_column');
@@ -75,6 +84,7 @@ trait FinisterreUserTrait
         return $attr;
     }
 
+    /** @return HasMany<FinisterreTaskChange, $this> */
     public function taskChanges(): HasMany
     {
         return $this->hasMany(FinisterreTaskChange::class, 'user_id');

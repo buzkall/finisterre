@@ -8,13 +8,14 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table as FilamentTable;
+use Illuminate\Database\Eloquent\Builder;
 
 class Table
 {
     public static function configure(FilamentTable $table): FilamentTable
     {
         return $table
-            ->modifyQueryUsing(fn($query) => $query->with('coverMedia'))
+            ->modifyQueryUsing(fn(Builder $query) => $query->with('coverMedia'))
             ->columns([
                 // Computed from the media library, so sorting is turned off explicitly:
                 // a host may switch it on for every column in its AppServiceProvider.

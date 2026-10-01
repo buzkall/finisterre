@@ -33,9 +33,9 @@ class PanelLabel
      */
     protected static function override(string $key): ?string
     {
-        $label = config('finisterre.' . $key);
+        $label = Typed::string(config('finisterre.' . $key));
 
-        return filled($label) ? (string)__((string)$label) : null;
+        return filled($label) ? Typed::string(__($label)) : null;
     }
 
     /**

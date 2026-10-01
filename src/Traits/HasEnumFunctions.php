@@ -4,12 +4,13 @@ namespace Arzcode\Finisterre\Traits;
 
 trait HasEnumFunctions
 {
+    /** @return list<string> */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
     }
 
-    public function getLabel(): ?string
+    public function getLabel(): string
     {
         if (trans()->has('finisterre::finisterre.' . $this->name)) {
             return __('finisterre::finisterre.' . $this->name);
@@ -18,7 +19,7 @@ trait HasEnumFunctions
         return __($this->name);
     }
 
-    public function getPluralLabel(): ?string
+    public function getPluralLabel(): string
     {
         if (trans()->has('finisterre::finisterre.' . str($this->name)->plural()->value())) {
             return __('finisterre::finisterre.' . str($this->name)->plural()->value());
@@ -27,10 +28,11 @@ trait HasEnumFunctions
         return __(str($this->name)->plural()->value());
     }
 
+    /** @return array<string, string> */
     public static function options(): array
     {
         return collect(static::cases())
-            ->mapWithKeys(fn($item) => [$item->value => __($item->name)])
-            ->toArray();
+            ->mapWithKeys(fn(self $item) => [$item->value => __($item->name)])
+            ->all();
     }
 }

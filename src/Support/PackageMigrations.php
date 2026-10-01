@@ -276,7 +276,7 @@ class PackageMigrations
                 return null;
             }
 
-            return DB::table('migrations')->pluck('migration')->all();
+            return array_values(array_filter(DB::table('migrations')->pluck('migration')->all(), is_string(...)));
         } catch (Throwable) {
             return null;
         }

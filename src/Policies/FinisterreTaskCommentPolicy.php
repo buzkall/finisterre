@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Policies;
 
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 class FinisterreTaskCommentPolicy
@@ -24,13 +25,13 @@ class FinisterreTaskCommentPolicy
 
     public function update(Authenticatable $user, FinisterreTaskComment $finisterreTaskComment): bool
     {
-        return $user->id === $finisterreTaskComment->creator_id // @phpstan-ignore-line
+        return Typed::nullableInt($user->getAuthIdentifier()) === $finisterreTaskComment->creator_id
             && $finisterreTaskComment->sent_at === null;
     }
 
     public function delete(Authenticatable $user, FinisterreTaskComment $finisterreTaskComment): bool
     {
-        return $user->id === $finisterreTaskComment->creator_id; // @phpstan-ignore-line
+        return Typed::nullableInt($user->getAuthIdentifier()) === $finisterreTaskComment->creator_id;
     }
 
     public function deleteAny(Authenticatable $user): bool

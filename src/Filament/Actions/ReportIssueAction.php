@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Filament\Actions;
 use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
@@ -53,7 +54,7 @@ class ReportIssueAction extends Action
                     ->helperText(__('finisterre::finisterre.attachments_max_size', ['size' => '3 MB']))
                     ->openable()
                     ->downloadable()
-                    ->disk(config('finisterre.attachments_disk') ?? 'public')
+                    ->disk(AttachmentsDisk::name())
                     // keep the uploads as UploadedFile instances so they can be pushed
                     // into the media library after the task is created
                     ->storeFiles(false),
@@ -76,7 +77,7 @@ class ReportIssueAction extends Action
                 foreach ((array)($data['attachments'] ?? []) as $file) {
                     if ($file instanceof UploadedFile) {
                         $task->addMedia($file)
-                            ->toMediaCollection('tasks', config('finisterre.attachments_disk') ?? 'public');
+                            ->toMediaCollection('tasks', AttachmentsDisk::name());
                     }
                 }
 

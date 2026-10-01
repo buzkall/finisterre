@@ -11,6 +11,7 @@ use Filament\Contracts\Plugin;
 use Filament\Facades\Filament;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\Authenticatable;
+use LogicException;
 
 class FinisterrePlugin implements Plugin
 {
@@ -113,13 +114,22 @@ class FinisterrePlugin implements Plugin
 
     public static function make(): static
     {
-        return app(static::class);
+        $plugin = app(static::class);
+
+        if (! $plugin instanceof static) {
+            throw new LogicException('The container did not resolve the Finisterre plugin.');
+        }
+
+        return $plugin;
     }
 
     public static function get(): static
     {
-        /** @var static $plugin */
-        $plugin = filament(app(static::class)->getId());
+        $plugin = filament(static::make()->getId());
+
+        if (! $plugin instanceof static) {
+            throw new LogicException('The registered Finisterre plugin is not a ' . static::class . '.');
+        }
 
         return $plugin;
     }

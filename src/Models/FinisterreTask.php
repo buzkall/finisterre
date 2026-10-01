@@ -8,11 +8,13 @@ use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,17 +33,18 @@ use Spatie\Tags\HasTags;
 use Throwable;
 
 /**
+ * @property int $id
  * @property string $title
  * @property string $description
- * @property Collection $tags
- * @property Collection $comments
+ * @property EloquentCollection<int, FinisterreTag> $tags
+ * @property EloquentCollection<int, FinisterreTaskComment> $comments
  * @property TaskStatusEnum $status
  * @property bool $archived
  * @property TaskPriorityEnum $priority
- * @property Collection $subtasks
+ * @property EloquentCollection<int, FinisterreSubtask> $subtasks
  * @property ?Carbon $due_at
  * @property ?Carbon $completed_at
- * @property int $creator_id
+ * @property ?int $creator_id
  * @property ?int $assignee_id
  * @property ?int $cover_media_id
  * @property ?list<string> $editor_files
@@ -54,6 +57,7 @@ use Throwable;
  */
 class FinisterreTask extends Model implements HasMedia
 {
+    /** @use HasFactory<FinisterreTaskFactory> */
     use HasFactory, HasTags, InteractsWithMedia;
 
     /** Media conversion the card image is served from. */
@@ -107,11 +111,15 @@ class FinisterreTask extends Model implements HasMedia
         }
     }
 
-    public function getTable()
+    public function getTable(): string
     {
-        return config('finisterre.table_name');
+        return Typed::string(config('finisterre.table_name'));
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeNotArchived(Builder $query): Builder
     {
         return $query->where('archived', false);
@@ -134,14 +142,16 @@ class FinisterreTask extends Model implements HasMedia
         return $this->hasMany(FinisterreSubtask::class, 'task_id')->orderBy('order_column');
     }
 
+    /** @return HasMany<FinisterreTaskChange, $this> */
     public function taskChanges(): HasMany
     {
         return $this->hasMany(FinisterreTaskChange::class, 'task_id');
     }
 
+    /** @return BelongsTo<Model, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('finisterre.authenticatable'), 'creator_id');
+        return $this->belongsTo(UserModel::class(), 'creator_id');
     }
 
     public function creatorName(): string
@@ -151,8 +161,7 @@ class FinisterreTask extends Model implements HasMedia
             return 'N/A';
         }
 
-        /** @var Authenticatable $creator */
-        return $creator->getUserDisplayName();
+        return UserModel::displayName($creator);
     }
 
     public function assigneeName(): ?string
@@ -162,17 +171,19 @@ class FinisterreTask extends Model implements HasMedia
             return null;
         }
 
-        /** @var Authenticatable $assignee */
-        return $assignee->getUserDisplayName();
+        return UserModel::displayName($assignee);
     }
 
+    /** @return BelongsTo<Model, $this> */
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(config('finisterre.authenticatable'), 'assignee_id');
+        return $this->belongsTo(UserModel::class(), 'assignee_id');
     }
 
     /**
      * The host record this task was reported against, if any.
+     *
+     * @return MorphTo<Model, $this>
      */
     public function subject(): MorphTo
     {
@@ -270,7 +281,7 @@ class FinisterreTask extends Model implements HasMedia
             return 50.0;
         }
 
-        return max(0.0, min(100.0, (float)$media->getCustomProperty(self::COVER_POSITION_PROPERTY, 50)));
+        return max(0.0, min(100.0, Typed::float($media->getCustomProperty(self::COVER_POSITION_PROPERTY, 50), 50.0)));
     }
 
     /**
@@ -282,7 +293,7 @@ class FinisterreTask extends Model implements HasMedia
     {
         $media = $this->coverMedia;
 
-        return $media instanceof Media ? $media->getCustomProperty(self::COVER_SOURCE_PROPERTY) : null;
+        return $media instanceof Media ? Typed::nullableString($media->getCustomProperty(self::COVER_SOURCE_PROPERTY)) : null;
     }
 
     /**
@@ -314,6 +325,8 @@ class FinisterreTask extends Model implements HasMedia
      * Override the tags() method from HasTags trait to use the correct pivot key.
      * When using a custom Tag model (FinisterreTag), Laravel defaults to 'finisterre_tag_id'
      * but the taggables table uses 'tag_id'.
+     *
+     * @return MorphToMany<FinisterreTag, $this>
      */
     public function tags(): MorphToMany
     {
@@ -333,14 +346,20 @@ class FinisterreTask extends Model implements HasMedia
      * which would otherwise throw a MissingAttributeException. Exposing it as a lazy-load-safe
      * accessor (returning the already-loaded media for the field's collection, or an empty
      * collection) keeps the package compatible with strict mode without triggering a query.
+     *
+     * @return Attribute<Collection<int, Media>, never>
      */
     protected function attachments(): Attribute
     {
-        return Attribute::get(
-            fn(): Collection => $this->relationLoaded('media')
-                ? $this->getRelation('media')->where('collection_name', 'tasks')->values()
-                : collect()
-        );
+        return Attribute::get($this->loadedAttachments(...));
+    }
+
+    /** @return Collection<int, Media> */
+    protected function loadedAttachments(): Collection
+    {
+        return $this->relationLoaded('media')
+            ? $this->media->whereInstanceOf(Media::class)->where('collection_name', 'tasks')->values()
+            : new Collection;
     }
 
     protected function casts(): array

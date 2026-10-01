@@ -6,6 +6,8 @@ use Arzcode\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
 use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Observers\FinisterreTaskCommentObserver;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -20,11 +22,12 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
+ * @property int $id
  * @property string $comment
  * @property Carbon|null $scheduled_for
  * @property Carbon|null $sent_at
- * @property array|null $notify_user_ids
- * @property int $creator_id
+ * @property list<int>|null $notify_user_ids
+ * @property ?int $creator_id
  * @property int $task_id
  * @property Carbon|null $created_at
  * @property FinisterreTask $task
@@ -32,14 +35,17 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 #[ObservedBy(FinisterreTaskCommentObserver::class)]
 class FinisterreTaskComment extends Model implements HasMedia
 {
+    /** @use HasFactory<FinisterreTaskCommentFactory> */
     use HasFactory, InteractsWithMedia;
 
     protected $fillable = ['task_id', 'comment', 'creator_id', 'scheduled_for', 'sent_at', 'notify_user_ids'];
+
+    /** @var list<string> */
     protected $touches = ['task'];
 
     public function getTable(): string
     {
-        return config('finisterre.comments.table_name', 'finisterre_task_comments');
+        return Typed::string(config('finisterre.comments.table_name', 'finisterre_task_comments'));
     }
 
     protected static function newFactory(): FinisterreTaskCommentFactory
@@ -47,16 +53,22 @@ class FinisterreTaskComment extends Model implements HasMedia
         return FinisterreTaskCommentFactory::new();
     }
 
+    /** @return BelongsTo<FinisterreTask, $this> */
     public function task(): BelongsTo
     {
         return $this->belongsTo(FinisterreTask::class);
     }
 
+    /** @return BelongsTo<Model, $this> */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('finisterre.authenticatable'), 'creator_id');
+        return $this->belongsTo(UserModel::class(), 'creator_id');
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeVisibleTo(Builder $query, ?int $userId): Builder
     {
         return $query->where(function(Builder $q) use ($userId) {
@@ -73,6 +85,8 @@ class FinisterreTaskComment extends Model implements HasMedia
 
     /**
      * Send notifications, create taskChanges and stamp sent_at.
+     *
+     * @return Collection<int, Model>
      */
     public function deliver(): Collection
     {
@@ -81,11 +95,9 @@ class FinisterreTaskComment extends Model implements HasMedia
         $userIds = $this->notify_user_ids ?: [$this->task->assignee_id];
         $userIds = array_filter($userIds, fn($id) => ! is_null($id));
 
-        $users = config('finisterre.authenticatable')::findMany($userIds);
-        $notified = collect();
-
+        $users = UserModel::class()::findMany($userIds);
         foreach ($users as $user) {
-            $user->notify(new TaskCommentNotification($this));
+            UserModel::notify($user, new TaskCommentNotification($this));
 
             Notification::make()
                 ->title(__(
@@ -97,24 +109,24 @@ class FinisterreTaskComment extends Model implements HasMedia
                     Action::make('view')
                         ->label(__('finisterre::finisterre.comment_notification.cta'))
                         ->button()
-                        ->url(route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $this->task)),
+                        ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this->task)),
                 ])
                 ->sendToDatabase($user);
 
             if ($user->getKey() !== $this->creator_id) {
                 $this->task->taskChanges()->firstOrCreate(['user_id' => $user->getKey()]);
             }
-
-            $notified->push($user);
         }
 
         $this->forceFill(['sent_at' => now()])->save();
 
         if ($wasScheduled) {
-            $this->creator?->notify(new ScheduledCommentSentNotification($this)); // @phpstan-ignore-line method.notFound
+            if ($this->creator) {
+                UserModel::notify($this->creator, new ScheduledCommentSentNotification($this));
+            }
         }
 
-        return $notified;
+        return $users;
     }
 
     protected function casts(): array

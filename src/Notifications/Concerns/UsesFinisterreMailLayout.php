@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Notifications\Concerns;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\Typed;
 use Filament\Facades\Filament;
 use Illuminate\Notifications\Messages\MailMessage;
 use Symfony\Component\Mime\Email;
@@ -28,7 +29,7 @@ trait UsesFinisterreMailLayout
             return null;
         }
 
-        $logo = (Filament::getPanels()[config('finisterre.panel_slug')] ?? null)?->getBrandLogo();
+        $logo = (Filament::getPanels()[Typed::string(config('finisterre.panel_slug'))] ?? null)?->getBrandLogo();
 
         return is_string($logo) && filled($logo) ? url($logo) : null;
     }
@@ -40,7 +41,7 @@ trait UsesFinisterreMailLayout
      */
     protected function threadByTask(Email $message, FinisterreTask $task): void
     {
-        $threadId = 'finisterre-task-' . $task->getKey() . '@' . (parse_url((string)config('app.url'), PHP_URL_HOST) ?: 'localhost');
+        $threadId = 'finisterre-task-' . $task->id . '@' . (parse_url(Typed::string(config('app.url')), PHP_URL_HOST) ?: 'localhost');
         $headers = $message->getHeaders();
 
         $headers->addIdHeader('In-Reply-To', $threadId);

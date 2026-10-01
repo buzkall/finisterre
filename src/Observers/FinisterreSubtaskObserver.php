@@ -4,7 +4,9 @@ namespace Arzcode\Finisterre\Observers;
 
 use Arzcode\Finisterre\Jobs\SendSubtaskChangesNotification;
 use Arzcode\Finisterre\Models\FinisterreSubtask;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 /**
  * Opens a notification window when somebody other than the assignee edits a
@@ -23,7 +25,7 @@ class FinisterreSubtaskObserver
         // The row is already there, so the "before" state is everything but it.
         $this->openWindow($subtask, fn(array $checklist) => array_diff_key(
             $checklist,
-            [$subtask->getKey() => null]
+            [$subtask->id => null]
         ));
     }
 
@@ -44,8 +46,8 @@ class FinisterreSubtaskObserver
         // getOriginal() still holds the pre-save values here: Eloquent only
         // re-syncs them after the `updated` event has fired.
         $this->openWindow($subtask, fn(array $checklist) => array_replace($checklist, [
-            $subtask->getKey() => [
-                'title'     => (string)$subtask->getOriginal('title'),
+            $subtask->id => [
+                'title'     => Typed::string($subtask->getOriginal('title')),
                 'completed' => (bool)$subtask->getOriginal('completed'),
             ],
         ]));
@@ -55,8 +57,8 @@ class FinisterreSubtaskObserver
     {
         // The row is gone, so put it back into the "before" state.
         $this->openWindow($subtask, fn(array $checklist) => $checklist + [
-            $subtask->getKey() => [
-                'title'     => (string)$subtask->title,
+            $subtask->id => [
+                'title'     => $subtask->title,
                 'completed' => (bool)$subtask->completed,
             ],
         ]);
@@ -84,7 +86,7 @@ class FinisterreSubtaskObserver
             $subtask->task_id,
             $rewind($this->checklist($subtask->task_id))
         )
-            ->delay((int)config('finisterre.subtasks.notification_delay_minutes', 5) * 60)
+            ->delay(Typed::int(config('finisterre.subtasks.notification_delay_minutes', 5)) * 60)
             ->afterCommit();
     }
 
@@ -95,13 +97,13 @@ class FinisterreSubtaskObserver
      */
     protected function checklist(int $taskId): array
     {
-        return DB::table(config('finisterre.subtasks.table_name', 'finisterre_subtasks'))
+        return DB::table(Typed::string(config('finisterre.subtasks.table_name', 'finisterre_subtasks')))
             ->where('task_id', $taskId)
             ->orderBy('order_column')
             ->orderBy('id')
             ->get(['id', 'title', 'completed'])
-            ->mapWithKeys(fn($row) => [(int)$row->id => [
-                'title'     => (string)$row->title,
+            ->mapWithKeys(fn(stdClass $row) => [Typed::int($row->id) => [
+                'title'     => Typed::string($row->title),
                 'completed' => (bool)$row->completed,
             ]])
             ->all();
@@ -114,12 +116,12 @@ class FinisterreSubtaskObserver
      */
     protected function assigneeIdFor(int $taskId): ?int
     {
-        $assigneeId = DB::table(config('finisterre.table_name'))
+        $assigneeId = DB::table(Typed::string(config('finisterre.table_name')))
             ->where('id', $taskId)
             ->value('assignee_id');
 
         // Cast so the identity check against auth()->id() holds on drivers that
         // hand integers back as strings.
-        return $assigneeId === null ? null : (int)$assigneeId;
+        return Typed::nullableInt($assigneeId);
     }
 }

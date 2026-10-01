@@ -2,12 +2,14 @@
 
 namespace Arzcode\Finisterre\Notifications\Concerns;
 
+use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Mime\Email;
 
 trait EmbedsPrivateImages
 {
+    /** @var array<string, string> */
     protected array $inlineImages = [];
 
     protected function embedImages(?string $html): string
@@ -16,7 +18,7 @@ trait EmbedsPrivateImages
             return '';
         }
 
-        $disk = config('finisterre.attachments_disk') ?? 'public';
+        $disk = AttachmentsDisk::name();
 
         return preg_replace_callback(
             '/(src=["\'])(?:[^"\']*?)storage\/finisterre-files\/([^"\']+)(["\'])/i',
@@ -33,7 +35,7 @@ trait EmbedsPrivateImages
                 return $matches[1] . 'cid:' . $cid . $matches[3];
             },
             $html
-        );
+        ) ?? $html;
     }
 
     protected function withInlineImages(MailMessage $mail): MailMessage

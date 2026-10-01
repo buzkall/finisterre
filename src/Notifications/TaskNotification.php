@@ -6,12 +6,14 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Arzcode\Finisterre\Notifications\Concerns\RendersTaskHistory;
 use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
+use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\UserModel;
 use DateTimeInterface;
 use Exception;
 use Filament\Support\Contracts\HasLabel;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
@@ -23,11 +25,13 @@ class TaskNotification extends Notification implements ShouldQueue
 
     protected bool $wasRecentlyCreated = false;
 
+    /** @param  array<string, mixed>  $taskChanges */
     public function __construct(public FinisterreTask $task, public array $taskChanges = [])
     {
         $this->wasRecentlyCreated = $task->wasRecentlyCreated;
     }
 
+    /** @return list<string> */
     public function via(object $notifiable): array
     {
         return ['mail', SMSChannel::class];
@@ -70,7 +74,7 @@ class TaskNotification extends Notification implements ShouldQueue
             ->when($history, fn(MailMessage $mail) => $mail->line($history))
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                route('filament.' . config('finisterre.panel_slug') . '.resources.finisterre-tasks.view', $this->task)
+                route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this->task)
             )
             ->salutation(' ');
 
@@ -108,11 +112,18 @@ class TaskNotification extends Notification implements ShouldQueue
         return match (true) {
             in_array($key, ['assignee_id', 'creator_id'], true) => $this->userName($value),
             $value === null                                     => '-',
-            $value instanceof HasLabel                          => (string)$value->getLabel(),
+            $value instanceof HasLabel                          => $this->labelText($value),
             $value instanceof DateTimeInterface                 => $value->format('d-m-y H:i'),
             is_bool($value)                                     => __('finisterre::finisterre.' . ($value ? 'yes' : 'no')),
-            default                                             => (string)$value,
+            default                                             => Typed::string($value),
         };
+    }
+
+    protected function labelText(HasLabel $value): string
+    {
+        $label = $value->getLabel();
+
+        return $label instanceof Htmlable ? $label->toHtml() : (string)$label;
     }
 
     protected function userName(mixed $id): string
@@ -121,10 +132,9 @@ class TaskNotification extends Notification implements ShouldQueue
             return __('finisterre::finisterre.unassigned');
         }
 
-        /** @var Authenticatable|null $user */
-        $user = config('finisterre.authenticatable')::find($id);
+        $user = UserModel::class()::query()->whereKey($id)->first();
 
-        return $user?->getUserDisplayName() ?? 'N/A';
+        return $user ? UserModel::displayName($user) : 'N/A';
     }
 
     public function toSms(object $notifiable): void
@@ -133,7 +143,7 @@ class TaskNotification extends Notification implements ShouldQueue
             return;
         }
 
-        if (! in_array($this->task->priority, config('finisterre.sms_notification.notify_priorities'))) {
+        if (! in_array($this->task->priority, Typed::array(config('finisterre.sms_notification.notify_priorities')))) {
             return;
         }
 
@@ -150,7 +160,7 @@ class TaskNotification extends Notification implements ShouldQueue
         $retryDelay = 1; // seconds
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
-                Http::timeout(10)->get(config('finisterre.sms_notification.url'), [
+                Http::timeout(10)->get(Typed::string(config('finisterre.sms_notification.url')), [
                     'auth_key' => config('finisterre.sms_notification.auth_key'),
                     'id'       => $this->task->id . '_' . now()->timestamp,
                     'from'     => config('finisterre.sms_notification.sender'),
