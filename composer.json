@@ -24,7 +24,8 @@
         "pxlrbt/filament-spotlight": "^2.1",
         "relaticle/flowforge": "^4.0.15",
         "spatie/laravel-package-tools": "^1.16",
-        "spatie/laravel-settings": "^3.0"
+        "spatie/laravel-settings": "^3.0",
+        "symfony/html-sanitizer": "^7.0|^8.0"
     },
     "require-dev": {
         "driftingly/rector-laravel": "^2.0",
@@ -39,7 +40,11 @@
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
         "rector/rector": "^2.6",
-        "spatie/laravel-ray": "^1.35"
+        "spatie/laravel-ray": "^1.35",
+        "webklex/php-imap": "^6.2"
+    },
+    "suggest": {
+        "webklex/php-imap": "Needed to receive replies by email through an IMAP mailbox (^6.2)"
     },
     "autoload": {
         "psr-4": {

@@ -291,6 +291,7 @@ without a deploy. The page covers:
 - **Subtasks** — whether to notify the assignee of checklist changes, and how long to group them for.
 - **Comments** — whether to show avatars, and the heroicons used for the comment actions.
 - **SMS** — enable/disable and credentials for SMS notifications (see [SMS notifications](#sms-notifications)).
+- **Reply by email** — turn replies to task emails into comments (see [Reply by email](#reply-by-email)).
 
 ## Global search
 
@@ -341,6 +342,35 @@ diff covers the whole checklist, so an edit the assignee makes themselves during
 is reported to them along with the rest. And seeders or bulk imports that create subtasks
 would otherwise trigger digests — set `finisterre.subtasks.notify` to `false`, or wrap the
 import in `FinisterreSubtask::withoutEvents(fn () => ...)`.
+
+## Reply by email
+
+When it's on, replying to any task email adds the reply as a **comment** on the task, written by the user whose address
+sent it. The quoted email below the reply is cut off, the HTML is sanitized, and the task's creator and assignee are
+notified (never the person who replied). Replies from addresses that don't belong to an assignable user who may comment
+on the task, out-of-office replies and bounces are skipped and logged, and the same email is never imported twice.
+
+The `From` header of an email can be forged, so a reply is also skipped when the `Authentication-Results` header the
+receiving mail server added says it failed DMARC, or, for a domain without DMARC, passed neither SPF nor DKIM. A mailbox
+that adds no `Authentication-Results` can't be checked this way, and its replies are taken at their word.
+
+Turn it on in the **Reply by email** section of the [settings page](#settings-page) (or under `mail.inbound` in
+`config/finisterre.php`) and set the **reply address**: every task email gets it as its `Reply-To`, so it has to land in
+the mailbox the driver reads. Task emails then open with a *reply above this line* marker.
+
+A reply finds its task through the `In-Reply-To` header mail clients add: every task email is sent with a `Message-ID`
+that carries the task id, signed with the app key so it can't be pointed at another task. This works with any mailbox.
+If your mail service rewrites the `Message-ID` (Amazon SES does), turn on **plus addressing** as well, and the signed
+task also goes in the reply address (`tasks+12-3f9a…@example.com`); only do that if the mailbox accepts plus addresses.
+
+**Two drivers** fetch the replies:
+
+| Driver | Use it when | Setup |
+|---|---|---|
+| `imap` | The replies land in an ordinary mailbox (your hosting's email, Gmail, Office 365…) | `composer require webklex/php-imap`, fill in the IMAP host and credentials. `finisterre:fetch-emails` runs every minute from the scheduler (so `schedule:run` has to be in cron) and handles the unread messages. |
+| `resend` | You receive email with [Resend](https://resend.com/docs/dashboard/receiving/introduction) | Point the MX of a (sub)domain at Resend and use an address on it as the reply address. Add a webhook for `email.received` pointing at `https://your-app/finisterre/inbound/resend` (the settings page shows it), and fill in its signing secret. The API key defaults to `services.resend.key`. |
+
+Attachments and inline images of a reply are not imported yet; only its text and formatting are.
 
 ## Displaying a user's full name
 

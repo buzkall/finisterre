@@ -44,7 +44,27 @@ class SettingsConfig
                 ->map(fn($priority) => $priority instanceof TaskPriorityEnum ? $priority->value : $priority)
                 ->values()
                 ->all(),
+            'finisterre.inbound_enabled'               => (bool)config('finisterre.mail.inbound.enabled', false),
+            'finisterre.inbound_driver'                => Typed::string(config('finisterre.mail.inbound.driver', 'imap')),
+            'finisterre.inbound_reply_address'         => Typed::string(config('finisterre.mail.inbound.reply_address', '')),
+            'finisterre.inbound_plus_addressing'       => (bool)config('finisterre.mail.inbound.plus_addressing', false),
+            'finisterre.inbound_imap_host'             => Typed::string(config('finisterre.mail.inbound.imap.host', '')),
+            'finisterre.inbound_imap_port'             => Typed::int(config('finisterre.mail.inbound.imap.port', 993)),
+            'finisterre.inbound_imap_encryption'       => Typed::string(config('finisterre.mail.inbound.imap.encryption', 'ssl')),
+            'finisterre.inbound_imap_username'         => Typed::string(config('finisterre.mail.inbound.imap.username', '')),
+            'finisterre.inbound_imap_password'         => config('finisterre.mail.inbound.imap.password') ?: null,
+            'finisterre.inbound_imap_folder'           => Typed::string(config('finisterre.mail.inbound.imap.folder', 'INBOX')),
+            'finisterre.inbound_resend_api_key'        => config('finisterre.mail.inbound.resend.api_key') ?: null,
+            'finisterre.inbound_resend_webhook_secret' => config('finisterre.mail.inbound.resend.webhook_secret') ?: null,
         ];
+    }
+
+    /**
+     * Whether a stored setting is kept encrypted, so seeding encrypts its default too.
+     */
+    public static function isEncrypted(string $property): bool
+    {
+        return in_array(str($property)->after('finisterre.')->toString(), FinisterreSettings::encrypted(), true);
     }
 
     /**
@@ -83,7 +103,7 @@ class SettingsConfig
         $created = 0;
 
         foreach (self::missing() as $property) {
-            $migrator->add($property, $defaults[$property]);
+            $migrator->add($property, $defaults[$property], self::isEncrypted($property));
             $created++;
         }
 
@@ -133,6 +153,18 @@ class SettingsConfig
                     ->filter()
                     ->values()
                     ->all(),
+                'finisterre.mail.inbound.enabled'               => $settings->inbound_enabled,
+                'finisterre.mail.inbound.driver'                => $settings->inbound_driver,
+                'finisterre.mail.inbound.reply_address'         => $settings->inbound_reply_address,
+                'finisterre.mail.inbound.plus_addressing'       => $settings->inbound_plus_addressing,
+                'finisterre.mail.inbound.imap.host'             => $settings->inbound_imap_host,
+                'finisterre.mail.inbound.imap.port'             => $settings->inbound_imap_port,
+                'finisterre.mail.inbound.imap.encryption'       => $settings->inbound_imap_encryption,
+                'finisterre.mail.inbound.imap.username'         => $settings->inbound_imap_username,
+                'finisterre.mail.inbound.imap.password'         => $settings->inbound_imap_password,
+                'finisterre.mail.inbound.imap.folder'           => $settings->inbound_imap_folder,
+                'finisterre.mail.inbound.resend.api_key'        => $settings->inbound_resend_api_key,
+                'finisterre.mail.inbound.resend.webhook_secret' => $settings->inbound_resend_webhook_secret,
             ]);
         } catch (Throwable) {
             // Settings are missing (not migrated / not seeded yet) — the plugin

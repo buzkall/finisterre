@@ -77,7 +77,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $creatorId = $this->record?->creator_id;
 
-        return $creatorId && $options->has($creatorId) ? [$creatorId] : [];
+        return $creatorId && $options->has((string)$creatorId) ? [$creatorId] : [];
     }
 
     private function isAllNotifySelected(Get $get): bool

@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Filament\Pages;
 
+use Arzcode\Finisterre\Controllers\ResendInboundController;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Grid;
@@ -63,6 +65,8 @@ class ManageFinisterreSettings extends Page
     {
         $settings = app(FinisterreSettings::class);
 
+        // Secrets (the SMS key, the IMAP password, the Resend key and webhook secret) are
+        // left out: the form state is sent to the browser. A blank field keeps them.
         $this->form->fill([
             'environments'                        => $settings->environments,
             'slug'                                => $settings->slug,
@@ -80,10 +84,18 @@ class ManageFinisterreSettings extends Page
             'comments_icon_empty'                 => $settings->comments_icon_empty,
             'sms_enabled'                         => $settings->sms_enabled,
             'sms_url'                             => $settings->sms_url,
-            'sms_auth_key'                        => $settings->sms_auth_key,
             'sms_sender'                          => $settings->sms_sender,
             'sms_notify_to'                       => $settings->sms_notify_to,
             'sms_notify_priorities'               => $settings->sms_notify_priorities,
+            'inbound_enabled'                     => $settings->inbound_enabled,
+            'inbound_driver'                      => $settings->inbound_driver,
+            'inbound_reply_address'               => $settings->inbound_reply_address,
+            'inbound_plus_addressing'             => $settings->inbound_plus_addressing,
+            'inbound_imap_host'                   => $settings->inbound_imap_host,
+            'inbound_imap_port'                   => $settings->inbound_imap_port,
+            'inbound_imap_encryption'             => $settings->inbound_imap_encryption,
+            'inbound_imap_username'               => $settings->inbound_imap_username,
+            'inbound_imap_folder'                 => $settings->inbound_imap_folder,
         ]);
     }
 
@@ -173,6 +185,99 @@ class ManageFinisterreSettings extends Page
                             ->columnSpanFull(),
                     ]),
 
+                Section::make(__('finisterre::finisterre.settings.section_inbound'))
+                    ->description(__('finisterre::finisterre.settings.section_inbound_help'))
+                    ->schema([
+                        Toggle::make('inbound_enabled')
+                            ->label(__('finisterre::finisterre.settings.inbound_enabled'))
+                            ->live()
+                            ->columnSpanFull(),
+
+                        Grid::make()->columns(2)->schema([
+                            Select::make('inbound_driver')
+                                ->label(__('finisterre::finisterre.settings.inbound_driver'))
+                                ->options([
+                                    'imap'   => __('finisterre::finisterre.settings.inbound_driver_imap'),
+                                    'resend' => __('finisterre::finisterre.settings.inbound_driver_resend'),
+                                ])
+                                ->native(false)
+                                ->required()
+                                ->live(),
+
+                            TextInput::make('inbound_reply_address')
+                                ->label(__('finisterre::finisterre.settings.inbound_reply_address'))
+                                ->helperText(__('finisterre::finisterre.settings.inbound_reply_address_help'))
+                                ->email()
+                                ->requiredIf('inbound_enabled', true),
+
+                            Toggle::make('inbound_plus_addressing')
+                                ->label(__('finisterre::finisterre.settings.inbound_plus_addressing'))
+                                ->helperText(__('finisterre::finisterre.settings.inbound_plus_addressing_help'))
+                                ->columnSpanFull(),
+                        ])
+                            ->visible(fn(Get $get): bool => (bool)$get('inbound_enabled')),
+
+                        Grid::make()->columns(2)->schema([
+                            TextInput::make('inbound_imap_host')
+                                ->label(__('finisterre::finisterre.settings.inbound_imap_host'))
+                                ->placeholder('imap.example.com'),
+
+                            TextInput::make('inbound_imap_port')
+                                ->label(__('finisterre::finisterre.settings.inbound_imap_port'))
+                                ->integer()
+                                ->required(),
+
+                            Select::make('inbound_imap_encryption')
+                                ->label(__('finisterre::finisterre.settings.inbound_imap_encryption'))
+                                ->options([
+                                    'ssl'      => 'SSL',
+                                    'tls'      => 'TLS',
+                                    'starttls' => 'STARTTLS',
+                                    'none'     => __('finisterre::finisterre.settings.inbound_imap_encryption_none'),
+                                ])
+                                ->native(false)
+                                ->required(),
+
+                            TextInput::make('inbound_imap_folder')
+                                ->label(__('finisterre::finisterre.settings.inbound_imap_folder'))
+                                ->placeholder('INBOX'),
+
+                            TextInput::make('inbound_imap_username')
+                                ->label(__('finisterre::finisterre.settings.inbound_imap_username')),
+
+                            TextInput::make('inbound_imap_password')
+                                ->label(__('finisterre::finisterre.settings.inbound_imap_password'))
+                                ->password()
+                                ->placeholder(fn(): ?string => $this->secretPlaceholder('inbound_imap_password'))
+                                ->revealable(),
+                        ])
+                            ->visible(fn(Get $get): bool => $get('inbound_enabled') && $get('inbound_driver') === 'imap'),
+
+                        Grid::make()->columns(2)->schema([
+                            TextEntry::make('inbound_resend_webhook_url')
+                                ->label(__('finisterre::finisterre.settings.inbound_resend_webhook_url'))
+                                ->helperText(__('finisterre::finisterre.settings.inbound_resend_webhook_url_help'))
+                                ->state(url(ResendInboundController::PATH))
+                                ->copyable()
+                                ->columnSpanFull(),
+
+                            TextInput::make('inbound_resend_api_key')
+                                ->label(__('finisterre::finisterre.settings.inbound_resend_api_key'))
+                                ->helperText(__('finisterre::finisterre.settings.inbound_resend_api_key_help'))
+                                ->password()
+                                ->placeholder(fn(): ?string => $this->secretPlaceholder('inbound_resend_api_key'))
+                                ->revealable(),
+
+                            TextInput::make('inbound_resend_webhook_secret')
+                                ->label(__('finisterre::finisterre.settings.inbound_resend_webhook_secret'))
+                                ->password()
+                                ->placeholder(fn(): ?string => $this->secretPlaceholder('inbound_resend_webhook_secret'))
+                                ->revealable(),
+                        ])
+                            ->visible(fn(Get $get): bool => $get('inbound_enabled') && $get('inbound_driver') === 'resend'),
+                    ])
+                    ->columnSpanFull(),
+
                 Section::make(__('finisterre::finisterre.settings.section_comments'))
                     ->schema([
                         Toggle::make('comments_display_avatars')
@@ -202,6 +307,7 @@ class ManageFinisterreSettings extends Page
                         TextInput::make('sms_auth_key')
                             ->label(__('finisterre::finisterre.settings.sms_auth_key'))
                             ->password()
+                            ->placeholder(fn(): ?string => $this->secretPlaceholder('sms_auth_key'))
                             ->revealable()
                             ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
                             ->dehydratedWhenHidden(),
@@ -254,10 +360,22 @@ class ManageFinisterreSettings extends Page
         $settings->comments_icon_empty = Typed::string($data['comments_icon_empty']);
         $settings->sms_enabled = (bool)$data['sms_enabled'];
         $settings->sms_url = Typed::string($data['sms_url']);
-        $settings->sms_auth_key = Typed::nullableString($data['sms_auth_key']);
+        $settings->sms_auth_key = Typed::nullableString($data['sms_auth_key'] ?? null) ?? $settings->sms_auth_key;
         $settings->sms_sender = Typed::nullableString($data['sms_sender']);
         $settings->sms_notify_to = Typed::nullableString($data['sms_notify_to']);
         $settings->sms_notify_priorities = Typed::strings($data['sms_notify_priorities'] ?? []);
+        $settings->inbound_enabled = (bool)$data['inbound_enabled'];
+        $settings->inbound_driver = Typed::string($data['inbound_driver'] ?? $settings->inbound_driver);
+        $settings->inbound_reply_address = trim(Typed::string($data['inbound_reply_address'] ?? $settings->inbound_reply_address));
+        $settings->inbound_plus_addressing = (bool)($data['inbound_plus_addressing'] ?? $settings->inbound_plus_addressing);
+        $settings->inbound_imap_host = trim(Typed::string($data['inbound_imap_host'] ?? $settings->inbound_imap_host));
+        $settings->inbound_imap_port = Typed::int($data['inbound_imap_port'] ?? $settings->inbound_imap_port);
+        $settings->inbound_imap_encryption = Typed::string($data['inbound_imap_encryption'] ?? $settings->inbound_imap_encryption);
+        $settings->inbound_imap_username = trim(Typed::string($data['inbound_imap_username'] ?? $settings->inbound_imap_username));
+        $settings->inbound_imap_password = Typed::nullableString($data['inbound_imap_password'] ?? null) ?? $settings->inbound_imap_password;
+        $settings->inbound_imap_folder = trim(Typed::string($data['inbound_imap_folder'] ?? $settings->inbound_imap_folder)) ?: 'INBOX';
+        $settings->inbound_resend_api_key = Typed::nullableString($data['inbound_resend_api_key'] ?? null) ?? $settings->inbound_resend_api_key;
+        $settings->inbound_resend_webhook_secret = Typed::nullableString($data['inbound_resend_webhook_secret'] ?? null) ?? $settings->inbound_resend_webhook_secret;
 
         $settings->save();
 
@@ -282,6 +400,11 @@ class ManageFinisterreSettings extends Page
                     : Typed::string($user->getAttribute($column)),
             ])
             ->all();
+    }
+
+    protected function secretPlaceholder(string $name): ?string
+    {
+        return filled(app(FinisterreSettings::class)->{$name}) ? Typed::string(__('finisterre::finisterre.settings.secret_stored')) : null;
     }
 
     protected function heroiconSelect(string $name, string $label): Select

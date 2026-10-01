@@ -27,6 +27,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property Carbon|null $scheduled_for
  * @property Carbon|null $sent_at
  * @property list<int>|null $notify_user_ids
+ * @property string|null $email_message_id
  * @property ?int $creator_id
  * @property int $task_id
  * @property Carbon|null $created_at
@@ -38,7 +39,7 @@ class FinisterreTaskComment extends Model implements HasMedia
     /** @use HasFactory<FinisterreTaskCommentFactory> */
     use HasFactory, InteractsWithMedia;
 
-    protected $fillable = ['task_id', 'comment', 'creator_id', 'scheduled_for', 'sent_at', 'notify_user_ids'];
+    protected $fillable = ['task_id', 'comment', 'creator_id', 'scheduled_for', 'sent_at', 'notify_user_ids', 'email_message_id'];
 
     /** @var list<string> */
     protected $touches = ['task'];
@@ -135,6 +136,7 @@ class FinisterreTaskComment extends Model implements HasMedia
             'scheduled_for'   => 'datetime',
             'sent_at'         => 'datetime',
             'notify_user_ids' => 'array',
+            'creator_id'      => 'integer',
         ];
     }
 }

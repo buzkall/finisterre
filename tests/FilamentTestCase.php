@@ -135,6 +135,10 @@ abstract class FilamentTestCase extends TestCase
             (include __DIR__ . '/../database/migrations/add_scheduling_to_finisterre_task_comments.php.stub')->up();
         }
 
+        if (! Schema::hasColumn('finisterre_task_comments', 'email_message_id')) {
+            (include __DIR__ . '/../database/migrations/add_email_message_id_to_finisterre_task_comments.php.stub')->up();
+        }
+
         $this->createTableIfMissing('tags', function(Blueprint $table) {
             $table->id();
             $table->json('name');

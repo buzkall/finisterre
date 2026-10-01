@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Notifications\Concerns;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\InboundEmail\ReplyToken;
 use Arzcode\Finisterre\Support\Typed;
 use Filament\Facades\Filament;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,10 +13,22 @@ trait UsesFinisterreMailLayout
 {
     protected function newMailMessage(FinisterreTask $task): MailMessage
     {
+        $acceptsReplies = (bool)config('finisterre.mail.inbound.enabled');
+        $replyTo = $acceptsReplies ? ReplyToken::replyAddress($task->id) : null;
+
         return (new MailMessage)
             ->theme('finisterre::themes.finisterre')
-            ->markdown('finisterre::mail.email', ['logo' => $this->mailLogo()])
-            ->withSymfonyMessage(fn(Email $message) => $this->threadByTask($message, $task));
+            ->markdown('finisterre::mail.email', ['logo' => $this->mailLogo(), 'acceptsReplies' => $acceptsReplies])
+            ->when($replyTo, fn(MailMessage $mail, string $address) => $mail->replyTo($address))
+            ->withSymfonyMessage(function(Email $message) use ($task, $acceptsReplies) {
+                $this->threadByTask($message, $task);
+
+                // A reply carries this id back in its In-Reply-To, which is how it
+                // finds its task.
+                if ($acceptsReplies) {
+                    $message->getHeaders()->addIdHeader('Message-ID', ReplyToken::messageId($task->id));
+                }
+            });
     }
 
     /**

@@ -32,8 +32,29 @@ class FinisterreSettings extends Settings
     /** @var array<int, string> */
     public array $sms_notify_priorities;
 
+    public bool $inbound_enabled;
+    public string $inbound_driver;
+    public string $inbound_reply_address;
+    public bool $inbound_plus_addressing;
+    public string $inbound_imap_host;
+    public int $inbound_imap_port;
+    public string $inbound_imap_encryption;
+    public string $inbound_imap_username;
+    public ?string $inbound_imap_password = null;
+    public string $inbound_imap_folder;
+    public ?string $inbound_resend_api_key = null;
+    public ?string $inbound_resend_webhook_secret = null;
+
     public static function group(): string
     {
         return 'finisterre';
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function encrypted(): array
+    {
+        return ['inbound_imap_password', 'inbound_resend_api_key', 'inbound_resend_webhook_secret'];
     }
 }

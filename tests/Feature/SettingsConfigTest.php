@@ -30,6 +30,18 @@ function fakeFinisterreSettings(array $overrides = []): void
         'sms_sender'                          => 'ACME',
         'sms_notify_to'                       => '600600600',
         'sms_notify_priorities'               => ['urgent', 'high'],
+        'inbound_enabled'                     => false,
+        'inbound_driver'                      => 'imap',
+        'inbound_reply_address'               => '',
+        'inbound_plus_addressing'             => false,
+        'inbound_imap_host'                   => '',
+        'inbound_imap_port'                   => 993,
+        'inbound_imap_encryption'             => 'ssl',
+        'inbound_imap_username'               => '',
+        'inbound_imap_password'               => null,
+        'inbound_imap_folder'                 => 'INBOX',
+        'inbound_resend_api_key'              => null,
+        'inbound_resend_webhook_secret'       => null,
     ], $overrides));
 }
 

@@ -3,11 +3,13 @@
 namespace Arzcode\Finisterre;
 
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
+use Arzcode\Finisterre\Commands\FetchEmailsCommand;
 use Arzcode\Finisterre\Commands\PrivatizeAttachmentsCommand;
 use Arzcode\Finisterre\Commands\ResetSequencesCommand;
 use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Commands\UpdateCommand;
 use Arzcode\Finisterre\Controllers\FilamentRouteController;
+use Arzcode\Finisterre\Controllers\ResendInboundController;
 use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
@@ -21,6 +23,7 @@ use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
+use Arzcode\Finisterre\Support\PanelProviders;
 use Arzcode\Finisterre\Support\SettingsConfig;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Traits\FinisterreUserTrait;
@@ -79,6 +82,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasMigrations(self::migrationNames())
             ->hasCommands([
                 DispatchScheduledCommentsCommand::class,
+                FetchEmailsCommand::class,
                 PrivatizeAttachmentsCommand::class,
                 ResetSequencesCommand::class,
                 UninstallCommand::class,
@@ -192,6 +196,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             'create_finisterre_subtasks_table',
             'add_cover_media_id_to_finisterre_tasks',
             'add_editor_files_to_finisterre_tasks',
+            'add_email_message_id_to_finisterre_task_comments',
         ];
     }
 
@@ -444,18 +449,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     protected function patchPanelProviders(): void
     {
-        $dir = app_path('Providers/Filament');
-
-        if (! is_dir($dir)) {
-            warning('No app/Providers/Filament directory — register FinisterrePlugin manually in your panel provider.');
-
-            return;
-        }
-
-        $files = glob($dir . '/*PanelProvider.php') ?: [];
+        $files = PanelProviders::files();
 
         if ($files === []) {
-            warning('No *PanelProvider.php found — register FinisterrePlugin manually in your panel provider.');
+            warning('No app/Providers/Filament/*PanelProvider.php found — register FinisterrePlugin manually in your panel provider.');
 
             return;
         }
@@ -464,20 +461,17 @@ class FinisterreServiceProvider extends PackageServiceProvider
             $contents = (string)file_get_contents($file);
             $relative = $this->relativePath($file);
 
-            if (str_contains($contents, 'FinisterrePlugin')) {
+            if (PanelProviders::hasPlugin($contents)) {
                 note(sprintf('FinisterrePlugin already present in %s — leaving as-is.', $relative));
 
                 continue;
             }
 
-            $withImport = $this->addUseImport($contents, FinisterrePlugin::class);
+            // Injected into an existing ->plugins([…]) call, or added as a new
+            // one to the $panel chain when the provider doesn't have one yet.
+            $patched = PanelProviders::addPlugin($contents);
 
-            // Inject into an existing ->plugins([…]) call, or add a new one to
-            // the $panel chain when the provider doesn't have one yet.
-            $patched = $this->injectIntoPluginsArray($withImport, 'FinisterrePlugin::make(),')
-                ?? $this->addPluginsArray($withImport);
-
-            if ($patched === null) {
+            if ($patched === null || ! PanelProviders::parses($patched)) {
                 warning(sprintf('Could not patch %s — add ->plugins([FinisterrePlugin::make()]) manually.', $relative));
 
                 continue;
@@ -507,10 +501,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
             return;
         }
 
-        $patched = $this->addUseImport($contents, FinisterreUserTrait::class);
+        $patched = PanelProviders::addUseImport($contents, FinisterreUserTrait::class);
         $patched = $this->addTraitInsideClass($patched, 'FinisterreUserTrait');
 
-        if ($patched === null) {
+        if ($patched === null || ! PanelProviders::parses($patched)) {
             warning(sprintf('Could not patch %s — add `use FinisterreUserTrait;` manually.', $relative));
 
             return;
@@ -635,189 +629,6 @@ class FinisterreServiceProvider extends PackageServiceProvider
         outro('Finisterre install complete. Reload your Filament panel.');
     }
 
-    protected function addUseImport(string $contents, string $fqcn): string
-    {
-        $pattern = '/^use\s+' . preg_quote($fqcn, '/') . ';/m';
-        if (preg_match($pattern, $contents)) {
-            return $contents;
-        }
-
-        if (preg_match_all('/^use\s+[^;]+;\n/m', $contents, $matches, PREG_OFFSET_CAPTURE)) {
-            $last = end($matches[0]);
-            $insertAt = $last[1] + strlen($last[0]);
-
-            return substr($contents, 0, $insertAt) . 'use ' . $fqcn . ";\n" . substr($contents, $insertAt);
-        }
-
-        if (preg_match('/^namespace\s+[^;]+;\n/m', $contents, $m, PREG_OFFSET_CAPTURE)) {
-            $insertAt = $m[0][1] + strlen($m[0][0]);
-
-            return substr($contents, 0, $insertAt) . "\nuse " . $fqcn . ";\n" . substr($contents, $insertAt);
-        }
-
-        return $contents . "\nuse " . $fqcn . ";\n";
-    }
-
-    protected function injectIntoPluginsArray(string $contents, string $entry): ?string
-    {
-        // Match ->plugins( … [ tolerating whitespace/newlines before the array,
-        // so both `->plugins([` and `->plugins(\n    [` are detected.
-        if (! preg_match('/->plugins\(\s*\[/', $contents, $m, PREG_OFFSET_CAPTURE)) {
-            return null;
-        }
-
-        $bracketAt = $m[0][1] + strlen($m[0][0]) - 1;
-
-        $closeAt = $this->findMatchingArrayClose($contents, $bracketAt + 1);
-        if ($closeAt === null) {
-            return null;
-        }
-
-        $lineStart = strrpos(substr($contents, 0, $closeAt), "\n");
-        $closeIndent = $lineStart === false ? '' : substr($contents, $lineStart + 1, $closeAt - $lineStart - 1);
-        $closeIndent = preg_replace('/[^\s].*$/', '', $closeIndent);
-
-        $itemIndent = $closeIndent . '    ';
-
-        $before = rtrim(substr($contents, 0, $closeAt));
-
-        if (! str_ends_with($before, ',') && ! str_ends_with($before, '[')) {
-            $before .= ',';
-        }
-
-        $insertion = "\n{$itemIndent}{$entry}\n{$closeIndent}";
-
-        return $before . $insertion . substr($contents, $closeAt);
-    }
-
-    protected function addPluginsArray(string $contents): ?string
-    {
-        // Add a ->plugins([…]) call at the bottom of the panel configuration
-        // chain, just before the terminating `;` of `return $panel->…;`.
-        if (! preg_match('/return\s+\$panel\b/', $contents, $m, PREG_OFFSET_CAPTURE)) {
-            return null;
-        }
-
-        $semicolonAt = $this->findStatementEnd($contents, $m[0][1] + strlen($m[0][0]));
-        if ($semicolonAt === null) {
-            return null;
-        }
-
-        $insertion = "\n            ->plugins([\n                FinisterrePlugin::make(),\n            ])";
-
-        return substr($contents, 0, $semicolonAt) . $insertion . substr($contents, $semicolonAt);
-    }
-
-    protected function findStatementEnd(string $contents, int $start): ?int
-    {
-        $len = strlen($contents);
-        $paren = 0;
-        $bracket = 0;
-        $brace = 0;
-        $stringDelim = null;
-
-        for ($pos = $start; $pos < $len; $pos++) {
-            $c = $contents[$pos];
-
-            if ($stringDelim !== null) {
-                if ($c === '\\') {
-                    $pos++;
-
-                    continue;
-                }
-                if ($c === $stringDelim) {
-                    $stringDelim = null;
-                }
-
-                continue;
-            }
-
-            if ($c === "'" || $c === '"') {
-                $stringDelim = $c;
-
-                continue;
-            }
-
-            if ($c === '/' && $pos + 1 < $len && $contents[$pos + 1] === '/') {
-                $nl = strpos($contents, "\n", $pos);
-                $pos = $nl === false ? $len : $nl;
-
-                continue;
-            }
-
-            if ($c === '(') {
-                $paren++;
-            } elseif ($c === ')') {
-                $paren--;
-            } elseif ($c === '[') {
-                $bracket++;
-            } elseif ($c === ']') {
-                $bracket--;
-            } elseif ($c === '{') {
-                $brace++;
-            } elseif ($c === '}') {
-                $brace--;
-            } elseif ($c === ';' && $paren === 0 && $bracket === 0 && $brace === 0) {
-                return $pos;
-            }
-        }
-
-        return null;
-    }
-
-    protected function findMatchingArrayClose(string $contents, int $startAfterOpenBracket): ?int
-    {
-        $len = strlen($contents);
-        $arrayDepth = 1;
-        $parenDepth = 0;
-        $stringDelim = null;
-
-        for ($pos = $startAfterOpenBracket; $pos < $len; $pos++) {
-            $c = $contents[$pos];
-
-            if ($stringDelim !== null) {
-                if ($c === '\\') {
-                    $pos++;
-
-                    continue;
-                }
-                if ($c === $stringDelim) {
-                    $stringDelim = null;
-                }
-
-                continue;
-            }
-
-            if ($c === "'" || $c === '"') {
-                $stringDelim = $c;
-
-                continue;
-            }
-
-            if ($c === '/' && $pos + 1 < $len && $contents[$pos + 1] === '/') {
-                $nl = strpos($contents, "\n", $pos);
-                $pos = $nl === false ? $len : $nl;
-
-                continue;
-            }
-
-            if ($c === '[') {
-                $arrayDepth++;
-            } elseif ($c === ']') {
-                $arrayDepth--;
-                if ($arrayDepth === 0) {
-                    return $pos;
-                }
-            } elseif ($c === '(') {
-                $parenDepth++;
-            } elseif ($c === ')') {
-                $parenDepth--;
-            }
-        }
-
-        return null;
-    }
-
     protected function addTraitInsideClass(string $contents, string $traitShortName): ?string
     {
         if (! preg_match('/(class\s+\w+[^{]*\{)/', $contents, $m, PREG_OFFSET_CAPTURE)) {
@@ -870,6 +681,12 @@ class FinisterreServiceProvider extends PackageServiceProvider
                 $schedule->command('finisterre:dispatch-scheduled-comments')
                     ->everyMinute()
                     ->withoutOverlapping();
+
+                if (config('finisterre.mail.inbound.enabled') && config('finisterre.mail.inbound.driver') === 'imap') {
+                    $schedule->command('finisterre:fetch-emails')
+                        ->everyMinute()
+                        ->withoutOverlapping();
+                }
             });
         }
 
@@ -879,6 +696,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // A private attachments disk sits outside public/, so its files are served
         // by routes that check the viewer may see the task they belong to.
         FilamentRouteController::registerForPrivateDisk();
+
+        // Always there, so a cached route list keeps it when reply by email is
+        // turned on later; the controller refuses while the Resend driver is off.
+        ResendInboundController::register();
 
         $this->observeMedia();
         $this->registerBoardCardView();

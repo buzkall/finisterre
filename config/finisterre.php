@@ -65,6 +65,44 @@ return [
         // comments, newest first) the notification emails include. Null includes
         // the whole history, 0 leaves it out. Editable from the settings page.
         'history_entries' => null,
+
+        // Reply by email: an answer to a task email becomes a comment on the task.
+        // Replies are matched to their task by a signed id in the Message-ID of
+        // the email they answer (and, with plus_addressing, in the Reply-To too),
+        // and only accepted from an existing user's address. Editable from the
+        // settings page.
+        'inbound' => [
+            'enabled' => env('FINISTERRE_INBOUND_ENABLED', false),
+
+            // imap: `finisterre:fetch-emails` polls a mailbox every minute.
+            // resend: Resend posts every received email to /finisterre/inbound/resend.
+            'driver' => env('FINISTERRE_INBOUND_DRIVER', 'imap'),
+
+            // The address replies go to (the Reply-To of every task email). It has
+            // to land in the mailbox the driver reads.
+            'reply_address' => env('FINISTERRE_INBOUND_REPLY_ADDRESS', ''),
+
+            // Send replies to reply_address with the signed task id after a `+`
+            // (tasks+12-3f9a…@example.com). Only turn it on when the mailbox
+            // accepts plus addresses; it helps when the mail service rewrites the
+            // Message-ID (Amazon SES does).
+            'plus_addressing' => env('FINISTERRE_INBOUND_PLUS_ADDRESSING', false),
+
+            'imap' => [
+                'host'       => env('FINISTERRE_IMAP_HOST', ''),
+                'port'       => (int)env('FINISTERRE_IMAP_PORT', 993),
+                'encryption' => env('FINISTERRE_IMAP_ENCRYPTION', 'ssl'), // ssl | tls | starttls | none
+                'username'   => env('FINISTERRE_IMAP_USERNAME', ''),
+                'password'   => env('FINISTERRE_IMAP_PASSWORD'),
+                'folder'     => env('FINISTERRE_IMAP_FOLDER', 'INBOX'),
+            ],
+
+            'resend' => [
+                // Falls back to services.resend.key, the one the Resend mailer uses.
+                'api_key'        => env('FINISTERRE_RESEND_API_KEY'),
+                'webhook_secret' => env('FINISTERRE_RESEND_WEBHOOK_SECRET'),
+            ],
+        ],
     ],
 
     'task_changes_table_name' => 'finisterre_task_changes',

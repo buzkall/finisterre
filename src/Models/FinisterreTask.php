@@ -370,6 +370,7 @@ class FinisterreTask extends Model implements HasMedia
             'priority'     => TaskPriorityEnum::class,
             'due_at'       => 'datetime',
             'completed_at' => 'datetime',
+            'creator_id'   => 'integer',
             'order_column' => 'integer',
             'editor_files' => 'array',
         ];

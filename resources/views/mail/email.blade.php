@@ -12,6 +12,11 @@
 </x-mail::header>
 </x-slot:header>
 
+{{-- Where a reply by email is cut: everything from here down is the quoted email --}}
+@if ($acceptsReplies ?? false)
+<div id="finisterre-reply-above" style="color: #9ca3af; font-size: 12px; margin-bottom: 16px;">{{ __('finisterre::finisterre.mail.reply_above') }}</div>
+
+@endif
 {{-- Greeting --}}
 @if (! empty($greeting))
 # {{ $greeting }}

@@ -2,6 +2,26 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.10.0 - 2026-10-01
+
+- **Reply by email**: replying to a task email adds the reply as a comment on the task, written by the user whose
+  address sent it, with the quoted email cut off and the HTML sanitized. The task's creator and assignee are notified,
+  never the person replying; replies from unknown addresses, out-of-office replies and bounces are skipped, and an email
+  is never imported twice. A reply finds its task through a `Message-ID` signed with the app key that every task email
+  now carries (and, optionally, through a plus-addressed `Reply-To`). Two drivers: `imap` polls a mailbox every minute
+  with the new `finisterre:fetch-emails` command (needs `composer require webklex/php-imap`), and `resend` takes
+  Resend's `email.received` webhook at `/finisterre/inbound/resend`. Set it up in the new *Reply by email* section of
+  the settings page or under `mail.inbound` in the config; see the README. New dependency: `symfony/html-sanitizer`.
+  **Run `php artisan finisterre:update` after upgrading** to add the `email_message_id` column to the comments and seed
+  the new settings; until then Finisterre stays inactive.
+- Reply by email is stricter about who can reply: the sender has to be an assignable user (so inactive or filtered-out
+  users are skipped) and pass the comment policy's `create`, and a reply whose `Authentication-Results` shows it failed
+  DMARC, or passed neither SPF nor DKIM, is skipped as spoofed. The same email arriving twice at once (a Resend retry,
+  or a fetch overlapping a webhook) no longer becomes two comments. Plain text replies that start with a `>` quoted line
+  or mention a "From:"/"De:" line are no longer cut to nothing. The settings page no longer sends the stored IMAP
+  password, Resend API key, webhook secret or SMS key to the browser; their fields stay blank and keep the stored value
+  unless you type a new one.
+
 ## 4.9.2 - 2026-10-01
 
 - Comments in the task's comment list show their headings, bullet and numbered lists again, as they look in the editor

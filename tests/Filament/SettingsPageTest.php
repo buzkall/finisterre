@@ -44,6 +44,18 @@ beforeEach(function() {
         'sms_sender'                          => null,
         'sms_notify_to'                       => null,
         'sms_notify_priorities'               => [],
+        'inbound_enabled'                     => false,
+        'inbound_driver'                      => 'imap',
+        'inbound_reply_address'               => '',
+        'inbound_plus_addressing'             => false,
+        'inbound_imap_host'                   => '',
+        'inbound_imap_port'                   => 993,
+        'inbound_imap_encryption'             => 'ssl',
+        'inbound_imap_username'               => '',
+        'inbound_imap_password'               => null,
+        'inbound_imap_folder'                 => 'INBOX',
+        'inbound_resend_api_key'              => null,
+        'inbound_resend_webhook_secret'       => null,
     ]);
 });
 
@@ -92,4 +104,55 @@ it('saves the number of history entries in emails, and an empty field as the who
         ->assertHasNoErrors();
 
     expect(app(FinisterreSettings::class)->mail_history_entries)->toBeNull();
+});
+
+it('saves the reply by email settings of the chosen driver and keeps the other driver\'s', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.inbound_enabled', true)
+        ->set('data.inbound_driver', 'resend')
+        ->set('data.inbound_reply_address', 'tasks@example.com')
+        ->set('data.inbound_resend_webhook_secret', 'whsec_c2VjcmV0')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $settings = app(FinisterreSettings::class);
+
+    expect($settings->inbound_enabled)->toBeTrue()
+        ->and($settings->inbound_driver)->toBe('resend')
+        ->and($settings->inbound_reply_address)->toBe('tasks@example.com')
+        ->and($settings->inbound_resend_webhook_secret)->toBe('whsec_c2VjcmV0')
+        ->and($settings->inbound_imap_folder)->toBe('INBOX')
+        ->and($settings->inbound_imap_port)->toBe(993);
+});
+
+it('asks for the reply address once reply by email is on', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.inbound_enabled', true)
+        ->call('save')
+        ->assertHasErrors(['data.inbound_reply_address']);
+});
+
+it('never sends the stored secrets to the browser and keeps them when their field is left blank', function() {
+    $settings = app(FinisterreSettings::class);
+    $settings->inbound_resend_api_key = 're_secret';
+    $settings->inbound_resend_webhook_secret = 'whsec_old';
+    $settings->save();
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->assertSet('data.inbound_resend_api_key', null)
+        ->assertSet('data.inbound_resend_webhook_secret', null)
+        ->set('data.inbound_enabled', true)
+        ->set('data.inbound_driver', 'resend')
+        ->set('data.inbound_reply_address', 'tasks@example.com')
+        ->assertDontSee('re_secret')
+        ->assertDontSee('whsec_old')
+        ->assertSee(__('finisterre::finisterre.settings.secret_stored'))
+        ->set('data.inbound_resend_webhook_secret', 'whsec_new')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $settings = app(FinisterreSettings::class)->refresh();
+
+    expect($settings->inbound_resend_api_key)->toBe('re_secret')
+        ->and($settings->inbound_resend_webhook_secret)->toBe('whsec_new');
 });

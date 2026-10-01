@@ -2,9 +2,9 @@
 
 namespace Arzcode\Finisterre\Commands;
 
-use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Arzcode\Finisterre\Support\PackageMigrations;
+use Arzcode\Finisterre\Support\PanelProviders;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 use Illuminate\Console\Command;
@@ -60,18 +60,10 @@ class UninstallCommand extends Command
 
     protected function unpatchPanelProviders(): void
     {
-        $dir = app_path('Providers/Filament');
-
-        if (! is_dir($dir)) {
-            warning('No app/Providers/Filament directory — nothing to clean.');
-
-            return;
-        }
-
-        $files = glob($dir . '/*PanelProvider.php') ?: [];
+        $files = PanelProviders::files();
 
         if ($files === []) {
-            warning('No *PanelProvider.php found — nothing to clean.');
+            warning('No app/Providers/Filament/*PanelProvider.php found — nothing to clean.');
 
             return;
         }
@@ -80,14 +72,25 @@ class UninstallCommand extends Command
             $contents = (string)file_get_contents($file);
             $relative = $this->relativePath($file);
 
-            if (! str_contains($contents, 'FinisterrePlugin')) {
+            if (! PanelProviders::hasPlugin($contents)) {
                 note(sprintf('FinisterrePlugin not present in %s — skipping.', $relative));
 
                 continue;
             }
 
-            $patched = $this->removeLinesContaining($contents, 'FinisterrePlugin::make()');
-            $patched = $this->removeUseImport($patched, FinisterrePlugin::class);
+            // Only the plugin entry goes: the other plugins registered on the
+            // same line, or in the same array, stay.
+            $patched = PanelProviders::removePlugin($contents);
+
+            if (! PanelProviders::parses($patched)) {
+                warning(sprintf('Could not unpatch %s safely — remove FinisterrePlugin from it manually.', $relative));
+
+                continue;
+            }
+
+            if (PanelProviders::hasPlugin($patched)) {
+                warning(sprintf('FinisterrePlugin still referenced in %s — remove it manually.', $relative));
+            }
 
             file_put_contents($file, $patched);
             info(sprintf('Removed FinisterrePlugin from %s.', $relative));
@@ -115,6 +118,12 @@ class UninstallCommand extends Command
 
         $patched = preg_replace('/^[ \t]*use\s+FinisterreUserTrait\s*;[ \t]*\r?\n/m', '', $contents) ?? $contents;
         $patched = $this->removeUseImport($patched, FinisterreUserTrait::class);
+
+        if (! PanelProviders::parses($patched)) {
+            warning(sprintf('Could not unpatch %s safely — remove FinisterreUserTrait from it manually.', $relative));
+
+            return;
+        }
 
         if (str_contains($patched, 'FinisterreUserTrait')) {
             warning(sprintf('FinisterreUserTrait still referenced in %s — remove it manually (it may be grouped with other traits).', $relative));
