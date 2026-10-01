@@ -2,6 +2,19 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.9.2 - 2026-10-01
+
+- Comments in the task's comment list show their headings, bullet and numbered lists again, as they look in the editor
+  and in the notification email. The list relied on Tailwind's typography `prose` class, which Filament themes no
+  longer include; it now uses Filament's own `fi-prose`.
+- Headings written in a comment or description stand out in the emails: H2 is now 18px and H3 16px (they were 16px and
+  14px, the same size as the body text or smaller), both in the theme's heading colour. The email's greeting goes from
+  18px to 20px so it stays the largest heading.
+- Static analysis raised to PHPStan level 10. Config values, form state and webhook payloads are now read through typed
+  accessors, so a malformed value falls back to its default instead of erroring. The users offered in a comment's
+  "notify" list now come from the same `assignableUsers` scope as the assignee picker, and a `finisterre.authenticatable`
+  that isn't an Eloquent model fails with a clear message.
+
 ## 4.9.1 - 2026-09-28
 
 - The task page now shows **who created the task** as a badge next to the assignee, and the creation date with how

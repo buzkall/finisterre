@@ -48,21 +48,23 @@ a img {
 
 h1 {
     color: {{ $headingColor }};
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     margin-top: 0;
     text-align: start;
 }
 
 h2 {
-    font-size: 16px;
+    color: {{ $headingColor }};
+    font-size: 18px;
     font-weight: bold;
     margin-top: 0;
     text-align: start;
 }
 
 h3 {
-    font-size: 14px;
+    color: {{ $headingColor }};
+    font-size: 16px;
     font-weight: bold;
     margin-top: 0;
     text-align: left;
