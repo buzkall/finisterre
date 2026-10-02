@@ -5,6 +5,7 @@ use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Mime\Email;
 use Workbench\App\Models\User;
 
@@ -49,6 +50,36 @@ it('leaves the description out of the history of a new task email, which already
     $body = mailBody((new TaskNotification($this->task->fresh()))->toMail($this->replier));
 
     expect(substr_count($body, 'The description'))->toBe(1);
+});
+
+it('names the attachments of a new task in its email', function() {
+    Storage::fake('public');
+
+    // loaded before the files exist, as it is on the task being created
+    $task = $this->task->fresh()->load('media');
+
+    $task->addMediaFromString('contents')->usingFileName('report_v2.pdf')->toMediaCollection('tasks', 'public');
+    $task->addMediaFromString('contents')->usingFileName('photo.png')->toMediaCollection('tasks', 'public');
+    $task->addMediaFromString('contents')->usingFileName('elsewhere.pdf')->toMediaCollection('other', 'public');
+
+    $body = mailBody((new TaskNotification($task))->toMail($this->replier));
+
+    expect($body)
+        ->toContain('<strong>' . __('finisterre::finisterre.attachments') . ' (2):</strong> report_v2.pdf, photo.png')
+        ->not->toContain('elsewhere.pdf')
+        ->and(strpos($body, 'The description'))->toBeLessThan(strpos($body, 'report_v2.pdf'));
+});
+
+it('says nothing about attachments in the email of a new task without them, nor in the changes email', function() {
+    Storage::fake('public');
+
+    expect(mailBody((new TaskNotification($this->task->fresh()))->toMail($this->replier)))
+        ->not->toContain(__('finisterre::finisterre.attachments'));
+
+    $this->task->addMediaFromString('contents')->usingFileName('report.pdf')->toMediaCollection('tasks', 'public');
+
+    expect(mailBody((new TaskNotification($this->task->fresh(), ['status' => 'doing']))->toMail($this->replier)))
+        ->not->toContain('report.pdf');
 });
 
 it('leaves the comment itself and anything newer out of the comment email history', function() {

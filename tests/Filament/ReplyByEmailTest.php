@@ -224,7 +224,7 @@ it('falls back to the plain text part and cuts the quoted email', function() {
 it('keeps a plain text reply that starts with a quoted line or mentions a From: line', function() {
     $body = (new ReplyParser)->parse('', "> Can you check it?\nChecked, it works\nDe: Carla, to see it tomorrow\nThanks");
 
-    expect($body)->toBe("<p>Checked, it works<br />\nDe: Carla, to see it tomorrow<br />\nThanks</p>");
+    expect($body)->toBe('<p>Checked, it works<br /> De: Carla, to see it tomorrow<br /> Thanks</p>');
 });
 
 it('cuts a plain text reply at the headers of the quoted email', function() {
@@ -238,6 +238,29 @@ it('cuts a reply at the reply line of the email it answers, in any language', fu
 
     expect((new ReplyParser)->parse($html, ''))->toBe('<p>Hecho</p>');
 });
+
+it('keeps only the words of a reply, without the markup mail clients leave around them', function(string $html, string $expected) {
+    expect((new ReplyParser)->parse($html, ''))->toBe($expected);
+})->with([
+    // Proton Mail: an indented, empty signature block, which markdown emails would show as code.
+    'an indented empty signature' => [
+        "<div style=\"font-size: 14px;\">A la tercera</div>\r\n<div class=\"protonmail_signature_block\">\r\n    <div>\r\n        \r\n            </div>\r\n</div>\r\n<div><br></div><div class=\"protonmail_quote\">the old email</div>",
+        '<div>A la tercera</div>',
+    ],
+    // Fastmail: the line that introduces the quote sits above it, not inside it.
+    'the line above the quote' => [
+        '<div>Hecho</div><div><br></div><div>On Thu, Oct 1, 2026, at 13:48, arzcode wrote:</div><blockquote type="cite">the old email</blockquote>',
+        '<div>Hecho</div>',
+    ],
+    'the same line in Spanish' => [
+        '<p>Hecho</p><p>El jue, 1 oct 2026, a las 13:48, arzcode escribió:</p><blockquote type="cite">the old email</blockquote>',
+        '<p>Hecho</p>',
+    ],
+    'the line breaks of a code block' => [
+        "<p>Mira:</p>\n<pre>if (true) {\n    run();\n}</pre>",
+        "<p>Mira:</p> <pre>if (true) {\n    run();\n}</pre>",
+    ],
+]);
 
 describe('resend webhook', function() {
     beforeEach(function() {

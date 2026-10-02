@@ -2,6 +2,14 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.11.0 - 2026-10-02
+
+- The email of a new task names its attachments, in a line under the description (*Attachments (2): report.pdf,
+  photo.png*). The files themselves are not sent with the email: the button opens the task, where they are.
+- Comments made from a reply by email are cleaned of what mail clients leave around the words. The indented, empty
+  signature block of Proton Mail showed up as `</div>` code lines in the notification emails, and replies from Fastmail
+  kept the *On … wrote:* line at their end. Trailing blank lines are dropped too.
+
 ## 4.10.1 - 2026-10-01
 
 - Reply by email no longer skips genuine replies as spoofed (*sender failed SPF, DKIM or DMARC* in the log) on mailboxes

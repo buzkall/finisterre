@@ -59,10 +59,16 @@ class TaskNotification extends Notification implements ShouldQueue
             ->when($relatedRecord, fn(MailMessage $mail) => $mail->line($relatedRecord))
             ->when(
                 $this->taskChanges === [],
-                fn(MailMessage $mail) => $mail->when(
-                    filled($this->task->description),
-                    fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description)))
-                ),
+                function(MailMessage $mail) {
+                    $attachments = $this->attachmentsLine();
+
+                    $mail
+                        ->when(
+                            filled($this->task->description),
+                            fn(MailMessage $mail) => $mail->line(new HtmlString($this->embedImages($this->task->description)))
+                        )
+                        ->when($attachments, fn(MailMessage $mail) => $mail->line($attachments));
+                },
                 function(MailMessage $mail) {
                     $mail->line(__('finisterre::finisterre.notification.changes'));
                     $mail->line(new HtmlString('<ul>' . $this->changeLines() . '</ul>'));
@@ -79,6 +85,28 @@ class TaskNotification extends Notification implements ShouldQueue
             ->salutation(' ');
 
         return $this->withInlineImages($mail);
+    }
+
+    /**
+     * The names of the files attached to the task, which are not sent with the email.
+     * Queried rather than read from the model: the files are saved after the task, so
+     * a media relation loaded while it was being created would miss them.
+     */
+    protected function attachmentsLine(): ?HtmlString
+    {
+        $names = $this->task->media()
+            ->where('collection_name', 'tasks')
+            ->orderBy('order_column')
+            ->pluck('file_name');
+
+        if ($names->isEmpty()) {
+            return null;
+        }
+
+        return new HtmlString(
+            '<strong>' . e(__('finisterre::finisterre.attachments')) . ' (' . $names->count() . '):</strong> ' .
+            $names->map(fn($name) => e(Typed::string($name)))->implode(', ')
+        );
     }
 
     /**

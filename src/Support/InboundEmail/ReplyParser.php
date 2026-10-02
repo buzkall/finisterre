@@ -121,6 +121,38 @@ class ReplyParser
             ->allowMediaSchemes(['http', 'https'])
             ->forceAttribute('a', 'rel', 'noopener noreferrer');
 
-        return trim((new HtmlSanitizer($config))->sanitize($html));
+        return $this->tidy((new HtmlSanitizer($config))->sanitize($html));
+    }
+
+    /**
+     * Drops what mail clients leave around the words: the indentation of their HTML,
+     * which the markdown of the notification emails takes for code blocks, the empty
+     * blocks of a blank signature, and the "On … wrote:" line some put above the quote
+     * instead of inside it.
+     */
+    private function tidy(string $html): string
+    {
+        // A line break is a space in HTML, except inside <pre>.
+        $parts = preg_split('#(<pre\b.*?</pre>)#is', $html, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$html];
+
+        foreach ($parts as $index => $part) {
+            if ($index % 2 === 0) {
+                $parts[$index] = preg_replace('/\s*\R\s*/', ' ', $part) ?? $part;
+            }
+        }
+
+        $html = implode('', $parts);
+
+        do {
+            $previous = $html;
+
+            $html = preg_replace([
+                '#<(div|p|span)>\s*</\1>#i',
+                '#(?:\s|<br\s*/?>|<(div|p)>\s*<br\s*/?>\s*</\1>)+$#i',
+                '#<(div|p)>\s*(?:On\b[^<]{0,200}\bwrote:|El\b[^<]{0,200}\bescribió:)\s*</\1>$#iu',
+            ], '', $html) ?? $html;
+        } while ($html !== $previous);
+
+        return trim($html);
     }
 }
