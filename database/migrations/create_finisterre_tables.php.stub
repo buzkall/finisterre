@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::create(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->longText('description')->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+        Schema::create(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table): void {
             $table->id();
             $table->foreignId('task_id')->nullable()->constrained(config('finisterre.table_name'))->cascadeOnDelete();
             $table->longText('comment');

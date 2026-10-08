@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('finisterre.task_changes_table_name', 'finisterre_task_changes'), function(Blueprint $table) {
+        Schema::create(config('finisterre.task_changes_table_name', 'finisterre_task_changes'), function(Blueprint $table): void {
             $table->id();
             $table->foreignId('task_id')->constrained(config('finisterre.table_name', 'finisterre_tasks'))->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()

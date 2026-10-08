@@ -31,7 +31,13 @@ return RectorConfig::configure()
     ->withPhpSets(php83: true)
     ->withPhpVersion(PhpVersion::PHP_83)
     ->withSkip([
-        AddClosureVoidReturnTypeWhereNoReturnRector::class,
+        // Not skipped in database/: host applications usually keep this rule on, and it
+        // would flag the closures of the published migrations.
+        AddClosureVoidReturnTypeWhereNoReturnRector::class => [
+            __DIR__ . '/src',
+            __DIR__ . '/config',
+            __DIR__ . '/resources',
+        ],
         NewlineAfterStatementRector::class,
         NewlineBetweenClassLikeStmtsRector::class,
         SafeDeclareStrictTypesRector::class,

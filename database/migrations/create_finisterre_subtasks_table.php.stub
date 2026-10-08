@@ -12,7 +12,7 @@ return new class extends Migration
         $tasksTable = config('finisterre.table_name', 'finisterre_tasks');
         $subtasksTable = config('finisterre.subtasks.table_name', 'finisterre_subtasks');
 
-        Schema::create($subtasksTable, function(Blueprint $table) use ($tasksTable) {
+        Schema::create($subtasksTable, function(Blueprint $table) use ($tasksTable): void {
             $table->id();
             $table->foreignId('task_id')->constrained($tasksTable)->cascadeOnDelete();
             $table->string('title');
@@ -30,7 +30,7 @@ return new class extends Migration
             ->select('id', 'subtasks')
             ->whereNotNull('subtasks')
             ->orderBy('id')
-            ->chunk(200, function($tasks) use ($subtasksTable) {
+            ->chunk(200, function($tasks) use ($subtasksTable): void {
                 $rows = [];
                 $now = now();
 
@@ -68,7 +68,7 @@ return new class extends Migration
                 }
             });
 
-        Schema::table($tasksTable, function(Blueprint $table) {
+        Schema::table($tasksTable, function(Blueprint $table): void {
             $table->dropColumn('subtasks');
         });
     }
@@ -79,7 +79,7 @@ return new class extends Migration
         $subtasksTable = config('finisterre.subtasks.table_name', 'finisterre_subtasks');
 
         if (! Schema::hasColumn($tasksTable, 'subtasks')) {
-            Schema::table($tasksTable, function(Blueprint $table) {
+            Schema::table($tasksTable, function(Blueprint $table): void {
                 $table->json('subtasks')->nullable()->after('priority');
             });
         }
@@ -90,7 +90,7 @@ return new class extends Migration
             ->orderBy('id')
             ->get()
             ->groupBy('task_id')
-            ->each(function($subtasks, $taskId) use ($tasksTable) {
+            ->each(function($subtasks, $taskId) use ($tasksTable): void {
                 DB::table($tasksTable)->where('id', $taskId)->update([
                     'subtasks' => json_encode($subtasks->map(fn($subtask) => [
                         'title'     => $subtask->title,

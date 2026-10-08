@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.11.1 - 2026-10-08
+
+- The closures of the published migrations declare their `void` return type, so a host application's Rector no longer
+  flags them (`AddClosureVoidReturnTypeWhereNoReturnRector`). Migrations that are already published are not rewritten:
+  let Rector fix those once in your project.
+
 ## 4.11.0 - 2026-10-02
 
 - The email of a new task names its attachments, in a line under the description (*Attachments (2): report.pdf,

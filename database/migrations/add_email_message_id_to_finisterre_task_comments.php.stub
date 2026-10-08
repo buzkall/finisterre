@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+        Schema::table(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table): void {
             $table->string('email_message_id')->nullable()->unique()->after('notify_user_ids');
         });
     }
 
     public function down(): void
     {
-        Schema::table(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table) {
+        Schema::table(config('finisterre.comments.table_name', 'finisterre_task_comments'), function(Blueprint $table): void {
             $table->dropColumn('email_message_id');
         });
     }

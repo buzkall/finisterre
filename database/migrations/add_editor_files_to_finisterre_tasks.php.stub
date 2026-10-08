@@ -11,7 +11,7 @@ return new class extends Migration
     {
         $tasks = config('finisterre.table_name', 'finisterre_tasks');
 
-        Schema::table($tasks, function(Blueprint $table) {
+        Schema::table($tasks, function(Blueprint $table): void {
             // The images pasted into the task's description and comments that belong
             // to it, so a private disk serves them only to users who can see the task.
             $table->json('editor_files')->nullable()->after('cover_media_id');
@@ -32,7 +32,7 @@ return new class extends Migration
             DB::table($source)
                 ->select(array_unique(['id', $taskKey, $column]))
                 ->where($column, 'like', '%finisterre-files/%')
-                ->chunkById(200, function($rows) use (&$files, $column, $taskKey) {
+                ->chunkById(200, function($rows) use (&$files, $column, $taskKey): void {
                     foreach ($rows as $row) {
                         if ($row->{$taskKey} === null) {
                             continue;
@@ -54,7 +54,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table) {
+        Schema::table(config('finisterre.table_name', 'finisterre_tasks'), function(Blueprint $table): void {
             $table->dropColumn('editor_files');
         });
     }
