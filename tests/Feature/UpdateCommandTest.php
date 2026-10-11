@@ -6,6 +6,7 @@ use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 use Spatie\Tags\TagsServiceProvider;
@@ -160,6 +161,31 @@ it('reports nothing outstanding once every migration is published and run', func
         ->assertSuccessful();
 
     expect(PackageMigrations::unpublished())->toBe([]);
+});
+
+it('fails the check while a migration the package loads itself has not run', function() {
+    foreach (FinisterreServiceProvider::migrationNames() as $index => $name) {
+        file_put_contents(sprintf('%s/2026_01_01_%06d_%s.php', $this->migrationsPath, $index, $name), "<?php\n");
+    }
+
+    Schema::create('migrations', function(Blueprint $table) {
+        $table->increments('id');
+        $table->string('migration');
+        $table->integer('batch');
+    });
+
+    foreach (glob($this->migrationsPath . '/*.php') as $file) {
+        DB::table('migrations')->insert(['migration' => basename($file, '.php'), 'batch' => 1]);
+    }
+
+    $this->artisan('finisterre:update', ['--check' => true])
+        ->expectsOutputToContain('loaded by the package')
+        ->expectsOutputToContain('2026_10_11_000000_create_finisterre_task_followers_table')
+        ->assertFailed();
+
+    DB::table('migrations')->insert(['migration' => '2026_10_11_000000_create_finisterre_task_followers_table', 'batch' => 2]);
+
+    $this->artisan('finisterre:update', ['--check' => true])->assertSuccessful();
 });
 
 it('leaves everything untouched when the prompts are declined', function() {

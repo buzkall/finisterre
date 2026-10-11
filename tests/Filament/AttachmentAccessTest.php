@@ -133,9 +133,21 @@ describe('on a private disk', function() {
             ->userCanViewAllTasks(fn(): bool => false)
             ->userCanViewOnlyTheirTasks(fn(): bool => false);
 
-        $media = privateAttachment(privateTask($this->owner));
+        $media = privateAttachment(privateTask(User::factory()->create()));
 
         $this->get(attachmentUrl($media))->assertForbidden();
+    });
+
+    it('serves a follower who cannot see all tasks the attachments of the tasks they follow', function() {
+        FinisterrePlugin::get()
+            ->userCanViewAllTasks(fn(): bool => false)
+            ->userCanViewOnlyTheirTasks(fn(): bool => false);
+
+        $followed = privateTask(User::factory()->create());
+        $followed->follow($this->owner);
+
+        $this->get(attachmentUrl(privateAttachment($followed, 'followed.pdf')))->assertOk();
+        $this->get(attachmentUrl(privateAttachment(privateTask(User::factory()->create()), 'other.pdf')))->assertForbidden();
     });
 
     it('refuses when the task policy does', function() {

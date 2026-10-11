@@ -11,6 +11,7 @@ use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -29,9 +30,17 @@ class ViewFinisterreTask extends ViewRecord
     protected static string $resource = FinisterreTaskResource::class;
     protected string $view = 'finisterre::tasks.view';
 
+    /**
+     * The subtasks panel is on show when the task has subtasks, and out of the way
+     * when it has none until its badge is clicked.
+     */
+    public bool $showSubtasks = false;
+
     public function mount(int|string $record): void
     {
         parent::mount($record);
+
+        $this->showSubtasks = $this->record->subtasks->isNotEmpty();
 
         $this->clearTaskChangeIndicator();
     }
@@ -51,6 +60,7 @@ class ViewFinisterreTask extends ViewRecord
         return [
             EditAction::make()
                 ->label(__('finisterre::finisterre.edit'))
+                ->icon(Heroicon::OutlinedPencilSquare)
                 ->color('gray'),
 
             ...$this->getArchiveActions(),
@@ -162,6 +172,11 @@ class ViewFinisterreTask extends ViewRecord
             ->title(__('finisterre::finisterre.quick_update.saved'))
             ->success()
             ->send();
+    }
+
+    public function toggleSubtasks(): void
+    {
+        $this->showSubtasks = ! $this->showSubtasks;
     }
 
     /**

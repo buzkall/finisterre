@@ -18,7 +18,7 @@ function commentsComponent(FinisterreTask $task)
     return Livewire::test(FinisterreCommentsComponent::class, ['record' => $task]);
 }
 
-it('preselects the task creator in the notify field', function() {
+it('notifies the followers of the task by default, but not the one commenting', function() {
     $creator = User::factory()->create();
     User::factory()->create();
 
@@ -30,7 +30,7 @@ it('preselects the task creator in the notify field', function() {
     commentsComponent($task)->assertSet('data.notify', [$creator->id]);
 });
 
-it('preselects nobody when the task creator is the one commenting', function() {
+it('preselects nobody when the one commenting is the only follower', function() {
     User::factory()->count(2)->create();
 
     $task = FinisterreTask::factory()->create([
@@ -41,7 +41,7 @@ it('preselects nobody when the task creator is the one commenting', function() {
     commentsComponent($task)->assertSet('data.notify', []);
 });
 
-it('still preselects the only other user when there is just one', function() {
+it('preselects the assignee of a task the one commenting created', function() {
     $other = User::factory()->create();
 
     $task = FinisterreTask::factory()->create([

@@ -8,11 +8,13 @@ use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\BoardSlug;
+use Arzcode\Finisterre\Support\PendingUpgrade;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Traits\HasIconOptions;
 use BackedEnum;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -62,6 +64,45 @@ class ManageFinisterreSettings extends Page
     public function getTitle(): string
     {
         return __('finisterre::finisterre.settings.title');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('applyUpgrade')
+                ->label(__('finisterre::finisterre.settings.upgrade_apply'))
+                ->icon(Heroicon::ArrowPath)
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalDescription(__('finisterre::finisterre.settings.upgrade_confirm'))
+                ->visible(fn(): bool => PendingUpgrade::appliable() !== [])
+                ->action(function(): void {
+                    $left = PendingUpgrade::apply();
+
+                    Notification::make()
+                        ->title($left === []
+                            ? __('finisterre::finisterre.settings.upgrade_applied')
+                            : __('finisterre::finisterre.settings.upgrade_failed'))
+                        ->body($left === [] ? null : implode(', ', $left))
+                        ->color($left === [] ? 'success' : 'danger')
+                        ->status($left === [] ? 'success' : 'danger')
+                        ->send();
+                }),
+        ];
+    }
+
+    /**
+     * What the callout above the form lists: the migrations the button runs, and
+     * the ones only the console can settle.
+     *
+     * @return array{appliable: list<string>, console: list<string>}
+     */
+    public function pendingUpgrade(): array
+    {
+        return [
+            'appliable' => PendingUpgrade::appliable(),
+            'console'   => PendingUpgrade::needsConsole(),
+        ];
     }
 
     public function mount(): void

@@ -2,11 +2,11 @@
 
 namespace Arzcode\Finisterre\Controllers;
 
-use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\TaskAccess;
 use Arzcode\Finisterre\Support\Typed;
 use Filament\Facades\Filament;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -171,9 +171,9 @@ class FilamentRouteController extends Controller
 
     /**
      * The same rules the panel applies before it shows a task: the task policy, and
-     * for users restricted to their own tasks, only the ones they created. The global
-     * scope that enforces the latter in the panel is not trusted here, since it is
-     * registered once per process and may have been set up for somebody else.
+     * for users who cannot see all tasks, only the ones they follow or, when they are
+     * limited to their own, created. The global scope that enforces the latter in the
+     * panel is not relied on here: these queries skip it to tell a 404 from a 403.
      */
     protected function canViewTask(Authenticatable $user, FinisterreTask $task): bool
     {
@@ -185,8 +185,8 @@ class FilamentRouteController extends Controller
                 return false;
             }
 
-            return ! FinisterrePlugin::get()->canViewOnlyTheirTasks()
-                || (string)$task->creator_id === Typed::string($user->getAuthIdentifier());
+            // Asked again here, for a host whose own policy does not.
+            return TaskAccess::canView($user, $task);
         }, false);
     }
 

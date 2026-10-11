@@ -2,6 +2,51 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.12.0 - 2026-10-11
+
+- **Followers**: every task has followers, the people notified of its new comments. The creator and the assignee follow
+  a task from the start (existing tasks get theirs when you upgrade), a new assignee joins them, and anybody else is
+  added or removed by clicking the stack of follower avatars in the badge strip of the task page, next to the assignee.
+  Any active user can be added; narrow that with `FinisterrePlugin::make()->modifyFollowersQueryUsing(fn(Builder $query) => …)` when your users
+  table also holds people who should not be offered. See *Followers* in the README.
+  **Run `php artisan migrate` after upgrading** to create the `finisterre_task_followers` table. Until then nobody can
+  be added, comments go to the task's creator and assignee, and those two count as its followers. Comments scheduled
+  before the upgrade with nobody picked still go to the assignee when they are due.
+- A new comment is notified to all the followers of the task except the person writing it, where it used to preselect
+  the creator only. They show as avatars under the comment box, in place of the *Notify to* select: remove one to leave
+  them out of that comment, or add somebody with the plus button after them, who then follows the task too (the button
+  goes away when nobody is left to add). Removing every avatar notifies nobody; an empty list no longer falls back to
+  the assignee.
+- A follower who cannot see all tasks can now open the tasks they follow, to read them and comment, but not to edit
+  them: no quick actions, no edit page, no archiving. That goes for users limited by `userCanViewOnlyTheirTasks()`, who
+  keep full access to the tasks they created, and for users with neither permission, who get the task list in the
+  navigation once they follow a task. Whoever a task is assigned to keeps editing it, whatever they can see otherwise.
+  Only users who may edit a task can add followers to it. If you replaced
+  `finisterre.model_policy` with your own policy, give its `view` and `update` the same rules
+  (`Arzcode\Finisterre\Support\TaskAccess`).
+- Users with neither `userCanViewAllTasks()` nor `userCanViewOnlyTheirTasks()` could open any task whose address they
+  knew. They now only get the tasks they follow.
+- Reply by email notifies the followers of the task, and accepts the reply of an active follower even when they are
+  outside the assignable users, so somebody a task was shared with can answer its emails. A sender who cannot see all
+  tasks only comments by email on a task they follow, as in the panel.
+- **Upgrading no longer needs `finisterre:update` to keep the panel working.** A version that added a setting used to
+  answer every Finisterre page with a 403 until the command had run, because the settings refused to load without the
+  new row. The missing settings are now stored with their defaults the first time the application boots. New
+  migrations, starting with the followers table, are loaded by the package instead of published, so the `migrate` of
+  an ordinary deploy applies them. `finisterre:update` is still there for the Filament assets, the theme's `@source`
+  lines, the private attachments disk and the migrations of earlier versions.
+- Users allowed to configure Finisterre see an *Update pending* button on the board while a migration of the package
+  has not run. It opens the settings page, which lists what is pending and applies it with one click: Finisterre's own
+  migrations and settings only, nothing is published into the application or built.
+- Kanban cards show the followers of the task tucked in behind the assignee, where only the creator used to be: the
+  first three, then how many more there are.
+- The task page is lighter. The subtasks panel only shows when the task has subtasks; on a task without any, a new
+  badge next to the attachments one, with the done/total count, brings it up and puts it away. The breadcrumbs are gone
+  from the task page and its edit form, where they only repeated the navigation and the title, and the *Edit*,
+  *Archive* and *Delete* buttons carry an icon. A task without a description no longer shows an empty box for it.
+- New Tailwind classes in the task page, the comment box and the settings page: run `npm run build` in your
+  application.
+
 ## 4.11.1 - 2026-10-08
 
 - The closures of the published migrations declare their `void` return type, so a host application's Rector no longer

@@ -107,6 +107,11 @@ return [
 
     'task_changes_table_name' => 'finisterre_task_changes',
 
+    // Who follows each task: its creator and assignee, plus anybody added from
+    // the task page. Followers are notified of new comments, and a follower who
+    // cannot see all tasks still sees the ones they follow, to read and comment.
+    'followers_table_name' => 'finisterre_task_followers',
+
     'subtasks' => [
         'table_name' => 'finisterre_subtasks',
 

@@ -6,8 +6,9 @@ use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
-use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
+use Arzcode\Finisterre\Support\TaskAccess;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Filament\Facades\Filament;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -80,35 +82,13 @@ class FinisterreTask extends Model implements HasMedia
             return;
         }
 
-        // Users who can only see their tasks get just the ones they created.
+        // Users who cannot see all tasks get the ones they follow, and the ones
+        // they created when they are limited to their own (see TaskAccess).
         static::addGlobalScope('canViewOnlyTheirTasks', function(Builder $query): void {
-            if (static::currentUserCanViewOnlyTheirTasks()) {
-                $query->where('creator_id', auth()->id());
-            }
+            TaskAccess::scope($query);
         });
 
         static::observe(FinisterreTaskObserver::class);
-    }
-
-    /**
-     * Decided per query rather than once at boot, because the model boots wherever
-     * it is first touched — and that is not always a panel carrying the plugin. The
-     * media observer builds a task on every file saved anywhere in the host, so a
-     * host panel without Finisterre (a website editor, say) booted the model there
-     * and FinisterrePlugin::get() threw "Plugin [finisterre] is not registered".
-     * Outside a panel with the plugin nobody is restricted to their own tasks.
-     */
-    protected static function currentUserCanViewOnlyTheirTasks(): bool
-    {
-        if (! app()->bound('filament')) {
-            return false;
-        }
-
-        try {
-            return FinisterrePlugin::get()->canViewOnlyTheirTasks();
-        } catch (Throwable) {
-            return false;
-        }
     }
 
     public function getTable(): string
@@ -178,6 +158,57 @@ class FinisterreTask extends Model implements HasMedia
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(UserModel::class(), 'assignee_id');
+    }
+
+    /**
+     * The people notified of the task's new comments. A follower who cannot see
+     * all tasks still sees this one, to read and comment on.
+     *
+     * @return BelongsToMany<Model, $this>
+     */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(UserModel::class(), TaskFollowers::table(), 'task_id', 'user_id')->withTimestamps();
+    }
+
+    /**
+     * @param  iterable<mixed>|int|string|Model|null  $users
+     */
+    public function follow(iterable|int|string|Model|null $users): static
+    {
+        TaskFollowers::add($this, self::followerKeys($users));
+
+        return $this;
+    }
+
+    /**
+     * @param  iterable<mixed>|int|string|Model|null  $users
+     */
+    public function unfollow(iterable|int|string|Model|null $users): static
+    {
+        TaskFollowers::remove($this, self::followerKeys($users));
+
+        return $this;
+    }
+
+    public function isFollowedBy(int|string|Model|null $user): bool
+    {
+        return TaskFollowers::follows($this, $user instanceof Model ? $user->getKey() : $user);
+    }
+
+    /**
+     * @param  iterable<mixed>|int|string|Model|null  $users
+     * @return list<mixed>
+     */
+    protected static function followerKeys(iterable|int|string|Model|null $users): array
+    {
+        $keys = [];
+
+        foreach ($users instanceof Model || ! is_iterable($users) ? [$users] : $users as $user) {
+            $keys[] = $user instanceof Model ? $user->getKey() : $user;
+        }
+
+        return $keys;
     }
 
     /**

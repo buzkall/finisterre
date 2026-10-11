@@ -12,6 +12,8 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Arzcode\Finisterre\Support\PanelLabel;
+use Arzcode\Finisterre\Support\PendingUpgrade;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserAvatar;
 use Arzcode\Finisterre\Support\UserModel;
@@ -116,6 +118,16 @@ class TasksKanbanBoard extends BoardPage
                 ->url(fn(): string => ManageFinisterreSettings::getUrl())
                 ->visible(fn(): bool => Finisterre::get()->canConfigure()),
 
+            // An upgrade that still has migrations to run says so here, to the people
+            // who can do something about it, and leads to the page that runs them.
+            Action::make('finisterreUpgrade')
+                ->label(__('finisterre::finisterre.settings.upgrade_action'))
+                ->icon(Heroicon::ArrowPath)
+                ->color('warning')
+                ->badge(fn(): int => count(PendingUpgrade::appliable()))
+                ->url(fn(): string => ManageFinisterreSettings::getUrl())
+                ->visible(fn(): bool => Finisterre::get()->canConfigure() && PendingUpgrade::appliable() !== []),
+
             // The panel this folds and unfolds is the filter widget below, so the
             // click never leaves the browser: it dispatches the event the widget
             // listens for. From `lg` up the panel is always open and the button is
@@ -169,15 +181,6 @@ class TasksKanbanBoard extends BoardPage
                         ViewEntry::make('card_info')
                             ->view('finisterre::tasks.task-card-info')
                             ->viewData(function(FinisterreTask $record): array {
-                                // The creator circle only earns its space on the card when
-                                // somebody else is doing the work; on a self-assigned task it
-                                // would just repeat the assignee.
-                                $creatorId = $record->creator_id === $record->assignee_id
-                                    ? null
-                                    : $record->creator_id;
-
-                                $creatorName = $creatorId === null ? null : $record->creator_name;
-
                                 // A task saved within a minute of its creation was never really
                                 // edited, so the card keeps to the creation date alone.
                                 $wasUpdated = $record->updated_at->diffInSeconds($record->created_at, true) > 60;
@@ -186,9 +189,8 @@ class TasksKanbanBoard extends BoardPage
                                     'assignee'         => $record->assignee_name,
                                     'assigneeInitials' => self::getInitials($record->assignee_name),
                                     'assigneeAvatar'   => UserAvatar::url($this->cardUser($record->assignee_id)),
-                                    'creator'          => $creatorName,
-                                    'creatorInitials'  => self::getInitials($creatorName),
-                                    'creatorAvatar'    => UserAvatar::url($this->cardUser($creatorId)),
+                                    'followers'        => ($cardFollowers = $this->cardFollowers($record))['shown'],
+                                    'moreFollowers'    => $cardFollowers['more'],
                                     'priority'         => $record->priority->getLabel(),
                                     'priorityColor'    => $record->priority->getColor(),
                                     'tagNames'         => $record->tags->pluck('name'),
@@ -412,6 +414,76 @@ class TasksKanbanBoard extends BoardPage
         return $this->cardUsers[$id] ?? null;
     }
 
+    /** How many followers a card shows behind the assignee before it counts the rest. */
+    private const int CARD_FOLLOWERS = 3;
+
+    /**
+     * Who follows each visible task, keyed by task id and read once per render,
+     * for the same reason as the users above.
+     *
+     * @var array<int, list<int>>|null
+     */
+    protected ?array $cardFollowerIds = null;
+
+    /**
+     * The circles tucked in behind the assignee: everybody else who follows the
+     * task, in the order they started following. The assignee is left out, since
+     * the leading circle already shows them. Until the followers table exists that
+     * is the creator, who the card has always shown there.
+     *
+     * Only the first few are people with a face; the rest are a number, so a task
+     * half the company follows does not load half the company.
+     *
+     * @return array{shown: list<array{name: string, initials: ?string, avatar: ?string, creator: bool}>, more: int}
+     */
+    protected function cardFollowers(FinisterreTask $record): array
+    {
+        $ids = self::cardFollowersOf($this->cardFollowerIds(), $record->id, $record->assignee_id, $record->creator_id);
+        $shown = [];
+
+        foreach (array_slice($ids, 0, self::CARD_FOLLOWERS) as $id) {
+            $user = $this->cardUser($id);
+
+            if ($user instanceof Model) {
+                $name = UserModel::displayName($user);
+
+                $shown[] = [
+                    'name'     => $name,
+                    'initials' => self::getInitials($name),
+                    'avatar'   => UserAvatar::url($user),
+                    'creator'  => $id === $record->creator_id,
+                ];
+            }
+        }
+
+        return ['shown' => $shown, 'more' => max(0, count($ids) - self::CARD_FOLLOWERS)];
+    }
+
+    /**
+     * @return array<int, list<int>>
+     */
+    protected function cardFollowerIds(): array
+    {
+        if ($this->cardFollowerIds === null) {
+            $this->loadCardUsers();
+        }
+
+        return $this->cardFollowerIds ?? [];
+    }
+
+    /**
+     * @param  array<int, list<int>>  $followerIds
+     * @return list<int>
+     */
+    protected static function cardFollowersOf(array $followerIds, mixed $taskId, mixed $assigneeId, mixed $creatorId): array
+    {
+        $ids = TaskFollowers::available()
+            ? ($followerIds[Typed::int($taskId)] ?? [])
+            : TaskFollowers::normalize([$creatorId]);
+
+        return array_values(array_diff($ids, [Typed::nullableInt($assigneeId)]));
+    }
+
     /**
      * Every person on the board in one query, avatars included.
      *
@@ -425,14 +497,36 @@ class TasksKanbanBoard extends BoardPage
     {
         $table = Typed::string(config('finisterre.table_name'));
 
-        $ids = $this->getFilteredQuery()
+        // Only these columns are selected, so the model's eager loads (tags,
+        // coverMedia) would read a missing id, which strict mode rejects.
+        $tasks = $this->getFilteredQuery()
             ->reorder()
-            ->select(["$table.assignee_id", "$table.creator_id"])
-            // Only two columns are selected, so the model's eager loads (tags,
-            // coverMedia) would read a missing id, which strict mode rejects.
+            ->select(["$table.id", "$table.assignee_id", "$table.creator_id"])
             ->toBase()
-            ->get()
-            ->flatMap(fn(object $task) => [$task->assignee_id, $task->creator_id])
+            ->get();
+
+        $this->cardFollowerIds = [];
+
+        if (TaskFollowers::available() && $tasks->isNotEmpty()) {
+            $rows = DB::table(TaskFollowers::table())
+                ->whereIn('task_id', $tasks->pluck('id'))
+                ->orderBy('id')
+                ->get(['task_id', 'user_id']);
+
+            foreach ($rows as $row) {
+                $this->cardFollowerIds[Typed::int($row->task_id)][] = Typed::int($row->user_id);
+            }
+        }
+
+        // The follower ids are plain numbers; only the ones a card draws become users.
+        $followerIds = $this->cardFollowerIds;
+
+        $ids = $tasks
+            ->flatMap(fn(object $task) => [
+                $task->assignee_id,
+                ...array_slice(self::cardFollowersOf($followerIds, $task->id, $task->assignee_id, $task->creator_id), 0, self::CARD_FOLLOWERS),
+            ])
+            ->map(fn(mixed $id): ?int => Typed::nullableInt($id))
             ->filter()
             ->unique()
             ->values()

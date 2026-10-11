@@ -640,6 +640,10 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // Make the package's settings migration discoverable by `migrate` and
         // register the settings class so spatie/laravel-settings can cache it.
         $this->loadMigrationsFrom(__DIR__ . '/../database/settings');
+
+        // Schema changes ship the same way, so a deploy's `migrate` applies them
+        // without anything having to be published first.
+        $this->loadMigrationsFrom(PackageMigrations::autoPath());
         config()->push('settings.settings', FinisterreSettings::class);
 
         $this->registerNotificationsMigration();

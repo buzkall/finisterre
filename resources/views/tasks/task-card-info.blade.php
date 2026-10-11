@@ -15,11 +15,13 @@
         </div>
 
         {{-- The assignee leads the stack: bigger, first, and z-10 keeps it on top
-             of the creator that -space-x-2 tucks in behind its right edge. Each
-             circle holds the host application's avatar when it has one, and falls
-             back to the initials it always showed. --}}
-        @if($assignee || $creator)
-            <div class="shrink-0 flex items-center -space-x-2">
+             of the followers that -space-x-2 tucks in behind its right edge: the
+             first few the board hands over, each one under the one before it
+             (a descending z-index), then how many more there are. Each circle holds the host
+             application's avatar when it has one, and falls back to the initials
+             it always showed. --}}
+        @if($assignee || $followers)
+            <div class="shrink-0 flex items-center -space-x-2" data-finisterre-card-people>
                 @if($assignee)
                     <span
                         title="{{ __('finisterre::finisterre.assignee_name') }}: {{ $assignee }}"
@@ -33,16 +35,26 @@
                     </span>
                 @endif
 
-                @if($creator)
+                @foreach($followers as $follower)
                     <span
-                        title="{{ __('finisterre::finisterre.creator_name') }}: {{ $creator }}"
+                        style="z-index: {{ count($followers) - $loop->index }}"
+                        title="{{ $follower['creator'] ? __('finisterre::finisterre.creator_name') : __('finisterre::finisterre.followers.one') }}: {{ $follower['name'] }}"
                         class="shrink-0 inline-flex items-center justify-center overflow-hidden w-6 h-6 rounded-full bg-gray-400 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-900 text-[11px] font-semibold text-white"
                     >
-                        @if($creatorAvatar)
-                            <img src="{{ $creatorAvatar }}" alt="{{ $creator }}" class="h-full w-full object-cover"/>
+                        @if($follower['avatar'])
+                            <img src="{{ $follower['avatar'] }}" alt="{{ $follower['name'] }}" class="h-full w-full object-cover"/>
                         @else
-                            {{ $creatorInitials }}
+                            {{ $follower['initials'] }}
                         @endif
+                    </span>
+                @endforeach
+
+                @if($moreFollowers > 0)
+                    <span
+                        title="{{ __('finisterre::finisterre.followers.label') }}: +{{ $moreFollowers }}"
+                        class="shrink-0 inline-flex items-center justify-center h-6 min-w-6 px-1 rounded-full bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-900 text-[11px] font-semibold text-gray-600 dark:text-gray-200"
+                    >
+                        +{{ $moreFollowers }}
                     </span>
                 @endif
             </div>

@@ -47,6 +47,8 @@ class FinisterreTaskObserver
         if ($task->assignee_id) {
             $task->taskChanges()->firstOrCreate(['user_id' => $task->assignee_id]);
         }
+
+        $task->follow([$task->creator_id, $task->assignee_id]);
     }
 
     public function updating(FinisterreTask $task): void
@@ -68,6 +70,12 @@ class FinisterreTaskObserver
      */
     public function updated(FinisterreTask $task): void
     {
+        // Whoever the task is handed to follows it from then on; the previous
+        // assignee keeps following until somebody removes them.
+        if ($task->wasChanged('assignee_id')) {
+            $task->follow($task->assignee_id);
+        }
+
         if (self::$repositioning || $task->status !== TaskStatusEnum::Done || ! $task->wasChanged('status')) {
             return;
         }

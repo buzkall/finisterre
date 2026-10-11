@@ -4,9 +4,9 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
-use Arzcode\Finisterre\Support\PanelLabel;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Support\Icons\Heroicon;
 
 /**
  * Behaviour shared by the task view and edit pages.
@@ -34,46 +34,50 @@ trait InteractsWithTaskPage
         return [
             Action::make('archive')
                 ->label(__('finisterre::finisterre.archive'))
+                ->icon(Heroicon::OutlinedArchiveBox)
                 ->color('gray')
                 ->requiresConfirmation()
                 ->modalHeading(__('finisterre::finisterre.archive_heading'))
                 ->action(fn() => $this->record->update(['archived' => true]))
-                ->visible(fn() => FinisterrePlugin::get()->getAuthUser()?->canArchiveTasks() ?? false)
+                ->visible(fn() => $this->canArchive())
                 ->hidden(fn() => $this->record->archived),
 
             Action::make('unarchive')
                 ->label(__('finisterre::finisterre.unarchive'))
+                ->icon(Heroicon::OutlinedArchiveBoxArrowDown)
                 ->color('gray')
                 ->requiresConfirmation()
                 ->modalHeading(__('finisterre::finisterre.unarchive_heading'))
                 ->action(fn() => $this->record->update(['archived' => false]))
-                ->visible(fn() => FinisterrePlugin::get()->getAuthUser()?->canArchiveTasks() && $this->record->archived),
+                ->visible(fn() => $this->canArchive() && $this->record->archived),
         ];
+    }
+
+    /**
+     * Archiving changes the task, so a follower who may only comment does not get it.
+     */
+    protected function canArchive(): bool
+    {
+        return (FinisterrePlugin::get()->getAuthUser()?->canArchiveTasks() ?? false)
+            && (auth()->user()?->can('update', $this->record) ?? false);
     }
 
     protected function getDeleteAction(): DeleteAction
     {
         return DeleteAction::make()
+            ->icon(Heroicon::OutlinedTrash)
             ->modalHeading(__('finisterre::finisterre.delete'))
             ->failureRedirectUrl(fn() => $this->getKanbanBoardUrl())
             ->successRedirectUrl(fn() => $this->getKanbanBoardUrl());
     }
 
+    /**
+     * No breadcrumbs: they would only repeat the navigation's link to the tasks
+     * and the title the page shows right below.
+     */
     public function getBreadcrumbs(): array
     {
-        if (FinisterrePlugin::get()->canViewAllTasks()) {
-            return [
-                $this->getKanbanBoardUrl() => PanelLabel::plural(),
-                ''                         => $this->record->title ?: $this->getBreadcrumbFallback(),
-            ];
-        }
-
-        return parent::getBreadcrumbs();
-    }
-
-    protected function getBreadcrumbFallback(): string
-    {
-        return __('finisterre::finisterre.view_task');
+        return [];
     }
 
     protected function getViewData(): array

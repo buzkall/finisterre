@@ -62,6 +62,28 @@ function createMigrationsTable(): void
     });
 }
 
+it('never asks for the migrations the package loads itself to be published', function() {
+    $auto = PackageMigrations::autoNames();
+
+    expect($auto)->toContain('2026_10_11_000000_create_finisterre_task_followers_table')
+        ->and(array_intersect(PackageMigrations::unpublished(), array_map(fn(string $name): string => substr($name, 18), $auto)))->toBe([]);
+});
+
+it('reports a self-loaded migration as pending until the migrations table has it', function() {
+    // Nothing to compare against yet: unknown, not pending.
+    expect(PackageMigrations::pendingAuto())->toBe([]);
+
+    createMigrationsTable();
+
+    expect(PackageMigrations::pendingAuto())->toBe(PackageMigrations::autoNames());
+
+    foreach (PackageMigrations::autoNames() as $name) {
+        DB::table('migrations')->insert(['migration' => $name, 'batch' => 1]);
+    }
+
+    expect(PackageMigrations::pendingAuto())->toBe([]);
+});
+
 it('reports every shipped migration as unpublished when nothing was published', function() {
     expect(PackageMigrations::unpublished())->toBe(FinisterreServiceProvider::migrationNames());
 });

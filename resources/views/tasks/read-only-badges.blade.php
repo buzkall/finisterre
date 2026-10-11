@@ -17,6 +17,12 @@
         {{ $getRecord()->assigneeName() ?? __('finisterre::finisterre.unassigned') }}
     </x-filament::badge>
 
+    @if ($followers !== null && $followers->isNotEmpty())
+        <x-filament::badge color="gray" icon="heroicon-o-users" :tooltip="__('finisterre::finisterre.followers.label')">
+            @include('finisterre::tasks.followers', ['followers' => $followers])
+        </x-filament::badge>
+    @endif
+
     <x-filament::badge color="gray" icon="heroicon-o-pencil-square">
         {{ __('finisterre::finisterre.created_by') }}: {{ $getRecord()->creatorName() }}
     </x-filament::badge>

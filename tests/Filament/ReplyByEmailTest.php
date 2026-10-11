@@ -1,6 +1,7 @@
 <?php
 
 use Arzcode\Finisterre\Controllers\ResendInboundController;
+use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
@@ -170,7 +171,7 @@ it('skips replies from users the comment policy does not let comment', function(
     expect(app(InboundMessageHandler::class)->handle(replyTo($this->task)))->toBeNull();
 });
 
-it('skips replies from users outside the assignable users', function() {
+it('skips replies from users outside the assignable users who do not follow the task', function() {
     if (! Schema::hasColumn('users', 'role')) {
         Schema::table('users', function(Blueprint $table) {
             $table->string('role')->nullable();
@@ -182,11 +183,70 @@ it('skips replies from users outside the assignable users', function() {
         'finisterre.authenticatable_filter_value'  => 'admin',
     ]);
 
+    $this->task->unfollow($this->assignee);
+
     expect(app(InboundMessageHandler::class)->handle(replyTo($this->task)))->toBeNull();
 
     $this->assignee->forceFill(['role' => 'admin'])->save();
 
     expect(app(InboundMessageHandler::class)->handle(replyTo($this->task)))->toBeInstanceOf(FinisterreTaskComment::class);
+});
+
+it('skips the reply of somebody who cannot see all tasks to a task they do not follow', function() {
+    FinisterrePlugin::get()->userCanViewAllTasks(fn(): bool => false);
+
+    $this->task->unfollow($this->assignee);
+    $this->task->update(['assignee_id' => null]);
+
+    expect(app(InboundMessageHandler::class)->handle(replyTo($this->task)))->toBeNull()
+        ->and(auth()->check())->toBeFalse();
+
+    $this->task->follow($this->assignee);
+
+    expect(app(InboundMessageHandler::class)->handle(replyTo($this->task)))->toBeInstanceOf(FinisterreTaskComment::class);
+});
+
+it('takes the reply of a follower outside the assignable users, and tells the other followers', function() {
+    if (! Schema::hasColumn('users', 'role')) {
+        Schema::table('users', function(Blueprint $table) {
+            $table->string('role')->nullable();
+        });
+    }
+
+    config([
+        'finisterre.authenticatable_filter_column' => 'role',
+        'finisterre.authenticatable_filter_value'  => 'admin',
+    ]);
+
+    $guest = User::factory()->create(['email' => 'guest@example.com']);
+    $this->task->follow($guest);
+
+    $comment = app(InboundMessageHandler::class)->handle(replyTo($this->task, ['from' => 'guest@example.com']));
+
+    expect($comment)->toBeInstanceOf(FinisterreTaskComment::class)
+        ->and($comment->creator_id)->toBe($guest->id);
+
+    Notification::assertSentTo([$this->creator, $this->assignee], TaskCommentNotification::class);
+    Notification::assertNotSentTo($guest, TaskCommentNotification::class);
+});
+
+it('skips the reply of a follower who is no longer active', function() {
+    foreach (['role' => 'string', 'active' => 'boolean'] as $column => $type) {
+        if (! Schema::hasColumn('users', $column)) {
+            Schema::table('users', fn(Blueprint $table) => $table->{$type}($column)->nullable());
+        }
+    }
+
+    config([
+        'finisterre.authenticatable_filter_column' => 'role',
+        'finisterre.authenticatable_filter_value'  => 'admin',
+    ]);
+
+    $guest = User::factory()->create(['email' => 'guest@example.com']);
+    $guest->forceFill(['active' => false])->save();
+    $this->task->follow($guest);
+
+    expect(app(InboundMessageHandler::class)->handle(replyTo($this->task, ['from' => 'guest@example.com'])))->toBeNull();
 });
 
 it('skips an email another request imported while it was being handled', function() {

@@ -3,6 +3,10 @@
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\SettingsConfig;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Spatie\LaravelSettings\Migrations\SettingsMigrator;
+use Spatie\LaravelSettings\SettingsRepositories\SettingsRepository;
 
 // fake() needs every declared property, otherwise spatie loads the missing
 // ones from the (absent) settings table. This provides sensible defaults so
@@ -109,4 +113,59 @@ it('activates from an explicit env list even when settings are not migrated', fu
     SettingsConfig::apply();
 
     expect(config('finisterre.active'))->toBeTrue();
+});
+
+describe('after an upgrade that added settings', function() {
+    beforeEach(function() {
+        if (! Schema::hasTable('settings')) {
+            (include __DIR__ . '/../../vendor/spatie/laravel-settings/database/migrations/create_settings_table.php.stub')->up();
+        }
+
+        // An installed host: every setting of the version it installed has its row.
+        (include __DIR__ . '/../../database/settings/2026_06_09_000000_create_finisterre_settings.php')->up();
+
+        $this->forget = function(string $name): void {
+            DB::table('settings')->where('group', 'finisterre')->where('name', $name)->delete();
+            app()->forgetInstance(FinisterreSettings::class);
+        };
+    });
+
+    it('seeds the settings the stored ones predate instead of turning finisterre off', function() {
+        DB::table('settings')->where('group', 'finisterre')->where('name', 'slug')->update(['payload' => json_encode('my-board')]);
+        ($this->forget)('inbound_enabled');
+        ($this->forget)('mail_history_entries');
+
+        SettingsConfig::apply();
+
+        expect(config('finisterre.active'))->toBeTrue()
+            // What was stored is kept; only the gaps are filled.
+            ->and(config('finisterre.slug'))->toBe('my-board')
+            ->and(config('finisterre.mail.inbound.enabled'))->toBeFalse()
+            ->and(SettingsConfig::missing())->toBe([]);
+    });
+
+    it('stays inactive when none of its settings are stored', function() {
+        DB::table('settings')->where('group', 'finisterre')->delete();
+        app()->forgetInstance(FinisterreSettings::class);
+        config(['finisterre.environments' => '']);
+
+        SettingsConfig::apply();
+
+        expect(config('finisterre.active'))->toBeFalse()
+            ->and(DB::table('settings')->where('group', 'finisterre')->count())->toBe(0);
+    });
+
+    it('does not trip over a setting another request seeded first', function() {
+        // The check says the row is missing; by the time it is added, it is there.
+        app()->bind(SettingsMigrator::class, fn() => new class(app(SettingsRepository::class)) extends SettingsMigrator
+        {
+            public function exists(string $property): bool
+            {
+                return $property !== 'finisterre.inbound_enabled' && parent::exists($property);
+            }
+        });
+
+        expect(SettingsConfig::seedMissing())->toBe(0)
+            ->and(DB::table('settings')->where('group', 'finisterre')->where('name', 'inbound_enabled')->count())->toBe(1);
+    });
 });

@@ -270,7 +270,7 @@ it('deliver() creates taskChanges for notified users except creator', function()
         ->and($userIds)->not->toContain($creator->id);
 });
 
-it('deliver() falls back to task assignee when notify_user_ids is empty', function() {
+it('deliver() goes to the task followers, except its author, when it names nobody', function() {
     Notification::fake();
 
     [$task, $creator, $assignee] = makeTaskWithUsers();
@@ -283,6 +283,24 @@ it('deliver() falls back to task assignee when notify_user_ids is empty', functi
     $comment->deliver();
 
     Notification::assertSentTo([$assignee], TaskCommentNotification::class);
+    Notification::assertNotSentTo($creator, TaskCommentNotification::class);
+});
+
+it('deliver() notifies nobody when the list of people to notify was emptied', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    $comment = $task->comments()->create([
+        'comment'         => '<p>quiet</p>',
+        'creator_id'      => $creator->id,
+        'notify_user_ids' => [],
+    ]);
+
+    $comment->deliver();
+
+    Notification::assertNothingSent();
+    expect($comment->fresh()->sent_at)->not->toBeNull();
 });
 
 it('dispatch command delivers pending comments whose time has come', function() {

@@ -10,6 +10,7 @@ use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ViewFinisterreTas
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Closure;
@@ -34,7 +35,7 @@ use Illuminate\Support\HtmlString;
 
 /**
  * Layout of the task page: a strip of badges that double as quick actions,
- * the description and attachments, the subtasks panel and a small footer.
+ * the description and attachments, and the subtasks panel its badge brings up.
  * The comments component is appended by the page view.
  */
 class Infolist
@@ -72,7 +73,10 @@ class Infolist
                         ->key('read_only_strip')
                         ->hiddenLabel()
                         ->view('finisterre::tasks.read-only-badges')
-                        ->viewData(fn(FinisterreTask $record) => ['showDueDate' => ! $userIsReporterOnly])
+                        ->viewData(fn(FinisterreTask $record) => [
+                            'showDueDate' => ! $userIsReporterOnly,
+                            'followers'   => TaskFollowers::available() ? TaskFollowers::users($record) : null,
+                        ])
                         ->hidden($canQuickEdit),
 
                     TextEntry::make('dates')
@@ -92,16 +96,18 @@ class Infolist
                     ->from('md')
                     ->verticallyAlignStart(),
 
+                // A task without a description does not get an empty box for it.
                 Section::make()
+                    ->key('description')
                     ->compact()
+                    ->visible(fn(FinisterreTask $record): bool => self::hasDescription($record))
                     ->schema([
                         TextEntry::make('description')
                             ->hiddenLabel()
                             ->html()
                             ->prose()
                             // Marks its pasted images for the card image star on the task page.
-                            ->extraAttributes(['data-finisterre-editor-images' => true])
-                            ->placeholder(__('finisterre::finisterre.no_description')),
+                            ->extraAttributes(['data-finisterre-editor-images' => true]),
                     ]),
 
                 ViewEntry::make('attachments')
@@ -114,21 +120,16 @@ class Infolist
                     ])
                     ->visible(fn(FinisterreTask $record) => $record->getMedia('tasks')->isNotEmpty()),
 
+                // Brought up and put away by the subtasks badge of the strip, so a
+                // task without subtasks does not carry an empty panel around.
                 Section::make(__('finisterre::finisterre.subtasks.label'))
-                    ->icon('heroicon-o-check-circle')
-                    ->collapsible()
-                    // Open when there is something to see, folded away otherwise.
-                    ->collapsed(fn(FinisterreTask $record) => $record->subtasks->isEmpty())
-                    ->afterHeader(fn(FinisterreTask $record): HtmlString => new HtmlString(
-                        view('finisterre::subtasks.counter-badge', [
-                            'done'  => $record->subtasks->where('completed', true)->count(),
-                            'total' => $record->subtasks->count(),
-                        ])->render()
-                    ))
+                    ->key('subtasks')
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->compact()
                     ->schema([
                         Livewire::make(FinisterreSubtasksComponent::class)->key('finisterre-subtasks'),
                     ])
-                    ->hidden($userIsReporterOnly),
+                    ->visible(fn(ViewFinisterreTask $livewire): bool => $livewire->showSubtasks && ! $userIsReporterOnly),
 
                 TextEntry::make('subject')
                     ->label(__('finisterre::finisterre.related_record'))
@@ -139,7 +140,8 @@ class Infolist
 
     /**
      * One badge per value. Status, priority and assignee change with a single
-     * click from a dropdown; tags and due date open a one-field modal.
+     * click from a dropdown; followers, tags, due date and attachments open a
+     * one-field modal, and the subtasks badge shows or hides their panel.
      * Reporters keep what the form allowed them: status, priority and tags.
      *
      * @return array<Action|ActionGroup>
@@ -216,6 +218,8 @@ class Infolist
                 // Reporters could never reassign on the form either.
                 ->hidden($userIsReporterOnly),
 
+            self::followersAction(),
+
             // Not editable: shown here only so it reads next to the assignee.
             Action::make('creator')
                 ->badge()
@@ -289,7 +293,64 @@ class Infolist
                 // submitted, so there is nothing left to persist here: this only
                 // reloads what the page shows.
                 ->action(fn(ViewFinisterreTask $livewire) => self::apply($livewire)),
+
+            // The counter follows the checklist as it changes (see the view).
+            Action::make('quick_subtasks')
+                ->badge()
+                ->color('gray')
+                ->icon(Heroicon::OutlinedCheckCircle)
+                ->label(fn(FinisterreTask $record): HtmlString => new HtmlString(
+                    view('finisterre::subtasks.counter-badge', [
+                        'done'  => $record->subtasks->where('completed', true)->count(),
+                        'total' => $record->subtasks->count(),
+                    ])->render()
+                ))
+                ->tooltip(__('finisterre::finisterre.subtasks.label'))
+                ->action(fn(ViewFinisterreTask $livewire) => $livewire->toggleSubtasks())
+                ->hidden($userIsReporterOnly),
         ];
+    }
+
+    /**
+     * The followers as a stack of avatars, next to the assignee. One modal for both
+     * directions: the field starts with the task's followers, and what it holds
+     * when saved is who follows from then on.
+     */
+    protected static function followersAction(): Action
+    {
+        return Action::make('quick_followers')
+            ->badge()
+            ->color('gray')
+            ->icon(Heroicon::OutlinedUserPlus)
+            ->label(fn(FinisterreTask $record): HtmlString => new HtmlString(
+                view('finisterre::tasks.followers', ['followers' => TaskFollowers::users($record)])->render()
+            ))
+            ->tooltip(__('finisterre::finisterre.followers.manage'))
+            ->visible(fn(): bool => TaskFollowers::available())
+            ->modalHeading(__('finisterre::finisterre.followers.label'))
+            ->modalDescription(__('finisterre::finisterre.followers.help'))
+            ->modalWidth(Width::Medium)
+            ->modalSubmitActionLabel(__('finisterre::finisterre.save'))
+            ->fillForm(fn(FinisterreTask $record) => ['followers' => TaskFollowers::ids($record)])
+            ->schema([
+                FollowersSelect::make()->multiple(),
+            ])
+            ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
+                $livewire,
+                fn() => FollowersSelect::persist($record, Typed::array($data['followers'] ?? []))
+            ));
+    }
+
+    /**
+     * The editor leaves empty paragraphs behind when its text is deleted, so the
+     * markup alone says nothing: there has to be text, or an image.
+     */
+    protected static function hasDescription(FinisterreTask $record): bool
+    {
+        $description = (string)$record->description;
+
+        return str_contains($description, '<img')
+            || trim(html_entity_decode(strip_tags($description)), " \t\n\r\0\x0B\u{A0}") !== '';
     }
 
     protected static function apply(ViewFinisterreTask $livewire, ?Closure $persist = null): void

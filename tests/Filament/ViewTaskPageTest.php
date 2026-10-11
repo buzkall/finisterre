@@ -372,6 +372,47 @@ it('shows a read-only strip to users who may not update', function() {
         ->assertSee(TaskStatusEnum::Open->getLabel());
 });
 
+it('keeps the subtasks panel away until its badge is clicked on a task without subtasks', function() {
+    $task = pageTask();
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->assertSchemaComponentHidden('subtasks')
+        ->callAction(quickAction('quick_subtasks'))
+        ->assertSchemaComponentVisible('subtasks')
+        ->callAction(quickAction('quick_subtasks'))
+        ->assertSchemaComponentHidden('subtasks');
+});
+
+it('opens the subtasks panel of a task that has subtasks, with the count on its badge', function() {
+    $task = pageTask();
+    $task->subtasks()->create(['title' => 'First', 'completed' => true, 'order_column' => 10]);
+    $task->subtasks()->create(['title' => 'Second', 'completed' => false, 'order_column' => 20]);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->assertSchemaComponentVisible('subtasks')
+        ->assertSee('1/2');
+});
+
+it('shows the description only when the task has one', function(?string $description, bool $shown) {
+    $task = pageTask(['description' => $description]);
+
+    $page = Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()]);
+
+    $shown ? $page->assertSchemaComponentVisible('description') : $page->assertSchemaComponentHidden('description');
+})->with([
+    'text'            => ['<p>Something to do</p>', true],
+    'an image only'   => ['<p><img src="/pasted.png"></p>', true],
+    'nothing'         => [null, false],
+    'empty paragraph' => ['<p></p><p>&nbsp;</p>', false],
+]);
+
+it('has no breadcrumbs on the task page nor on the edit page', function() {
+    $task = pageTask();
+
+    expect(Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])->instance()->getBreadcrumbs())->toBe([])
+        ->and(Livewire::test(EditFinisterreTask::class, ['record' => $task->getKey()])->instance()->getBreadcrumbs())->toBe([]);
+});
+
 it('links the edit action to the edit page', function() {
     $task = pageTask();
 
@@ -436,9 +477,8 @@ it('links the board card to the task page', function() {
         'assignee'         => 'Alicia',
         'assigneeInitials' => 'A',
         'assigneeAvatar'   => null,
-        'creator'          => null,
-        'creatorInitials'  => null,
-        'creatorAvatar'    => null,
+        'followers'        => [],
+        'moreFollowers'    => 0,
         'priority'         => $task->priority->getLabel(),
         'priorityColor'    => $task->priority->getColor(),
         'tagNames'         => collect(),
@@ -465,9 +505,8 @@ it('shows the creation and update dates on the board card', function() {
         'assignee'         => null,
         'assigneeInitials' => null,
         'assigneeAvatar'   => null,
-        'creator'          => null,
-        'creatorInitials'  => null,
-        'creatorAvatar'    => null,
+        'followers'        => [],
+        'moreFollowers'    => 0,
         'priority'         => $task->priority->getLabel(),
         'priorityColor'    => $task->priority->getColor(),
         'tagNames'         => collect(),

@@ -29,8 +29,20 @@ Pint (`pint.json`) enforces rules that differ from Laravel's defaults: no traili
 
 Every change gets an entry at the top of `CHANGELOG.md`: a bumped version (patch for fixes, minor for features),
 today's date as `YYYY-MM-DD`, and a short description written for the package's users, in the style of the
-existing entries. When an upgrade needs `php artisan finisterre:update` (new columns or settings), say so in bold.
-Tags are cut from these versions.
+existing entries. When an upgrade needs `php artisan migrate` (a new migration), say so in bold. Tags are cut from
+these versions.
+
+## Migrations and settings
+
+An upgrade has to work after `composer update` and a plain `php artisan migrate`, with no `finisterre:update`.
+
+- New migrations go in `database/auto/` as dated `.php` files (`2026_10_11_000000_…`), which the provider loads. Do not
+  add `.php.stub` files to `database/migrations/` or names to `FinisterreServiceProvider::migrationNames()`: those are
+  the migrations of versions up to 4.11, already published in host applications.
+- Code must tolerate its migration not having run yet (see `TaskFollowers::available()`): a deploy runs the new code
+  before `migrate`.
+- A new setting needs a property in `FinisterreSettings`, a default in `SettingsConfig::defaults()` and its line in
+  `applyStored()`. `SettingsConfig::apply()` seeds the missing row on boot.
 
 ## Translations
 

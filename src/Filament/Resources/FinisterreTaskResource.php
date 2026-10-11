@@ -12,6 +12,7 @@ use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\Table as TaskTa
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\PanelLabel;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -41,7 +42,16 @@ class FinisterreTaskResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return config('finisterre.active', false) && FinisterrePlugin::get()->canViewOnlyTheirTasks();
+        if (! config('finisterre.active', false)) {
+            return false;
+        }
+
+        $plugin = FinisterrePlugin::get();
+
+        // The board is for users who see all tasks. Everybody else finds theirs in
+        // this list: the ones they created, and the ones they follow.
+        return $plugin->canViewOnlyTheirTasks()
+            || (! $plugin->canViewAllTasks() && TaskFollowers::followsAny(auth()->id()));
     }
 
     public static function getModelLabel(): string

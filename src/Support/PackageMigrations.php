@@ -169,6 +169,47 @@ class PackageMigrations
     }
 
     /**
+     * Where the migrations the package loads itself live. Unlike the ones above
+     * they are never published: they carry their date in the file name, `migrate`
+     * finds them through the service provider, and a deploy that runs it applies
+     * them with no further step.
+     */
+    public static function autoPath(): string
+    {
+        return dirname(__DIR__, 2) . '/database/auto';
+    }
+
+    /**
+     * Full names (date included) of the migrations the package loads itself.
+     *
+     * @return list<string>
+     */
+    public static function autoNames(): array
+    {
+        $names = array_map(
+            fn(string $file): string => basename($file, '.php'),
+            glob(self::autoPath() . '/*.php') ?: []
+        );
+
+        sort($names);
+
+        return $names;
+    }
+
+    /**
+     * The self-loaded migrations that have not run yet. Empty when the migrations
+     * table can't be read.
+     *
+     * @return list<string>
+     */
+    public static function pendingAuto(): array
+    {
+        $ran = self::ranMigrations();
+
+        return $ran === null ? [] : array_values(array_diff(self::autoNames(), $ran));
+    }
+
+    /**
      * The published file for a migration base name, or null when it was never
      * published. Guards against a stray duplicate by returning the oldest one.
      */

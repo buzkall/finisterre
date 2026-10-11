@@ -227,6 +227,7 @@ class UninstallCommand extends Command
         $tables = [
             Typed::string(config('finisterre.subtasks.table_name', 'finisterre_subtasks')),
             Typed::string(config('finisterre.task_changes_table_name', 'finisterre_task_changes')),
+            Typed::string(config('finisterre.followers_table_name', 'finisterre_task_followers')),
             Typed::string(config('finisterre.comments.table_name', 'finisterre_task_comments')),
             Typed::string(config('finisterre.table_name', 'finisterre_tasks')),
         ];

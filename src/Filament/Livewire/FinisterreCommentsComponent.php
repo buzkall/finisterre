@@ -5,11 +5,13 @@ namespace Arzcode\Finisterre\Filament\Livewire;
 use Arzcode\Finisterre\Filament\Actions\EditCommentAction;
 use Arzcode\Finisterre\Filament\Actions\PostponeCommentAction;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\FollowersSelect;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\Action;
@@ -17,15 +19,16 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
@@ -62,45 +65,112 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
     }
 
     /**
-     * The task creator is notified by default, so whoever opened the task hears
-     * back about it without having to remember to pick them.
+     * Every follower of the task hears about a new comment, except the one
+     * writing it.
      *
-     * @return array<int, int|string>
+     * @return list<int>
      */
     private function getDefaultNotifyIds(): array
     {
-        $options = $this->getNotifyOptions();
-
-        if ($options->count() === 1) {
-            return $options->keys()->all();
+        if (! $this->record instanceof FinisterreTask) {
+            return [];
         }
 
-        $creatorId = $this->record?->creator_id;
-
-        return $creatorId && $options->has((string)$creatorId) ? [$creatorId] : [];
+        return array_values(array_diff(TaskFollowers::ids($this->record), [UserModel::authId()]));
     }
 
-    private function isAllNotifySelected(Get $get): bool
+    /**
+     * Who the comment being written goes to. The list comes back from the browser,
+     * so it is read again here: followers stay, and anybody else has to be a user
+     * who can be added, picked by somebody who may add them.
+     *
+     * @return list<int>
+     */
+    private function notifyIds(): array
     {
-        return count(Typed::array($get('notify'))) >= $this->getNotifyOptions()->count();
-    }
-
-    /** @return Collection<string, string> */
-    private function getNotifyOptions(): Collection
-    {
-        $options = UserModel::assignableQuery()
-            ->whereKeyNot(auth()->id())
-            ->get()
-            ->mapWithKeys(fn(Model $user) => [Typed::string($user->getKey()) => UserModel::displayName($user)]);
-
-        // Append task creator if not the authenticated user and not already in options
-        $creator = $this->record?->creator;
-
-        if ($creator && $creator->getKey() !== auth()->id() && ! $options->has(Typed::string($creator->getKey()))) {
-            $options->put(Typed::string($creator->getKey()), UserModel::displayName($creator));
+        if (! $this->record instanceof FinisterreTask) {
+            return [];
         }
 
-        return $options;
+        $selected = array_diff(TaskFollowers::normalize(Typed::array($this->data['notify'] ?? [])), [UserModel::authId()]);
+        $followers = TaskFollowers::ids($this->record);
+        $added = array_values(array_diff($selected, $followers));
+        $allowed = [...$followers, ...($this->canAddRecipients() ? TaskFollowers::onlyCandidates($added) : [])];
+
+        return array_values(array_intersect($selected, $allowed));
+    }
+
+    /**
+     * Notifying somebody new makes them a follower, which shows them the task:
+     * that is for whoever may edit it, not for a follower who may only comment.
+     */
+    private function canAddRecipients(): bool
+    {
+        return $this->record instanceof FinisterreTask
+            && TaskFollowers::available()
+            && (auth()->user()?->can('update', $this->record) ?? false);
+    }
+
+    /**
+     * The people behind the avatars under the comment.
+     *
+     * @return EloquentCollection<int, Model>
+     */
+    #[Computed]
+    public function notifyUsers(): EloquentCollection
+    {
+        return TaskFollowers::usersById($this->notifyIds());
+    }
+
+    /**
+     * Who the plus button can still bring in: nobody already on the comment, and
+     * not the person writing it.
+     *
+     * @return list<int>
+     */
+    private function notifyExcept(): array
+    {
+        return [...$this->notifyIds(), ...array_filter([UserModel::authId()])];
+    }
+
+    /**
+     * The plus after the avatars: a modal to add people to this comment, who then
+     * follow the task too. Gone when there is nobody left to add.
+     */
+    public function addNotifyAction(): Action
+    {
+        return Action::make('addNotify')
+            ->iconButton()
+            ->color('gray')
+            ->icon(Heroicon::Plus)
+            ->label(__('finisterre::finisterre.comments.notify_add'))
+            ->tooltip(__('finisterre::finisterre.comments.notify_add'))
+            ->modalHeading(__('finisterre::finisterre.comments.notify_add'))
+            ->modalDescription(__('finisterre::finisterre.comments.notify_add_help'))
+            ->modalWidth(Width::Medium)
+            ->modalSubmitActionLabel(__('finisterre::finisterre.add'))
+            ->schema([
+                FollowersSelect::make('people', fn(): array => $this->notifyExcept())
+                    ->hiddenLabel()
+                    ->multiple()
+                    ->required(),
+            ])
+            ->action(function(array $data): void {
+                $this->data['notify'] = TaskFollowers::normalize([
+                    ...Typed::array($this->data['notify'] ?? []),
+                    ...Typed::array($data['people'] ?? []),
+                ]);
+
+                unset($this->notifyUsers);
+            })
+            ->visible(fn(): bool => $this->canAddRecipients() && TaskFollowers::hasCandidates($this->notifyExcept()));
+    }
+
+    public function removeNotify(int $id): void
+    {
+        $this->data['notify'] = array_values(array_diff(TaskFollowers::normalize(Typed::array($this->data['notify'] ?? [])), [$id]));
+
+        unset($this->notifyUsers);
     }
 
     public function form(Schema $schema): Schema
@@ -111,32 +181,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $canSchedule = FinisterrePlugin::get()->canScheduleComments();
 
-        $notifyOptions = $this->getNotifyOptions();
-
-        $notify = Select::make('notify')
-            ->multiple()
-            ->live()
-            ->columnSpan($canSchedule ? 1 : 'full')
+        $notify = ViewField::make('notify')
+            ->view('finisterre::comments.notify')
             ->label(__('finisterre::finisterre.comments.notify'))
             ->hint(__('finisterre::finisterre.comments.notify_hint'))
-            ->options(fn() => $this->getNotifyOptions())
-            ->suffixAction(
-                Action::make('toggleSelectAll')
-                    ->icon(fn(Get $get): string => $this->isAllNotifySelected($get)
-                        ? 'heroicon-m-user-minus'
-                        : 'heroicon-m-users')
-                    ->label(fn(Get $get): string => $this->isAllNotifySelected($get)
-                        ? __('finisterre::finisterre.comments.deselect_all')
-                        : __('finisterre::finisterre.comments.select_all'))
-                    ->tooltip(fn(Get $get): string => $this->isAllNotifySelected($get)
-                        ? __('finisterre::finisterre.comments.deselect_all')
-                        : __('finisterre::finisterre.comments.select_all'))
-                    ->visible($notifyOptions->count() > 1)
-                    ->action(fn(Get $get, Set $set) => $set(
-                        'notify',
-                        $this->isAllNotifySelected($get) ? [] : $this->getNotifyOptions()->keys()->toArray()
-                    ))
-            );
+            ->columnSpan($canSchedule ? 1 : 'full');
 
         $gridComponents = $canSchedule
             ? [
@@ -180,8 +229,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $canSchedule = FinisterrePlugin::get()->canScheduleComments();
         $scheduledFor = $canSchedule && ! empty($data['scheduled_for']) ? Carbon::parse(Typed::string($data['scheduled_for'])) : null;
-        $selectedIds = array_values(array_filter(array_map(Typed::nullableInt(...), Typed::array($data['notify'] ?? []))));
-        $notifyIds = $selectedIds ?: array_filter([$task->assignee_id]);
+        $notifyIds = $this->notifyIds();
 
         $comment = $task->comments()->create([
             'comment'         => $data['comment'],
@@ -189,6 +237,11 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             'scheduled_for'   => $scheduledFor,
             'notify_user_ids' => $scheduledFor instanceof Carbon ? $notifyIds : null,
         ]);
+
+        // Whoever is told about the comment follows the task from here on, so they
+        // can open it and hear about the answers. Only once the comment exists: a
+        // comment that failed to save shares the task with nobody.
+        $task->follow($notifyIds);
 
         if ($scheduledFor instanceof Carbon) {
             Notification::make()

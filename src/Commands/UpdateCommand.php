@@ -111,6 +111,14 @@ class UpdateCommand extends Command
             },
         ], PackageMigrations::status());
 
+        // Never published: `migrate` finds these in the package itself.
+        $pendingAuto = PackageMigrations::pendingAuto();
+        $autoRows = array_map(fn(string $name): array => [
+            $name,
+            '<fg=gray>loaded by the package</>',
+            in_array($name, $pendingAuto, true) ? '<fg=yellow>no</>' : '<fg=green>yes</>',
+        ], PackageMigrations::autoNames());
+
         // The spatie tables tasks lean on, told apart from Finisterre's own by
         // their package. "Migrated" means the tables exist, whatever created them.
         $dependencyRows = array_map(fn(array $dependency): array => [
@@ -127,7 +135,7 @@ class UpdateCommand extends Command
             },
         ], DependencyMigrations::status());
 
-        table(['Migration', 'Published as', 'Migrated'], [...$rows, ...$dependencyRows]);
+        table(['Migration', 'Published as', 'Migrated'], [...$rows, ...$autoRows, ...$dependencyRows]);
     }
 
     /**
@@ -290,13 +298,13 @@ class UpdateCommand extends Command
 
     protected function handlePendingMigrations(bool $check): int
     {
-        $pending = [...PackageMigrations::pending(), ...DependencyMigrations::pending()];
+        $pending = [...PackageMigrations::pending(), ...PackageMigrations::pendingAuto(), ...DependencyMigrations::pending()];
 
         if ($pending === []) {
             return 0;
         }
 
-        warning(sprintf('%d published migration(s) have not run yet:', count($pending)));
+        warning(sprintf('%d migration(s) have not run yet:', count($pending)));
         note($this->bulletList($pending));
 
         if ($check) {

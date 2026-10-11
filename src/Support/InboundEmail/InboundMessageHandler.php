@@ -4,7 +4,10 @@ namespace Arzcode\Finisterre\Support\InboundEmail;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\TaskFollowers;
+use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Gate;
@@ -46,11 +49,9 @@ class InboundMessageHandler
             return $this->skip('sender failed SPF, DKIM or DMARC', $message);
         }
 
-        $sender = $this->sender($message->from);
+        $sender = $this->sender($message->from, $task);
 
-        if (! $sender instanceof Model
-            || Gate::forUser($sender)->denies('view', $task)
-            || Gate::forUser($sender)->denies('create', FinisterreTaskComment::class)) {
+        if (! $sender instanceof Model || ! $this->mayComment($sender, $task)) {
             return $this->skip('sender is not a user who can comment on the task', $message);
         }
 
@@ -60,14 +61,9 @@ class InboundMessageHandler
             return $this->skip('empty reply', $message);
         }
 
-        // The people the email thread is between, but never the one replying: their
-        // email client already shows what they wrote.
-        $notifyIds = collect([$task->creator_id, $task->assignee_id])
-            ->filter()
-            ->reject(fn($id) => $id === $sender->getKey())
-            ->unique()
-            ->values()
-            ->all();
+        // The task's followers, but never the one replying: their email client
+        // already shows what they wrote.
+        $notifyIds = array_values(array_diff(TaskFollowers::ids($task), [Typed::int($sender->getKey())]));
 
         try {
             /** @var FinisterreTaskComment $comment */
@@ -89,14 +85,67 @@ class InboundMessageHandler
         return $comment;
     }
 
-    private function sender(?string $email): ?Model
+    /**
+     * The same answer the app would give the sender. Whether somebody sees all
+     * tasks is asked of the signed-in user, and nobody is signed in while an email
+     * comes in, so the sender is for the length of the check: without that every
+     * task would count as theirs to see.
+     */
+    private function mayComment(Model $sender, FinisterreTask $task): bool
+    {
+        if (! $sender instanceof Authenticatable) {
+            return false;
+        }
+
+        $guard = auth()->guard();
+        $previous = $guard->user();
+
+        $guard->setUser($sender);
+
+        try {
+            return Gate::forUser($sender)->allows('view', $task)
+                && Gate::forUser($sender)->allows('create', FinisterreTaskComment::class);
+        } finally {
+            $previous instanceof Authenticatable ? $guard->setUser($previous) : $guard->forgetUser();
+        }
+    }
+
+    private function sender(?string $email, FinisterreTask $task): ?Model
     {
         if (blank($email)) {
             return null;
         }
 
-        // Only users who can be picked in the app: inactive or filtered-out users can't comment by email either.
-        return UserModel::assignableQuery()->whereRaw('LOWER(email) = ?', [strtolower(trim($email))])->first();
+        $email = strtolower(trim($email));
+
+        // Only users who can be picked in the app: inactive or filtered-out users
+        // can't comment by email either.
+        return UserModel::assignableQuery()->whereRaw('LOWER(email) = ?', [$email])->first()
+            ?? $this->follower($email, $task);
+    }
+
+    /**
+     * Somebody outside the assignable users the task was shared with by making them
+     * a follower: they can comment on it in the app, so they can by email too.
+     */
+    private function follower(string $email, FinisterreTask $task): ?Model
+    {
+        if (! TaskFollowers::available()) {
+            return null;
+        }
+
+        $query = UserModel::class()::query();
+        $model = $query->getModel();
+
+        // The scope narrows the builder in place.
+        if (method_exists($model, 'scopeUserIsActive')) {
+            $model->scopeUserIsActive($query);
+        }
+
+        return $query
+            ->whereKey(TaskFollowers::ids($task))
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
     }
 
     /**

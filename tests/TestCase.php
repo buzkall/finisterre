@@ -83,5 +83,8 @@ class TestCase extends Orchestra
         // Run users migration for testing
         $usersMigration = include __DIR__ . '/../workbench/database/migrations/create_users_table.php';
         $usersMigration->up();
+
+        // After the users: it backfills from the tasks and points at both tables.
+        (include __DIR__ . '/../database/auto/2026_10_11_000000_create_finisterre_task_followers_table.php')->up();
     }
 }

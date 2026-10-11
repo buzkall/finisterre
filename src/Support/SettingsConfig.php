@@ -4,8 +4,11 @@ namespace Arzcode\Finisterre\Support;
 
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Arr;
+use Spatie\LaravelSettings\Exceptions\SettingAlreadyExists;
 use Spatie\LaravelSettings\Migrations\SettingsMigrator;
+use Spatie\LaravelSettings\Support\SettingsCacheFactory;
 use Throwable;
 
 class SettingsConfig
@@ -103,12 +106,17 @@ class SettingsConfig
         $created = 0;
 
         foreach (self::missing() as $property) {
-            $migrator->add($property, $defaults[$property], self::isEncrypted($property));
-            $created++;
+            try {
+                $migrator->add($property, $defaults[$property], self::isEncrypted($property));
+                $created++;
+            } catch (SettingAlreadyExists|UniqueConstraintViolationException) {
+                // Another request seeded it first: this also runs while the panel
+                // boots, and two page loads can get here together.
+            }
         }
 
         if ($created > 0) {
-            app()->forgetInstance(FinisterreSettings::class);
+            self::forgetLoaded();
         }
 
         return $created;
@@ -119,54 +127,21 @@ class SettingsConfig
      * in the database. This lets every existing config() read keep working
      * unchanged while the settings page becomes the source of truth.
      *
-     * Wrapped in a try/catch so a fresh install whose settings table has not
-     * been migrated yet simply falls back to the config-file defaults.
+     * A version of the package that adds a setting finds no row for it in a host
+     * that upgraded, and the settings refuse to load without it. Those rows are
+     * seeded from the config defaults on the spot (see heal()), so upgrading never
+     * turns Finisterre off. Only when nothing is stored at all (a fresh install
+     * whose settings have not been migrated yet) does it stay inactive.
      */
     public static function apply(): void
     {
         try {
-            $settings = app(FinisterreSettings::class);
-
-            config([
-                'finisterre.environments'                        => $settings->environments,
-                'finisterre.active'                              => self::isActiveForEnvironments($settings->environments),
-                'finisterre.slug'                                => $settings->slug,
-                'finisterre.hidden_statuses'                     => $settings->hidden_statuses,
-                'finisterre.fallback_notifiable_id'              => $settings->fallback_notifiable_id,
-                'finisterre.authenticatable_filter_column'       => $settings->authenticatable_filter_column,
-                'finisterre.authenticatable_filter_value'        => $settings->authenticatable_filter_value,
-                'finisterre.exclude_from_global_search'          => $settings->exclude_from_global_search,
-                'finisterre.subtasks.notify'                     => $settings->subtasks_notify,
-                'finisterre.subtasks.notification_delay_minutes' => $settings->subtasks_notification_delay_minutes,
-                'finisterre.mail.history_entries'                => $settings->mail_history_entries,
-                'finisterre.comments.display_avatars'            => $settings->comments_display_avatars,
-                'finisterre.comments.icons.action'               => $settings->comments_icon_action,
-                'finisterre.comments.icons.delete'               => $settings->comments_icon_delete,
-                'finisterre.comments.icons.empty'                => $settings->comments_icon_empty,
-                'finisterre.sms_notification.enabled'            => $settings->sms_enabled,
-                'finisterre.sms_notification.url'                => $settings->sms_url,
-                'finisterre.sms_notification.auth_key'           => $settings->sms_auth_key,
-                'finisterre.sms_notification.sender'             => $settings->sms_sender,
-                'finisterre.sms_notification.notify_to'          => $settings->sms_notify_to,
-                'finisterre.sms_notification.notify_priorities'  => collect($settings->sms_notify_priorities)
-                    ->map(fn($value) => TaskPriorityEnum::tryFrom($value))
-                    ->filter()
-                    ->values()
-                    ->all(),
-                'finisterre.mail.inbound.enabled'               => $settings->inbound_enabled,
-                'finisterre.mail.inbound.driver'                => $settings->inbound_driver,
-                'finisterre.mail.inbound.reply_address'         => $settings->inbound_reply_address,
-                'finisterre.mail.inbound.plus_addressing'       => $settings->inbound_plus_addressing,
-                'finisterre.mail.inbound.imap.host'             => $settings->inbound_imap_host,
-                'finisterre.mail.inbound.imap.port'             => $settings->inbound_imap_port,
-                'finisterre.mail.inbound.imap.encryption'       => $settings->inbound_imap_encryption,
-                'finisterre.mail.inbound.imap.username'         => $settings->inbound_imap_username,
-                'finisterre.mail.inbound.imap.password'         => $settings->inbound_imap_password,
-                'finisterre.mail.inbound.imap.folder'           => $settings->inbound_imap_folder,
-                'finisterre.mail.inbound.resend.api_key'        => $settings->inbound_resend_api_key,
-                'finisterre.mail.inbound.resend.webhook_secret' => $settings->inbound_resend_webhook_secret,
-            ]);
+            self::applyStored();
         } catch (Throwable) {
+            if (self::heal()) {
+                return;
+            }
+
             // Settings are missing (not migrated / not seeded yet) — the plugin
             // isn't really installed, so stay inactive UNLESS an explicit
             // environment list was configured via env/config. An empty list here
@@ -177,6 +152,88 @@ class SettingsConfig
 
             config(['finisterre.active' => $environments !== '' && self::isActiveForEnvironments($environments)]);
         }
+    }
+
+    /**
+     * Seed the settings a newer version added and load them again. False when
+     * there is nothing to build on: no settings table, or none of Finisterre's
+     * rows in it.
+     */
+    protected static function heal(): bool
+    {
+        try {
+            if (count(self::missing()) === count(self::defaults())) {
+                return false;
+            }
+
+            self::seedMissing();
+            self::forgetLoaded();
+            self::applyStored();
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Drop the settings object held in the container and in spatie's cache, both
+     * loaded before the missing rows existed.
+     */
+    protected static function forgetLoaded(): void
+    {
+        app()->forgetInstance(FinisterreSettings::class);
+
+        $cache = app(SettingsCacheFactory::class)->build(FinisterreSettings::repository());
+
+        if ($cache->isEnabled()) {
+            $cache->clear();
+        }
+    }
+
+    protected static function applyStored(): void
+    {
+        $settings = app(FinisterreSettings::class);
+
+        config([
+            'finisterre.environments'                        => $settings->environments,
+            'finisterre.active'                              => self::isActiveForEnvironments($settings->environments),
+            'finisterre.slug'                                => $settings->slug,
+            'finisterre.hidden_statuses'                     => $settings->hidden_statuses,
+            'finisterre.fallback_notifiable_id'              => $settings->fallback_notifiable_id,
+            'finisterre.authenticatable_filter_column'       => $settings->authenticatable_filter_column,
+            'finisterre.authenticatable_filter_value'        => $settings->authenticatable_filter_value,
+            'finisterre.exclude_from_global_search'          => $settings->exclude_from_global_search,
+            'finisterre.subtasks.notify'                     => $settings->subtasks_notify,
+            'finisterre.subtasks.notification_delay_minutes' => $settings->subtasks_notification_delay_minutes,
+            'finisterre.mail.history_entries'                => $settings->mail_history_entries,
+            'finisterre.comments.display_avatars'            => $settings->comments_display_avatars,
+            'finisterre.comments.icons.action'               => $settings->comments_icon_action,
+            'finisterre.comments.icons.delete'               => $settings->comments_icon_delete,
+            'finisterre.comments.icons.empty'                => $settings->comments_icon_empty,
+            'finisterre.sms_notification.enabled'            => $settings->sms_enabled,
+            'finisterre.sms_notification.url'                => $settings->sms_url,
+            'finisterre.sms_notification.auth_key'           => $settings->sms_auth_key,
+            'finisterre.sms_notification.sender'             => $settings->sms_sender,
+            'finisterre.sms_notification.notify_to'          => $settings->sms_notify_to,
+            'finisterre.sms_notification.notify_priorities'  => collect($settings->sms_notify_priorities)
+                ->map(fn($value) => TaskPriorityEnum::tryFrom($value))
+                ->filter()
+                ->values()
+                ->all(),
+            'finisterre.mail.inbound.enabled'               => $settings->inbound_enabled,
+            'finisterre.mail.inbound.driver'                => $settings->inbound_driver,
+            'finisterre.mail.inbound.reply_address'         => $settings->inbound_reply_address,
+            'finisterre.mail.inbound.plus_addressing'       => $settings->inbound_plus_addressing,
+            'finisterre.mail.inbound.imap.host'             => $settings->inbound_imap_host,
+            'finisterre.mail.inbound.imap.port'             => $settings->inbound_imap_port,
+            'finisterre.mail.inbound.imap.encryption'       => $settings->inbound_imap_encryption,
+            'finisterre.mail.inbound.imap.username'         => $settings->inbound_imap_username,
+            'finisterre.mail.inbound.imap.password'         => $settings->inbound_imap_password,
+            'finisterre.mail.inbound.imap.folder'           => $settings->inbound_imap_folder,
+            'finisterre.mail.inbound.resend.api_key'        => $settings->inbound_resend_api_key,
+            'finisterre.mail.inbound.resend.webhook_secret' => $settings->inbound_resend_webhook_secret,
+        ]);
     }
 
     /**

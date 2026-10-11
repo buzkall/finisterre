@@ -11,6 +11,8 @@ use Filament\Contracts\Plugin;
 use Filament\Facades\Filament;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use LogicException;
 
 class FinisterrePlugin implements Plugin
@@ -19,6 +21,7 @@ class FinisterrePlugin implements Plugin
     protected bool|Closure $canViewOnlyTheirTasks = false;
     protected bool|Closure $canScheduleComments = true;
     protected bool|Closure $canConfigureFinisterre = true;
+    protected ?Closure $modifyFollowersQueryUsing = null;
 
     public function getId(): string
     {
@@ -71,6 +74,27 @@ class FinisterrePlugin implements Plugin
     public function canConfigure(): bool
     {
         return $this->evaluate($this->canConfigureFinisterre);
+    }
+
+    /**
+     * Narrow who can be added as a follower of a task. Without it, every active
+     * user can: `fn(Builder $query) => $query->where('is_staff', true)`.
+     */
+    public function modifyFollowersQueryUsing(?Closure $callback): static
+    {
+        $this->modifyFollowersQueryUsing = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @param  Builder<Model>  $query
+     */
+    public function applyFollowersQuery(Builder $query): void
+    {
+        if ($this->modifyFollowersQueryUsing instanceof Closure) {
+            app()->call($this->modifyFollowersQueryUsing, ['query' => $query]);
+        }
     }
 
     protected function evaluate(bool|Closure $value): bool

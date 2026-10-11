@@ -106,7 +106,20 @@ php artisan vendor:publish --tag="finisterre-views"
 
 ### Upgrading
 
-After `composer update arzcode/finisterre`, run:
+After `composer update arzcode/finisterre`, run your migrations, as a deploy already does:
+
+```bash
+php artisan migrate
+```
+
+That is all a new version needs to keep working. Its schema changes are migrations the package loads itself, so there
+is nothing to publish first, and the settings it adds are stored with their defaults the first time the application
+boots. Until the migrations have run the panel keeps working without the feature they belong to, and users allowed to
+configure Finisterre see an **Update pending** button on the board: it leads to the settings page, which lists what is
+pending and applies it with one click (only Finisterre's own migrations and settings, nothing else of your application).
+
+The migrations of versions up to 4.11 are published into `database/migrations`, and a few things are outside what
+`migrate` does: the Filament assets, the theme's `@source` lines, the private attachments disk. For those there is:
 
 ```bash
 php artisan finisterre:update
@@ -197,9 +210,39 @@ FinisterrePlugin::make()
     ->userCanConfigureFinisterre(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
 ```
 
+## Followers
+
+Every task has followers: the people notified of its new comments. Its creator and its assignee follow it from the
+start, a new assignee joins them when the task is handed over, and anybody else is added or removed by clicking the stack
+of follower avatars in the badge strip of the task page, next to the assignee.
+
+Under the comment box the followers show up as avatars (never the person writing): remove one to leave them out of that
+comment only, or add somebody with the plus button after them, who then also follows the task from there on. On the
+board, the followers of a task are tucked in behind the assignee's avatar on its card.
+
+Following is also how a task is shown to somebody who cannot see all tasks. A follower outside
+`userCanViewAllTasks()` finds the task in the task list and can open it, read it and comment, but not edit it: no quick
+actions, no edit page, no archiving. Users limited by `userCanViewOnlyTheirTasks()` keep full access to the tasks they
+created and get this read-and-comment access to the ones they follow. Whoever a task is assigned to keeps editing it,
+whatever they can see otherwise. Adding followers is for whoever may edit the task. A reply by email is held to the same
+rules: somebody who cannot see all tasks only comments by email on a task they follow.
+
+Any active user can be made a follower. If your users table also holds people who should never be offered (customers,
+students), narrow it:
+
+```php
+FinisterrePlugin::make()
+    ->modifyFollowersQueryUsing(fn(Builder $query) => $query->whereIn('role', ['admin', 'editor', 'seller'])),
+```
+
+If you replaced `finisterre.model_policy` with a policy of your own, give its `view` and `update` the same rules (see
+`Arzcode\Finisterre\Support\TaskAccess`), or followers who cannot see all tasks will be able to edit the ones they follow.
+
+Task changes (status, priority, a new assignee) are still emailed to the assignee only.
+
 ## Renaming tasks in the panel
 
-Tasks are called *Tasks* in the navigation, on the board and in the breadcrumbs (and *Issues* for users restricted to
+Tasks are called *Tasks* in the navigation and on the board (and *Issues* for users restricted to
 their own tasks). To call them something else — tickets, incidents, jobs — set the two labels in the config file:
 
 ```php
@@ -213,9 +256,9 @@ key of your own (`'labels.ticket'`) works as well as a literal string.
 
 ## The task page
 
-Clicking a card on the board (or a row in the task list) opens the task page rather than a form. It shows the title as heading, a strip of badges for status, priority, assignee, due date, tags and attachment count, the description with its attachments, the subtasks panel and the comments below.
+Clicking a card on the board (or a row in the task list) opens the task page rather than a form. It shows the title as heading, a strip of badges for status, priority, assignee, due date, followers, tags, attachment count and subtasks, the description with its attachments, and the comments below. The subtasks panel is open when the task has subtasks; on a task without any it stays away until its badge is clicked.
 
-Every badge is a quick action for users allowed to update the task: status, priority and assignee change with one click from a dropdown; tags, due date and attachments open a small modal (new tags can be created on the spot, and the attachments modal uploads new files and removes existing ones). The page updates in place after each change. Image attachments open in a lightbox; other files open in a new tab or download. The **Edit** button leads to the form, which only keeps the long-form fields: title, description and attachments.
+Every badge is a quick action for users allowed to update the task: status, priority and assignee change with one click from a dropdown; followers, tags, due date and attachments open a small modal (new tags can be created on the spot, and the attachments modal uploads new files and removes existing ones). The page updates in place after each change. Image attachments open in a lightbox; other files open in a new tab or download. The **Edit** button leads to the form, which only keeps the long-form fields: title, description and attachments.
 
 ## Card images
 
@@ -261,7 +304,7 @@ To do it by hand:
     'attachments_disk' => 'finisterre',
     ```
 
-With any disk other than `public`, the package registers `/storage/finisterre-files/{id}/{file}` (attachments and their conversions) and `/storage/finisterre-files/{file}` (rich editor images). A file is only served to a user logged in on `finisterre.guard` who can see the task it belongs to: the task policy's `viewAny` and `view`, and for users limited by `userCanViewOnlyTheirTasks()`, only the tasks they created. Guests are refused. A rich editor image belongs to the task it was first saved in from the session that uploaded it (listed in the task's `editor_files` column), and is served only while a description or comment of that task loads it: writing its URL into another task unlocks nothing, and until it is saved only its uploader is shown it. Notification emails embed the images instead of linking to them.
+With any disk other than `public`, the package registers `/storage/finisterre-files/{id}/{file}` (attachments and their conversions) and `/storage/finisterre-files/{file}` (rich editor images). A file is only served to a user logged in on `finisterre.guard` who can see the task it belongs to: the task policy's `viewAny` and `view`, and for users who cannot see all tasks, only the tasks they follow (and, when limited by `userCanViewOnlyTheirTasks()`, the ones they created). Guests are refused. A rich editor image belongs to the task it was first saved in from the session that uploaded it (listed in the task's `editor_files` column), and is served only while a description or comment of that task loads it: writing its URL into another task unlocks nothing, and until it is saved only its uploader is shown it. Notification emails embed the images instead of linking to them.
 
 Earlier versions asked you to call `(new FilamentRouteController)()` from `bootstrap/app.php`. That is no longer needed, and leaving it in does not register the routes twice.
 
@@ -347,9 +390,10 @@ import in `FinisterreSubtask::withoutEvents(fn () => ...)`.
 ## Reply by email
 
 When it's on, replying to any task email adds the reply as a **comment** on the task, written by the user whose address
-sent it. The quoted email below the reply is cut off, the HTML is sanitized, and the task's creator and assignee are
-notified (never the person who replied). Replies from addresses that don't belong to an assignable user who may comment
-on the task, out-of-office replies and bounces are skipped and logged, and the same email is never imported twice.
+sent it. The quoted email below the reply is cut off, the HTML is sanitized, and the task's followers are notified
+(never the person who replied). Replies from addresses that belong neither to an assignable user who may comment on the
+task nor to an active follower of it, out-of-office replies and bounces are skipped and logged, and the same email is
+never imported twice.
 
 The `From` header of an email can be forged, so a reply is also skipped when the `Authentication-Results` header the
 receiving mail server added says it failed DMARC, or, for a domain without DMARC, passed neither SPF nor DKIM. A mailbox

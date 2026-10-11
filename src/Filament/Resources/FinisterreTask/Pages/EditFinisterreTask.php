@@ -22,7 +22,7 @@ class EditFinisterreTask extends EditRecord
 
     // Note the space! We use a blank heading to avoid the default "Edit" text
     // but if we set it to null, the heading will not be displayed at all,
-    // hiding breadcrumbs and header actions.
+    // hiding the header actions.
     protected ?string $heading = ' ';
 
     public function mount(int|string $record): void
@@ -37,11 +37,6 @@ class EditFinisterreTask extends EditRecord
         return [
             $this->getDeleteAction(),
         ];
-    }
-
-    protected function getBreadcrumbFallback(): string
-    {
-        return __('finisterre::finisterre.edit_task');
     }
 
     /**

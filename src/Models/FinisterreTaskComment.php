@@ -6,6 +6,7 @@ use Arzcode\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
 use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Observers\FinisterreTaskCommentObserver;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Filament\Actions\Action;
@@ -93,8 +94,10 @@ class FinisterreTaskComment extends Model implements HasMedia
     {
         $wasScheduled = $this->scheduled_for !== null;
 
-        $userIds = $this->notify_user_ids ?: [$this->task->assignee_id];
-        $userIds = array_filter($userIds, fn($id) => ! is_null($id));
+        // A comment that names nobody goes to the task's followers, never back to
+        // its own author. An empty list is somebody's choice to notify no one.
+        $userIds = $this->notify_user_ids
+            ?? array_diff(TaskFollowers::ids($this->task), [$this->creator_id]);
 
         $users = UserModel::class()::findMany($userIds);
         foreach ($users as $user) {
