@@ -9,6 +9,7 @@ use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Support\TaskFollowers;
+use Arzcode\Finisterre\Tests\Support\AvatarUser;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -311,6 +312,16 @@ describe('the followers of the task page', function() {
             ->assertSeeHtml('title="Olga Owner"')
             ->assertSeeHtml('title="Fiona Follower"')
             ->assertSee('FF');
+    });
+
+    it('caps the avatar images, so a stale host theme cannot blow them up', function() {
+        $task = followedTask();
+
+        config()->set('finisterre.authenticatable', AvatarUser::class);
+
+        Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+            ->assertSeeHtml('/storage/avatars/' . $task->creator_id . '.jpg')
+            ->assertSeeHtml('width="32" height="32" style="max-width: 2rem; max-height: 2rem"');
     });
 
     it('stacks the first avatars and counts the rest', function() {

@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.12.2 - 2026-10-13
+
+- Avatar images now carry their own size limit. With a Filament theme built before the followers were added, the
+  circles had no size and a follower's avatar showed at the full size of its file, under the comment box and on the
+  board cards. Rebuilding the theme (`npm run build`) is still what gives them their proper look.
+
 ## 4.12.1 - 2026-10-13
 
 - The followers badge of the task page was taller than the badges next to it, and its avatars carried a white ring

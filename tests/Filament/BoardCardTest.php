@@ -90,6 +90,8 @@ it('shows the host application avatar instead of the initials when there is one'
     Livewire::test(TasksKanbanBoard::class)
         ->assertSee('/storage/avatars/' . $assignee->id . '.jpg')
         ->assertSee('/storage/avatars/' . $creator->id . '.jpg')
+        ->assertSeeHtml('width="28" height="28" style="max-width: 1.75rem; max-height: 1.75rem"')
+        ->assertSeeHtml('width="24" height="24" style="max-width: 1.5rem; max-height: 1.5rem"')
         ->assertDontSee('>BL<', escape: false)
         ->assertDontSee('>MG<', escape: false);
 });

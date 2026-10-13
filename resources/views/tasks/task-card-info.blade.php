@@ -19,7 +19,8 @@
              first few the board hands over, each one under the one before it
              (a descending z-index), then how many more there are. Each circle holds the host
              application's avatar when it has one, and falls back to the initials
-             it always showed. --}}
+             it always showed. The images carry their own cap, for a host theme
+             built before these classes were in the views. --}}
         @if($assignee || $followers)
             <div class="shrink-0 flex items-center -space-x-2" data-finisterre-card-people>
                 @if($assignee)
@@ -28,7 +29,7 @@
                         class="relative z-10 shrink-0 inline-flex items-center justify-center overflow-hidden w-7 h-7 rounded-full bg-gray-700 ring-2 ring-black dark:ring-white text-xs font-semibold text-white"
                     >
                         @if($assigneeAvatar)
-                            <img src="{{ $assigneeAvatar }}" alt="{{ $assignee }}" class="h-full w-full object-cover"/>
+                            <img src="{{ $assigneeAvatar }}" alt="{{ $assignee }}" width="28" height="28" style="max-width: 1.75rem; max-height: 1.75rem" class="h-full w-full object-cover"/>
                         @else
                             {{ $assigneeInitials }}
                         @endif
@@ -42,7 +43,7 @@
                         class="shrink-0 inline-flex items-center justify-center overflow-hidden w-6 h-6 rounded-full bg-gray-400 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-900 text-[11px] font-semibold text-white"
                     >
                         @if($follower['avatar'])
-                            <img src="{{ $follower['avatar'] }}" alt="{{ $follower['name'] }}" class="h-full w-full object-cover"/>
+                            <img src="{{ $follower['avatar'] }}" alt="{{ $follower['name'] }}" width="24" height="24" style="max-width: 1.5rem; max-height: 1.5rem" class="h-full w-full object-cover"/>
                         @else
                             {{ $follower['initials'] }}
                         @endif
