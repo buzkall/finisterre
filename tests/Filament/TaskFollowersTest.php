@@ -11,7 +11,6 @@ use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
@@ -262,9 +261,10 @@ describe('what a follower who cannot see all tasks gets', function() {
         $task = followedTask();
 
         restrictTasks();
+        config()->set('app.env', 'local');
 
-        expect(fn() => Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()]))
-            ->toThrow(ModelNotFoundException::class);
+        // Over HTTP: Livewire::test() throws for a missing record up to 4.4.3 and answers 404 after it.
+        $this->get(FinisterreTaskResource::getUrl('view', ['record' => $task->getKey()]))->assertNotFound();
     });
 
     it('gives somebody with no task permission the list once they follow a task', function() {
