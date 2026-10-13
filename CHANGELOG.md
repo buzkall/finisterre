@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.12.1 - 2026-10-13
+
+- The followers badge of the task page was taller than the badges next to it, and its avatars carried a white ring
+  that stood out against the badge. The avatars are now the size of the badge's icon and only show a gap where two of
+  them overlap. Rebuild your Filament theme (`npm run build`) to pick up the new classes.
+
 ## 4.12.0 - 2026-10-11
 
 - **Followers**: every task has followers, the people notified of its new comments. The creator and the assignee follow
