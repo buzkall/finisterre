@@ -185,7 +185,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         $notify = ViewField::make('notify')
             ->view('finisterre::comments.notify')
             ->label(__('finisterre::finisterre.comments.notify'))
-            ->hint(__('finisterre::finisterre.comments.notify_hint'))
+            ->belowLabel(__('finisterre::finisterre.comments.notify_hint'))
             ->columnSpan($canSchedule ? 1 : 'full');
 
         $gridComponents = $canSchedule
@@ -197,7 +197,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
                     ->displayFormat('d/m/y H:i')
                     ->columnSpan(1)
                     ->label(__('finisterre::finisterre.comments.scheduled_for'))
-                    ->hint(__('finisterre::finisterre.comments.scheduled_for_hint'))
+                    ->belowLabel(__('finisterre::finisterre.comments.scheduled_for_hint'))
                     ->seconds(false)
                     ->minDate(today()),
             ]

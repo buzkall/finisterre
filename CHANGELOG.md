@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.13.1 - 2026-10-14
+
+- The "Notify" and "Schedule for" labels under the comment box stay on one line again. Their explanations, which
+  squeezed each label down to one word per line at any screen width, now sit below the label.
+
 ## 4.13.0 - 2026-10-14
 
 - Done tasks can now be archived automatically once nobody has changed or commented on them for a number of days.
