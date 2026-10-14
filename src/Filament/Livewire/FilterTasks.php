@@ -38,15 +38,19 @@ class FilterTasks extends Component implements HasForms
     #[Url]
     public bool $filter_show_archived = false;
 
+    #[Url]
+    public bool $filter_with_changes = false;
+
     public function mount(): void
     {
         // Load from session if URL params are empty
-        if (empty($this->filter_text) && $this->filter_tags === [] && empty($this->filter_assignee)) {
+        if (! $this->hasUrlFilters()) {
             $sessionFilters = Typed::array(session('finisterre.filters', []));
             $this->filter_text = Typed::nullableString($sessionFilters['filter_text'] ?? null);
             $this->filter_tags = Typed::ids($sessionFilters['filter_tags'] ?? []);
             $this->filter_assignee = Typed::nullableInt($sessionFilters['filter_assignee'] ?? null);
             $this->filter_show_archived = (bool)($sessionFilters['filter_show_archived'] ?? false);
+            $this->filter_with_changes = (bool)($sessionFilters['filter_with_changes'] ?? false);
         }
 
         $filters = $this->getFilters();
@@ -54,8 +58,19 @@ class FilterTasks extends Component implements HasForms
         $this->dispatch('filtersUpdated', $filters);
     }
 
+    // The toggles count too: a link with only ?filter_with_changes=1 must not be
+    // overwritten by whatever the session saved last.
+    private function hasUrlFilters(): bool
+    {
+        return filled($this->filter_text)
+            || $this->filter_tags !== []
+            || filled($this->filter_assignee)
+            || $this->filter_show_archived
+            || $this->filter_with_changes;
+    }
+
     /**
-     * @return array{filter_text: ?string, filter_tags: list<int|string>, filter_assignee: ?int, filter_show_archived: bool}
+     * @return array{filter_text: ?string, filter_tags: list<int|string>, filter_assignee: ?int, filter_show_archived: bool, filter_with_changes: bool}
      */
     private function getFilters(): array
     {
@@ -64,6 +79,7 @@ class FilterTasks extends Component implements HasForms
             'filter_tags'          => $this->filter_tags,
             'filter_assignee'      => $this->filter_assignee,
             'filter_show_archived' => $this->filter_show_archived,
+            'filter_with_changes'  => $this->filter_with_changes,
         ];
     }
 
@@ -107,9 +123,16 @@ class FilterTasks extends Component implements HasForms
                         ->inline(false)
                         ->live()
                         ->afterStateUpdated(fn() => $this->dispatchFilters())
+                        ->columnSpan(1),
+
+                    Toggle::make('filter_with_changes')
+                        ->label(__('finisterre::finisterre.filter.with_changes'))
+                        ->inline(false)
+                        ->live()
+                        ->afterStateUpdated(fn() => $this->dispatchFilters())
                         ->columnSpan(1)
                 ])
-                ->columns(4)
+                ->columns(5)
                 ->compact()
                 ->extraAttributes([
                     'x-data' => '{}',
@@ -120,7 +143,7 @@ class FilterTasks extends Component implements HasForms
 
     public function resetFilters(): void
     {
-        $this->reset(['filter_text', 'filter_tags', 'filter_assignee', 'filter_show_archived']);
+        $this->reset(['filter_text', 'filter_tags', 'filter_assignee', 'filter_show_archived', 'filter_with_changes']);
 
         $this->form->fill($this->getFilters());
 

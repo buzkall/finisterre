@@ -116,6 +116,7 @@ class ManageFinisterreSettings extends Page
             'slug'                                => $settings->slug,
             'hidden_statuses'                     => $settings->hidden_statuses,
             'fallback_notifiable_id'              => $settings->fallback_notifiable_id,
+            'auto_archive_after_days'             => $settings->auto_archive_after_days,
             'authenticatable_filter_column'       => $settings->authenticatable_filter_column,
             'authenticatable_filter_value'        => $settings->authenticatable_filter_value,
             'exclude_from_global_search'          => $settings->exclude_from_global_search,
@@ -191,6 +192,13 @@ class ManageFinisterreSettings extends Page
                             ->options(fn(): array => $this->authenticatableOptions())
                             ->searchable()
                             ->preload()
+                            ->columnSpanFull(),
+
+                        TextInput::make('auto_archive_after_days')
+                            ->label(__('finisterre::finisterre.settings.auto_archive_after_days'))
+                            ->helperText(__('finisterre::finisterre.settings.auto_archive_after_days_help'))
+                            ->integer()
+                            ->minValue(1)
                             ->columnSpanFull(),
                     ]),
 
@@ -401,6 +409,7 @@ class ManageFinisterreSettings extends Page
         $settings->slug = Typed::string($data['slug']);
         $settings->hidden_statuses = Typed::strings($data['hidden_statuses'] ?? []);
         $settings->fallback_notifiable_id = Typed::int($data['fallback_notifiable_id']);
+        $settings->auto_archive_after_days = filled($data['auto_archive_after_days']) ? Typed::int($data['auto_archive_after_days']) : null;
         $settings->authenticatable_filter_column = Typed::string($data['authenticatable_filter_column']);
         $settings->authenticatable_filter_value = Typed::string($data['authenticatable_filter_value']);
         $settings->exclude_from_global_search = (bool)$data['exclude_from_global_search'];

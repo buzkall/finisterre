@@ -157,6 +157,7 @@ class TasksKanbanBoard extends BoardPage
             filled($this->taskFilters['filter_assignee'] ?? null),
             // Same string "false" the board query has to guard against.
             filter_var($this->taskFilters['filter_show_archived'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($this->taskFilters['filter_with_changes'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ])->filter()->count();
     }
 
@@ -319,6 +320,8 @@ class TasksKanbanBoard extends BoardPage
             ->whereColumn($userTable . '.id', $table . '.' . $column)
             ->limit(1);
 
+        $onlyWithChanges = filter_var($this->taskFilters['filter_with_changes'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
         return FinisterreTask::query()
             // The card image is rendered on every card, so the relation comes along
             // with the board query — the counts below are subqueries and load no rows.
@@ -328,13 +331,19 @@ class TasksKanbanBoard extends BoardPage
                 'media',
                 'subtasks',
                 'subtasks as completed_subtasks_count' => self::onlyCompleted(...),
-                'taskChanges as has_changes'           => self::onlyMine(...),
             ])
             ->addSelect([
                 $table . '.*',
                 'assignee_name' => $userQuery('assignee_id'),
                 'creator_name'  => $userQuery('creator_id'),
             ])
+            // With the filter on, every task left has changes, so the one subquery
+            // filtering them is enough and the dot is a constant.
+            ->when(
+                $onlyWithChanges,
+                fn($query) => $query->whereHas('taskChanges', self::onlyMine(...))->selectRaw('1 as has_changes'),
+                fn($query) => $query->withExists(['taskChanges as has_changes' => self::onlyMine(...)])
+            )
             ->when(
                 $this->taskFilters['filter_tags'] ?? null,
                 fn($query, $tagIds) => $query->withAnyTags(FinisterreTag::findMany(Typed::array($tagIds)))

@@ -15,7 +15,8 @@
                     wire:click="removeNotify({{ $recipient->getKey() }})"
                     title="{{ __('finisterre::finisterre.comments.notify_remove', ['name' => $name]) }}"
                     aria-label="{{ __('finisterre::finisterre.comments.notify_remove', ['name' => $name]) }}"
-                    class="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-white text-gray-500 ring-1 ring-gray-950/10 hover:text-danger-600 dark:bg-gray-800 dark:text-gray-300 dark:ring-white/20"
+                    style="top: -0.375rem; right: -0.375rem"
+                    class="absolute inline-flex h-4 w-4 items-center justify-center rounded-full bg-white text-gray-500 ring-1 ring-gray-950/10 hover:text-danger-600 dark:bg-gray-800 dark:text-gray-300 dark:ring-white/20"
                 >
                     <x-filament::icon icon="heroicon-m-x-mark" class="h-3 w-3"/>
                 </button>

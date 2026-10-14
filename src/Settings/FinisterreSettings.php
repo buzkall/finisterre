@@ -13,6 +13,7 @@ class FinisterreSettings extends Settings
     public array $hidden_statuses;
 
     public int $fallback_notifiable_id;
+    public ?int $auto_archive_after_days = null;
     public string $authenticatable_filter_column;
     public string $authenticatable_filter_value;
     public bool $exclude_from_global_search;

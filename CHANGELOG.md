@@ -2,6 +2,24 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.13.0 - 2026-10-14
+
+- Done tasks can now be archived automatically once nobody has changed or commented on them for a number of days.
+  It is off until you set the number of days under *Tasks* on the settings page. The archiving runs once a day from
+  the new `finisterre:archive-done-tasks` command, through Laravel's scheduler. A task you unarchive starts counting
+  again, so it is not archived back the next night.
+- New board filter *Only with changes for me*: it leaves on the board just the tasks showing you the blue "changed"
+  dot, the ones with something new since you last opened them. It is reset with the other filters and counted on the
+  Filters button on a phone.
+- The comment you are writing is kept in the browser until it is saved. If sending it fails (the session expired, or
+  the site was down for a deploy) and you reload the page, the text is back in the comment box instead of lost. Each
+  user and task keep their own draft, and it is dropped once the comment is saved or the box is emptied.
+- Deleting a comment asks for confirmation first. The trash icon sat right next to the edit one and deleted the
+  comment on the first click, with no way to get it back.
+- The button that removes someone from "Notify" under the comment box sits on the top right corner of their avatar
+  again, even with a Filament theme that hasn't been rebuilt.
+- On the task page, the followers badge now comes after "Created by", so the assignee and the creator read together.
+
 ## 4.12.2 - 2026-10-13
 
 - Avatar images now carry their own size limit. With a Filament theme built before the followers were added, the

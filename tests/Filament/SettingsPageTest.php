@@ -30,6 +30,7 @@ beforeEach(function() {
         'slug'                                => 'tasks',
         'hidden_statuses'                     => [],
         'fallback_notifiable_id'              => 1,
+        'auto_archive_after_days'             => null,
         'authenticatable_filter_column'       => '',
         'authenticatable_filter_value'        => '',
         'exclude_from_global_search'          => true,
@@ -202,4 +203,21 @@ it('never sends the stored secrets to the browser and keeps them when their fiel
 
     expect($settings->inbound_resend_api_key)->toBe('re_secret')
         ->and($settings->inbound_resend_webhook_secret)->toBe('whsec_new');
+});
+
+it('saves the days before done tasks are archived, and an empty field as never', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->assertSet('data.auto_archive_after_days', null)
+        ->set('data.auto_archive_after_days', '30')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(app(FinisterreSettings::class)->auto_archive_after_days)->toBe(30);
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.auto_archive_after_days', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(app(FinisterreSettings::class)->auto_archive_after_days)->toBeNull();
 });

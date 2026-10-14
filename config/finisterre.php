@@ -41,6 +41,10 @@ return [
 
     'hidden_statuses' => [],
 
+    // Days a done task can go untouched before it is archived automatically.
+    // null (the default) turns it off. Editable from the settings page.
+    'auto_archive_after_days' => null,
+
     // Keep the package's Filament resources out of the panel's global search,
     // so the host application's own results are not diluted by tasks.
     // Editable from the settings page.

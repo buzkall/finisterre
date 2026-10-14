@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre;
 
+use Arzcode\Finisterre\Commands\ArchiveDoneTasksCommand;
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
 use Arzcode\Finisterre\Commands\FetchEmailsCommand;
 use Arzcode\Finisterre\Commands\PrivatizeAttachmentsCommand;
@@ -82,6 +83,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             ->hasTranslations()
             ->hasMigrations(self::migrationNames())
             ->hasCommands([
+                ArchiveDoneTasksCommand::class,
                 DispatchScheduledCommentsCommand::class,
                 FetchEmailsCommand::class,
                 PrivatizeAttachmentsCommand::class,
@@ -635,6 +637,26 @@ class FinisterreServiceProvider extends PackageServiceProvider
         ], DependencyMigrations::NOTIFICATIONS_TAG);
     }
 
+    protected function registerSchedule(Schedule $schedule): void
+    {
+        $schedule->command('finisterre:dispatch-scheduled-comments')
+            ->everyMinute()
+            ->withoutOverlapping();
+
+        if (config('finisterre.mail.inbound.enabled') && config('finisterre.mail.inbound.driver') === 'imap') {
+            $schedule->command('finisterre:fetch-emails')
+                ->everyMinute()
+                ->withoutOverlapping();
+        }
+
+        // Always registered: the command reads the setting each time it runs, so
+        // turning archiving on or off from the settings page needs no restart of
+        // a long-lived process holding the schedule.
+        $schedule->command('finisterre:archive-done-tasks')
+            ->daily()
+            ->withoutOverlapping();
+    }
+
     public function packageBooted(): void
     {
         // Make the package's settings migration discoverable by `migrate` and
@@ -658,17 +680,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         }
 
         if (config('finisterre.active', false)) {
-            $this->callAfterResolving(Schedule::class, function(Schedule $schedule) {
-                $schedule->command('finisterre:dispatch-scheduled-comments')
-                    ->everyMinute()
-                    ->withoutOverlapping();
-
-                if (config('finisterre.mail.inbound.enabled') && config('finisterre.mail.inbound.driver') === 'imap') {
-                    $schedule->command('finisterre:fetch-emails')
-                        ->everyMinute()
-                        ->withoutOverlapping();
-                }
-            });
+            $this->callAfterResolving(Schedule::class, $this->registerSchedule(...));
         }
 
         Gate::policy(FinisterreTask::class, Typed::string(config('finisterre.model_policy', FinisterreTaskPolicy::class)));

@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Filament\Livewire;
 
+use Arzcode\Finisterre\Filament\Actions\DeleteCommentAction;
 use Arzcode\Finisterre\Filament\Actions\EditCommentAction;
 use Arzcode\Finisterre\Filament\Actions\PostponeCommentAction;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
@@ -268,6 +269,9 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
 
         $this->fillWithDefaults();
 
+        // Drops the draft the browser kept of this comment (see comments.blade.php).
+        $this->dispatch('finisterre-comment-saved', taskId: $task->getKey());
+
         $event = $this->dispatch('commentCreated');
 
         if ($event instanceof Event) {
@@ -285,20 +289,9 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         return EditCommentAction::make();
     }
 
-    public function delete(int $id): void
+    public function deleteCommentAction(): Action
     {
-        $comment = FinisterreTaskComment::find($id);
-
-        if (! $comment || ! auth()->guard(Typed::nullableString(config('finisterre.guard')))->user()?->can('delete', $comment)) {
-            return;
-        }
-
-        $comment->delete();
-
-        Notification::make()
-            ->title(__('finisterre::finisterre.comments.notifications.deleted'))
-            ->success()
-            ->send();
+        return DeleteCommentAction::make();
     }
 
     /** @return Collection<int, FinisterreTaskComment> */

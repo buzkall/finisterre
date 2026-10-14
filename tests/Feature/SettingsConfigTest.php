@@ -18,6 +18,7 @@ function fakeFinisterreSettings(array $overrides = []): void
         'slug'                                => 'board',
         'hidden_statuses'                     => ['backlog', 'rejected'],
         'fallback_notifiable_id'              => 7,
+        'auto_archive_after_days'             => 60,
         'authenticatable_filter_column'       => 'role',
         'authenticatable_filter_value'        => 'admin',
         'exclude_from_global_search'          => true,

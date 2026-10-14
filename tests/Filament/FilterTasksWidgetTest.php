@@ -1,7 +1,9 @@
 <?php
 
+use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
+use Arzcode\Finisterre\Models\FinisterreTask;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
 
@@ -54,9 +56,10 @@ it('counts the filters hidden behind the button', function() {
         'filter_tags'          => [1],
         'filter_assignee'      => 1,
         'filter_show_archived' => true,
+        'filter_with_changes'  => true,
     ]);
 
-    expect($board->instance()->activeFilterCount())->toBe(4);
+    expect($board->instance()->activeFilterCount())->toBe(5);
 });
 
 it('does not count the show archived toggle when it comes back as the string "false"', function() {
@@ -67,4 +70,38 @@ it('does not count the show archived toggle when it comes back as the string "fa
     ])->test(TasksKanbanBoard::class);
 
     expect($board->instance()->activeFilterCount())->toBe(0);
+});
+
+it('narrows the board to the tasks with changes for the current user', function() {
+    $changed = FinisterreTask::factory()->create(['title' => 'Changed for me', 'status' => TaskStatusEnum::Open, 'archived' => false]);
+    $changedForOthers = FinisterreTask::factory()->create(['title' => 'Changed for somebody else', 'status' => TaskStatusEnum::Open, 'archived' => false]);
+    $untouched = FinisterreTask::factory()->create(['title' => 'Nothing new', 'status' => TaskStatusEnum::Open, 'archived' => false]);
+
+    // Creating a task already records changes for its people; start clean.
+    FinisterreTask::query()->each(fn(FinisterreTask $task) => $task->taskChanges()->delete());
+    $changed->taskChanges()->create(['user_id' => auth()->id()]);
+    $changedForOthers->taskChanges()->create(['user_id' => User::factory()->create()->id]);
+
+    Livewire::test(TasksKanbanBoard::class)
+        ->assertSee([$changed->title, $changedForOthers->title, $untouched->title])
+        ->call('updateFilters', ['filter_with_changes' => true])
+        ->assertSee($changed->title)
+        ->assertDontSee($changedForOthers->title)
+        ->assertDontSee($untouched->title);
+});
+
+it('ignores the changes toggle when it comes back as the string "false"', function() {
+    $task = FinisterreTask::factory()->create(['title' => 'Nothing new', 'status' => TaskStatusEnum::Open, 'archived' => false]);
+    $task->taskChanges()->delete();
+
+    Livewire::withQueryParams(['taskFilters' => ['filter_with_changes' => 'false']])
+        ->test(TasksKanbanBoard::class)
+        ->assertSee($task->title);
+});
+
+it('resets the changes toggle with the other filters', function() {
+    Livewire::test(FilterTasksWidget::class)
+        ->set('filter_with_changes', true)
+        ->call('resetFilters')
+        ->assertSet('filter_with_changes', false);
 });

@@ -12,7 +12,7 @@
         }
     </style>
 
-    {{-- Below `lg` the four filters stack into four rows and push the board off
+    {{-- Below `lg` the five filters stack into five rows and push the board off
          the screen, so on a phone the panel starts folded away and the Filters
          button in the page header unfolds it. From `lg` up nothing changes: the
          panel is always open, the button is not rendered, and a tablet turned to

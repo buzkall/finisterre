@@ -218,8 +218,6 @@ class Infolist
                 // Reporters could never reassign on the form either.
                 ->hidden($userIsReporterOnly),
 
-            self::followersAction(),
-
             // Not editable: shown here only so it reads next to the assignee.
             Action::make('creator')
                 ->badge()
@@ -227,6 +225,8 @@ class Infolist
                 ->icon(Heroicon::OutlinedPencilSquare)
                 ->label(fn(FinisterreTask $record) => __('finisterre::finisterre.created_by') . ': ' . $record->creatorName())
                 ->extraAttributes(['style' => 'pointer-events: none']),
+
+            self::followersAction(),
 
             Action::make('quick_due_at')
                 ->badge()

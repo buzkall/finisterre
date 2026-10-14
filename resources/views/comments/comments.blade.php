@@ -8,7 +8,42 @@
                 {{ $this->postponeCommentAction }}
             </div>
 
-            {{ $this->form }}
+            {{-- The comment being written is kept in the browser until it is saved, so a
+                 submit that never reaches the server (expired session, deploy) followed by a
+                 reload gives the text back instead of losing it. --}}
+            <div
+                x-data="{
+                    key: @js('finisterre-comment-draft:' . auth()->id() . ':' . $this->record?->getKey()),
+                    isEmpty(doc) {
+                        if (! doc) return true
+                        {{-- An HTML value with no text left, such as <p></p>, is empty too, unless it holds an image. --}}
+                        if (typeof doc === 'string') return ! /<img/i.test(doc) && doc.replace(/<[^>]*>|&nbsp;/g, '').trim() === ''
+
+                        return ! (doc.content ?? []).some((node) => node.type !== 'paragraph' || (node.content ?? []).length)
+                    },
+                    forget() {
+                        try { localStorage.removeItem(this.key) } catch {}
+                    },
+                    init() {
+                        try {
+                            const draft = JSON.parse(localStorage.getItem(this.key) ?? 'null')
+
+                            if (! this.isEmpty(draft) && this.isEmpty($wire.$get('data.comment'))) {
+                                $wire.$set('data.comment', draft, false)
+                            }
+                        } catch {}
+
+                        $wire.$watch('data.comment', (value) => {
+                            if (this.isEmpty(value)) return this.forget()
+
+                            try { localStorage.setItem(this.key, JSON.stringify(value)) } catch {}
+                        })
+                    },
+                }"
+                x-on:finisterre-comment-saved.window="if ($event.detail.taskId == @js($this->record?->getKey())) forget()"
+            >
+                {{ $this->form }}
+            </div>
 
             <div class="w-full flex justify-end">
                 <x-filament::button
@@ -54,12 +89,7 @@
                                     @endif
 
                                     @if (auth()->user()->can('delete', $comment))
-                                        <x-filament::icon-button
-                                            wire:click="delete({{ $comment->id }})"
-                                            icon="heroicon-s-trash"
-                                            color="danger"
-                                            tooltip="{{ __('finisterre::finisterre.comments.delete') }}"
-                                        />
+                                        {{ ($this->deleteCommentAction)(['comment_id' => $comment->id]) }}
                                     @endif
                                 </div>
                             </div>
