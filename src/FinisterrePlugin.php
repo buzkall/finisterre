@@ -20,7 +20,7 @@ class FinisterrePlugin implements Plugin
     protected bool|Closure $canViewAllTasks = true;
     protected bool|Closure $canViewOnlyTheirTasks = false;
     protected bool|Closure $canScheduleComments = true;
-    protected bool|Closure $canConfigureFinisterre = true;
+    protected bool|Closure $canConfigureFinisterre = false;
     protected ?Closure $modifyFollowersQueryUsing = null;
 
     public function getId(): string

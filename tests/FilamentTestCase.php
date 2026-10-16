@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Tests;
 
+use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\FinisterreServiceProvider;
 use Arzcode\Finisterre\Tests\Support\TestPanelProvider;
 use Filament\Facades\Filament;
@@ -67,6 +68,9 @@ abstract class FilamentTestCase extends TestCase
         app()->setLocale('es');
 
         Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        // The plugin is closed to everyone by default; the pages under test are not.
+        FinisterrePlugin::get()->userCanConfigureFinisterre(true);
     }
 
     protected function createTableIfMissing(string $table, \Closure $blueprint): void

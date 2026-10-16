@@ -323,7 +323,14 @@ Run the migrations first: the command records each moved image as belonging to t
 
 Most configuration can be managed at runtime from an in-app **settings page** instead of editing the config file. It is
 opened from a header action (⚙️) on the Kanban board — it is intentionally hidden from the navigation menu — and is
-gated by `userCanConfigureFinisterre()` (allowed for everyone by default; see the closure above).
+gated by `userCanConfigureFinisterre()`. Nobody can open it until you allow someone: the default is **closed** (before
+4.14.0 it was open to every user of the panel). The settings include the SMS gateway key and the mailbox credentials,
+so allow only administrators:
+
+```php
+FinisterrePlugin::make()
+    ->userCanConfigureFinisterre(fn() => auth()->user()?->hasRole(RoleEnum::Admin)),
+```
 
 Values are stored in the database and take precedence over `config/finisterre.php` at runtime, so admins can change them
 without a deploy. Saving a change runs `queue:restart`, since queue workers read the settings only when they start; like
