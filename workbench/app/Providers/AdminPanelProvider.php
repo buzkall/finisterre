@@ -2,6 +2,7 @@
 
 namespace Workbench\App\Providers;
 
+use Arzcode\Finisterre\FinisterrePlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -24,6 +25,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->plugin(FinisterrePlugin::make()->userCanConfigureFinisterre(true))
             ->colors([
                 'primary' => [
                     '50'  => '239 246 255',
