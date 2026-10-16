@@ -203,6 +203,8 @@ return [
         'mail_history_entries_help'                => 'How many of the latest entries of the task history (description and comments, newest first) the notification emails include. Leave it empty for the whole history, or set 0 to leave it out.',
         'sms_enabled'                              => 'Enable SMS notifications',
         'sms_url'                                  => 'API URL',
+        'sms_url_help'                             => 'The key is sent to this address with every text message. It must be an https address on the public internet.',
+        'sms_url_unsafe'                           => 'The URL must start with https:// and point to a public address, not to this server or its network.',
         'sms_auth_key'                             => 'Auth key',
         'sms_sender'                               => 'Sender',
         'sms_notify_to'                            => 'Notify to',

@@ -203,6 +203,8 @@ return [
         'mail_history_entries_help'                => 'Cuántas de las últimas entradas del historial de la tarea (descripción y comentarios, de más reciente a más antigua) incluyen los emails de notificación. Déjalo vacío para incluir todo el historial, o pon 0 para no incluirlo.',
         'sms_enabled'                              => 'Habilitar notificaciones SMS',
         'sms_url'                                  => 'URL de la API',
+        'sms_url_help'                             => 'La clave se envía a esta dirección con cada mensaje de texto. Tiene que ser una dirección https de internet.',
+        'sms_url_unsafe'                           => 'La URL debe empezar por https:// y apuntar a una dirección pública, no a este servidor ni a su red.',
         'sms_auth_key'                             => 'Clave de autenticación',
         'sms_sender'                               => 'Remitente',
         'sms_notify_to'                            => 'Notificar a',

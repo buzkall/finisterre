@@ -56,6 +56,6 @@ class FinisterreSettings extends Settings
      */
     public static function encrypted(): array
     {
-        return ['inbound_imap_password', 'inbound_resend_api_key', 'inbound_resend_webhook_secret'];
+        return ['sms_auth_key', 'inbound_imap_password', 'inbound_resend_api_key', 'inbound_resend_webhook_secret'];
     }
 }

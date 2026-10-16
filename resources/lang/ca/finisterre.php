@@ -203,6 +203,8 @@ return [
         'mail_history_entries_help'                => "Quantes de les darreres entrades de l'historial de la tasca (descripció i comentaris, de la més recent a la més antiga) inclouen els correus de notificació. Deixa-ho buit per incloure tot l'historial, o posa 0 per no incloure'l.",
         'sms_enabled'                              => 'Habilitar notificacions SMS',
         'sms_url'                                  => "URL de l'API",
+        'sms_url_help'                             => "La clau s'envia a aquesta adreça amb cada missatge de text. Ha de ser una adreça https d'internet.",
+        'sms_url_unsafe'                           => 'La URL ha de començar per https:// i apuntar a una adreça pública, no a aquest servidor ni a la seva xarxa.',
         'sms_auth_key'                             => 'Clau d\'autenticació',
         'sms_sender'                               => 'Remitent',
         'sms_notify_to'                            => 'Notificar a',

@@ -4,8 +4,10 @@ namespace Arzcode\Finisterre\Support;
 
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
 use Spatie\LaravelSettings\Exceptions\SettingAlreadyExists;
 use Spatie\LaravelSettings\Migrations\SettingsMigrator;
 use Spatie\LaravelSettings\Support\SettingsCacheFactory;
@@ -69,6 +71,42 @@ class SettingsConfig
     public static function isEncrypted(string $property): bool
     {
         return in_array(str($property)->after('finisterre.')->toString(), FinisterreSettings::encrypted(), true);
+    }
+
+    /**
+     * Encrypt the SMS gateway key if it was stored as plain text, as versions before
+     * 4.14.0 did. Safe to run again: a value that already decrypts is left alone, which
+     * is also what a fresh install holds, since its seed was encrypted from the start.
+     *
+     * Runs from the settings migration, and again while the settings are being loaded,
+     * because the code that expects the key encrypted deploys before `migrate` does.
+     */
+    public static function encryptStoredSmsAuthKey(): void
+    {
+        // The migration can run before the settings table exists, on a fresh install.
+        if (! Schema::hasTable(Typed::string(config('settings.repositories.database.table') ?? 'settings'))) {
+            return;
+        }
+
+        $migrator = app(SettingsMigrator::class);
+
+        if (! $migrator->exists('finisterre.sms_auth_key')) {
+            return;
+        }
+
+        $migrator->update('finisterre.sms_auth_key', function(mixed $payload): mixed {
+            if (! is_string($payload) || $payload === '') {
+                return $payload;
+            }
+
+            try {
+                decrypt($payload);
+
+                return $payload;
+            } catch (DecryptException) {
+                return encrypt($payload);
+            }
+        });
     }
 
     /**
@@ -167,6 +205,7 @@ class SettingsConfig
                 return false;
             }
 
+            self::encryptStoredSmsAuthKey();
             self::seedMissing();
             self::forgetLoaded();
             self::applyStored();

@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Tests;
 
 use Arzcode\Finisterre\FinisterreServiceProvider;
+use Arzcode\Finisterre\Support\SafeUrl;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Encryption\Encrypter;
@@ -22,6 +23,10 @@ class TestCase extends Orchestra
         // discarded attribute or a column the query never selected must fail
         // here rather than in their local environment.
         Model::shouldBeStrict();
+
+        // Names resolve to a public address without asking a DNS server, so no test
+        // depends on the network.
+        SafeUrl::resolveUsing(fn(): array => ['203.0.113.10']);
 
         Factory::guessFactoryNamesUsing(
             fn(string $modelName) => 'Arzcode\\FinisterrePlugin\\Database\\Factories\\' . class_basename($modelName) . 'Factory'

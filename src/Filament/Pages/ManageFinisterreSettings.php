@@ -9,6 +9,7 @@ use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\BoardSlug;
 use Arzcode\Finisterre\Support\PendingUpgrade;
+use Arzcode\Finisterre\Support\SafeUrl;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Traits\HasIconOptions;
@@ -358,7 +359,13 @@ class ManageFinisterreSettings extends Page
 
                         TextInput::make('sms_url')
                             ->label(__('finisterre::finisterre.settings.sms_url'))
+                            ->helperText(__('finisterre::finisterre.settings.sms_url_help'))
                             ->url()
+                            ->rule(fn(): Closure => function(string $attribute, mixed $value, Closure $fail): void {
+                                if (filled($value) && ! SafeUrl::isPublicHttps(Typed::string($value))) {
+                                    $fail(Typed::string(__('finisterre::finisterre.settings.sms_url_unsafe')));
+                                }
+                            })
                             ->visible(fn(Get $get): bool => (bool)$get('sms_enabled'))
                             ->dehydratedWhenHidden()
                             ->columnSpanFull(),

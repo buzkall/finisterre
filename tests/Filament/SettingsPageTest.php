@@ -221,3 +221,23 @@ it('saves the days before done tasks are archived, and an empty field as never',
 
     expect(app(FinisterreSettings::class)->auto_archive_after_days)->toBeNull();
 });
+
+it('refuses an sms url that is not a public https address', function(string $url) {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.sms_enabled', true)
+        ->set('data.sms_url', $url)
+        ->call('save')
+        ->assertHasErrors(['data.sms_url']);
+})->with([
+    'the cloud metadata service' => 'https://169.254.169.254/latest/meta-data',
+    'loopback'                   => 'https://127.0.0.1/sms',
+    'plain http'                 => 'http://example.test/sms',
+]);
+
+it('saves a public https sms url', function() {
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.sms_enabled', true)
+        ->set('data.sms_url', 'https://sms.example.test/send')
+        ->call('save')
+        ->assertHasNoErrors();
+});

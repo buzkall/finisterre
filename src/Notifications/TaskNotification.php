@@ -6,17 +6,16 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Arzcode\Finisterre\Notifications\Concerns\RendersTaskHistory;
 use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
+use Arzcode\Finisterre\Support\SmsGateway;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use DateTimeInterface;
-use Exception;
 use Filament\Support\Contracts\HasLabel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\HtmlString;
 
 class TaskNotification extends Notification implements ShouldQueue
@@ -181,38 +180,13 @@ class TaskNotification extends Notification implements ShouldQueue
             return;
         }
 
-        // Make a GET call to:
-        // https://api.smsarena.es/http/sms.php?auth_key=XXXX&id=11964&from=XXXX&to=XXXX&text=XXXX
-
-        $maxRetries = 3;
-        $retryDelay = 1; // seconds
-        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
-            try {
-                Http::timeout(10)->get(Typed::string(config('finisterre.sms_notification.url')), [
-                    'auth_key' => config('finisterre.sms_notification.auth_key'),
-                    'id'       => $this->task->id . '_' . now()->timestamp,
-                    'from'     => config('finisterre.sms_notification.sender'),
-                    'to'       => config('finisterre.sms_notification.notify_to'),
-                    'text'     => __(
-                        'finisterre::finisterre.notification.sms',
-                        [
-                            'priority' => $this->task->priority->getLabel(),
-                            'title'    => $this->task->title,
-                            'creator'  => $this->task->creatorName(),
-                        ]
-                    )]);
-
-                return;
-            } catch (Exception $e) {
-                if (str_contains($e->getMessage(), 'Could not resolve host') &&
-                    $attempt < $maxRetries) {
-                    sleep($retryDelay);
-
-                    continue;
-                }
-
-                throw $e;
-            }
-        }
+        SmsGateway::send(
+            $this->task->id . '_' . now()->timestamp,
+            __('finisterre::finisterre.notification.sms', [
+                'priority' => $this->task->priority->getLabel(),
+                'title'    => $this->task->title,
+                'creator'  => $this->task->creatorName(),
+            ])
+        );
     }
 }
