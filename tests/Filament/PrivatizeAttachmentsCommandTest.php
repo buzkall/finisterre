@@ -26,11 +26,15 @@ beforeEach(function() {
 
 function legacyTask(string $html): FinisterreTask
 {
-    return FinisterreTask::factory()->create([
+    $task = FinisterreTask::factory()->create([
         'creator_id'  => auth()->id(),
         'assignee_id' => auth()->id(),
-        'description' => $html,
     ]);
+
+    // Straight to the table, as an older version stored it.
+    DB::table('finisterre_tasks')->where('id', $task->id)->update(['description' => $html]);
+
+    return $task;
 }
 
 function legacyComment(FinisterreTask $task, string $html): int

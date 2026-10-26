@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Models;
 
+use Arzcode\Finisterre\Casts\SafeHtmlCast;
 use Arzcode\Finisterre\Database\Factories\FinisterreTaskCommentFactory;
 use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
@@ -139,6 +140,7 @@ class FinisterreTaskComment extends Model implements HasMedia
             'scheduled_for'   => 'datetime',
             'sent_at'         => 'datetime',
             'notify_user_ids' => 'array',
+            'comment'         => SafeHtmlCast::class,
             'creator_id'      => 'integer',
         ];
     }

@@ -15,6 +15,7 @@ use Workbench\App\Models\User;
 
 const FOLLOWERS_MIGRATION = '2026_10_11_000000_create_finisterre_task_followers_table';
 const SMS_KEY_MIGRATION = '2026_10_15_000000_encrypt_finisterre_sms_auth_key';
+const RICH_TEXT_MIGRATION = '2026_10_16_000000_sanitize_finisterre_rich_text';
 
 beforeEach(function() {
     config()->set('app.env', 'local');
@@ -38,7 +39,7 @@ beforeEach(function() {
 afterEach(fn() => TaskFollowers::forgetTable());
 
 it('tells whoever configures finisterre, on the board, that an upgrade is pending', function() {
-    expect(PendingUpgrade::appliable())->toBe([FOLLOWERS_MIGRATION, SMS_KEY_MIGRATION]);
+    expect(PendingUpgrade::appliable())->toBe([FOLLOWERS_MIGRATION, SMS_KEY_MIGRATION, RICH_TEXT_MIGRATION]);
 
     Livewire::test(TasksKanbanBoard::class)
         ->assertActionVisible('finisterreUpgrade')
@@ -75,7 +76,7 @@ it('says so when a migration could not be applied', function() {
         ->assertNotified(__('finisterre::finisterre.settings.upgrade_failed'))
         ->assertActionVisible('applyUpgrade');
 
-    expect(PendingUpgrade::appliable())->toBe([FOLLOWERS_MIGRATION, SMS_KEY_MIGRATION]);
+    expect(PendingUpgrade::appliable())->toBe([FOLLOWERS_MIGRATION, SMS_KEY_MIGRATION, RICH_TEXT_MIGRATION]);
 });
 
 it('shows nothing once everything has run', function() {

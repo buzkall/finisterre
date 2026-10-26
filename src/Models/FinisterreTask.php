@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Models;
 
+use Arzcode\Finisterre\Casts\SafeHtmlCast;
 use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Database\Factories\FinisterreTaskFactory;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
@@ -404,6 +405,7 @@ class FinisterreTask extends Model implements HasMedia
             'creator_id'   => 'integer',
             'order_column' => 'integer',
             'editor_files' => 'array',
+            'description'  => SafeHtmlCast::class,
         ];
     }
 }

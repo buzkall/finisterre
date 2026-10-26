@@ -6,6 +6,8 @@ use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
+use Arzcode\Finisterre\Support\SafeHtml;
+use Arzcode\Finisterre\Support\Typed;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
@@ -61,8 +63,9 @@ class ReportIssueAction extends Action
             ])
             ->action(function(?Model $record, array $data): void {
                 $task = new FinisterreTask([
-                    'title'        => $data['title'],
-                    'description'  => $data['description'],
+                    'title' => $data['title'],
+                    // A plain text area: its text is HTML-escaped, since the description is shown as HTML.
+                    'description'  => SafeHtml::fromPlainText(Typed::string($data['description'])),
                     'priority'     => TaskPriorityEnum::Medium,
                     'order_column' => 0,
                     // status, creator_id and assignee_id (fallback) are set by FinisterreTaskObserver

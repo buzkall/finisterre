@@ -97,9 +97,11 @@
                             {{-- data-finisterre-editor-images: its pasted images get the card image star on the task page. --}}
                             <div data-finisterre-editor-images class="fi-prose [&>*]:mb-2 [&>*]:mt-0 [&>*:last-child]:mb-0 text-sm leading-6 text-gray-950 dark:text-white max-w-none pr-8">
                                 @php
+                                    // Sanitized when it was saved (see SafeHtmlCast).
+                                    $content = (string) $comment->comment;
                                     $content = preg_replace_callback('/<[^>]*>/', function($match) {
                                         return str_replace(['http://', 'https://'], ['__HTTP__', '__HTTPS__'], $match[0]);
-                                    }, $comment->comment);
+                                    }, $content);
                                     $content = preg_replace('/(https?:\/\/[^\s<]+)/', '<a href="$1" target="_blank" class="text-blue-500 underline">$1</a>', $content);
                                     $content = str_replace(['__HTTP__', '__HTTPS__'], ['http://', 'https://'], $content);
                                 @endphp

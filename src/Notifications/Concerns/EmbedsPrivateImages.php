@@ -12,6 +12,10 @@ trait EmbedsPrivateImages
     /** @var array<string, string> */
     protected array $inlineImages = [];
 
+    /**
+     * The HTML of a description or comment, ready for an email: with the private images
+     * it loads attached to the message. It was sanitized when it was saved.
+     */
     protected function embedImages(?string $html): string
     {
         if (blank($html)) {

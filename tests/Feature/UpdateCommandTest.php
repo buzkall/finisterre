@@ -186,6 +186,7 @@ it('fails the check while a migration the package loads itself has not run', fun
     DB::table('migrations')->insert([
         ['migration' => '2026_10_11_000000_create_finisterre_task_followers_table', 'batch' => 2],
         ['migration' => '2026_10_15_000000_encrypt_finisterre_sms_auth_key', 'batch' => 2],
+        ['migration' => '2026_10_16_000000_sanitize_finisterre_rich_text', 'batch' => 2],
     ]);
 
     $this->artisan('finisterre:update', ['--check' => true])->assertSuccessful();

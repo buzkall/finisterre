@@ -529,9 +529,19 @@ use Arzcode\Finisterre\Filament\Actions\ReportIssueAction;
 ReportIssueAction::make();
 ```
 
-## Role restriction for Task Reports
+## Who can report an issue
 
-TODO
+`ReportIssueAction` has no role check of its own: it is a regular Filament action, so it is shown wherever you put it
+and to whoever can see that page. To limit it, use the action's own methods:
+
+```php
+ReportIssueAction::make()
+    ->visible(fn() => auth()->user()?->hasRole(RoleEnum::Editor));
+```
+
+The task a report creates belongs to the person who sent it. A user limited with `userCanViewOnlyTheirTasks()` sees
+those tasks in the *Tasks* list, and nobody else's. The description they type is plain text: it is escaped and its line
+breaks are kept.
 
 ## Development
 
