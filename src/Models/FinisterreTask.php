@@ -74,7 +74,19 @@ class FinisterreTask extends Model implements HasMedia
 
     public $fillable = ['title', 'description', 'status', 'archived', 'priority', 'due_at', 'completed_at',
         'creator_id', 'assignee_id', 'order_column', 'subject_type', 'subject_id', 'cover_media_id'];
-    protected $with = ['tags'];
+
+    /**
+     * Tasks no longer bring their tags along with every query. In a list of tasks,
+     * a relation read from one of them (the tags in a host's table or export) is
+     * loaded for all of them at once, instead of with one query per task.
+     *
+     * @param  array<array-key, static>  $models
+     * @return EloquentCollection<array-key, static>
+     */
+    public function newCollection(array $models = []): EloquentCollection
+    {
+        return (new EloquentCollection($models))->withRelationshipAutoloading();
+    }
 
     protected static function booted(): void
     {

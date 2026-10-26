@@ -22,11 +22,13 @@ use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\BoardSlug;
+use Arzcode\Finisterre\Support\ColumnExists;
 use Arzcode\Finisterre\Support\DependencyMigrations;
 use Arzcode\Finisterre\Support\FilamentThemes;
 use Arzcode\Finisterre\Support\PackageMigrations;
 use Arzcode\Finisterre\Support\PanelProviders;
 use Arzcode\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Traits\FinisterreUserTrait;
 use Carbon\Carbon;
@@ -34,7 +36,9 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -674,6 +678,14 @@ class FinisterreServiceProvider extends PackageServiceProvider
         config()->push('settings.settings', FinisterreSettings::class);
 
         $this->registerNotificationsMigration();
+
+        // A migration may have just added a column or the followers table: schema
+        // answers given earlier in this request or job are asked again, whichever
+        // command, page or job ran it.
+        Event::listen(MigrationsEnded::class, function(): void {
+            ColumnExists::forget();
+            TaskFollowers::forgetTable();
+        });
 
         // Let the database settings override the config-file defaults.
         SettingsConfig::apply();

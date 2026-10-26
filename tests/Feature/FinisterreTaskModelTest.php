@@ -6,6 +6,7 @@ use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Workbench\App\Models\User;
@@ -196,4 +197,19 @@ it('declares correct casts', function() {
 
     expect($task->status)->toBeInstanceOf(TaskStatusEnum::class)
         ->and($task->due_at)->toBeInstanceOf(Carbon::class);
+});
+
+it('loads the tags of a list of tasks in one query', function() {
+    $tasks = FinisterreTask::factory()->count(3)->create();
+    $tasks->each(fn(FinisterreTask $task) => $task->attachTag('Boiler', 'tasks'));
+
+    $queries = 0;
+    DB::listen(function() use (&$queries) {
+        $queries++;
+    });
+
+    FinisterreTask::query()->get()->each(fn(FinisterreTask $task) => $task->tags->count());
+
+    // The tasks, then the tags of all three.
+    expect($queries)->toBe(2);
 });

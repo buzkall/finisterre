@@ -34,6 +34,9 @@ class TaskNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        // The tags are read when the email is built, not carried by every task query.
+        $this->task->loadMissing('tags');
+
         // a new task's email already shows the description above the history
         $history = $this->taskHistoryHtml($this->task, withDescription: $this->taskChanges !== []);
 

@@ -4,12 +4,13 @@ namespace Arzcode\Finisterre\Traits;
 
 use Arzcode\Finisterre\Models\FinisterreTaskChange;
 use Arzcode\Finisterre\Support\AuthenticatableFilter;
+use Arzcode\Finisterre\Support\ColumnExists;
+use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 trait FinisterreUserTrait
 {
@@ -25,7 +26,7 @@ trait FinisterreUserTrait
     public function scopeUserIsActive(Builder $query): Builder
     {
         return $query->when(
-            Schema::hasColumn(config('finisterre.authenticatable_table_name'), 'active'),
+            ColumnExists::in(Typed::string(config('finisterre.authenticatable_table_name')), 'active'),
             fn($query) => $query->where('active', true)
         );
     }
@@ -36,15 +37,15 @@ trait FinisterreUserTrait
      */
     public function scopeAssignableUsers(Builder $query): Builder
     {
-        $filterColumn = config('finisterre.authenticatable_filter_column');
-        $table = config('finisterre.authenticatable_table_name');
+        $filterColumn = Typed::string(config('finisterre.authenticatable_filter_column'));
+        $table = Typed::string(config('finisterre.authenticatable_table_name'));
 
         return $query
             ->when(
-                $filterColumn && Schema::hasColumn($table, $filterColumn),
+                $filterColumn && ColumnExists::in($table, $filterColumn),
                 fn($query) => $query->whereIn($filterColumn, AuthenticatableFilter::values())
             )->when(
-                Schema::hasColumn($table, 'active'),
+                ColumnExists::in($table, 'active'),
                 fn($query) => $query->where('active', true)
             );
     }

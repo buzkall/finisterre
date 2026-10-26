@@ -65,9 +65,6 @@ class PendingUpgrade
                 // A migrate that fails without throwing says why in its output only.
                 throw_if($exitCode !== 0, RuntimeException::class, 'Finisterre migrations failed: ' . trim(Artisan::output()));
             });
-
-            // The followers table may be there now.
-            TaskFollowers::forgetTable();
         }
 
         rescue(SettingsConfig::seedMissing(...), report: false);

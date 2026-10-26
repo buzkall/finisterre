@@ -5,7 +5,6 @@ namespace Arzcode\Finisterre\Support;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Filament\Forms\Components\RichEditor;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
@@ -137,7 +136,7 @@ class EditorFiles
      */
     public static function columnExists(): bool
     {
-        return Schema::hasColumn(Typed::string(config('finisterre.table_name', 'finisterre_tasks')), self::COLUMN);
+        return ColumnExists::in(Typed::string(config('finisterre.table_name', 'finisterre_tasks')), self::COLUMN);
     }
 
     /**

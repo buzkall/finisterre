@@ -323,9 +323,9 @@ class TasksKanbanBoard extends BoardPage
         $onlyWithChanges = filter_var($this->taskFilters['filter_with_changes'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         return FinisterreTask::query()
-            // The card image is rendered on every card, so the relation comes along
-            // with the board query — the counts below are subqueries and load no rows.
-            ->with('coverMedia')
+            // The card image and the tags are rendered on every card, so the relations come
+            // along with the board query — the counts below are subqueries and load no rows.
+            ->with(['coverMedia', 'tags'])
             ->withCount([
                 'comments' => fn(Builder $q) => $q->where(fn(Builder $q) => $q->whereNull('scheduled_for')->orWhereNotNull('sent_at')),
                 'media',

@@ -18,6 +18,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class FinisterreTaskResource extends Resource
 {
@@ -77,6 +79,16 @@ class FinisterreTaskResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return TaskInfolist::configure($schema);
+    }
+
+    /**
+     * The task page shows the tags in its badges and in the modal that edits them.
+     *
+     * @return Builder<Model>
+     */
+    public static function getRecordRouteBindingEloquentQuery(): Builder
+    {
+        return parent::getRecordRouteBindingEloquentQuery()->with('tags');
     }
 
     public static function getPages(): array

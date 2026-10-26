@@ -27,7 +27,7 @@ class TaskCommentNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $task = $this->comment->task;
+        $task = $this->comment->task->loadMissing('tags');
         $history = $this->taskHistoryHtml($task, comment: $this->comment);
 
         $mail = $this->newMailMessage($task)
