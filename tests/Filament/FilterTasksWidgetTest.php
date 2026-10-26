@@ -4,6 +4,7 @@ use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Filament\Pages\TasksKanbanBoard;
 use Arzcode\Finisterre\Filament\Widgets\FilterTasksWidget;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
 
@@ -104,4 +105,25 @@ it('resets the changes toggle with the other filters', function() {
         ->set('filter_with_changes', true)
         ->call('resetFilters')
         ->assertSet('filter_with_changes', false);
+});
+
+it('offers only the users some task is assigned to as assignees, without loading the tasks', function() {
+    $assigned = User::factory()->create(['name' => 'Has Tasks']);
+    $idle = User::factory()->create(['name' => 'No Tasks']);
+
+    FinisterreTask::factory()->count(3)->create(['creator_id' => $assigned->id, 'assignee_id' => $assigned->id]);
+
+    $queries = [];
+    DB::listen(function($query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    $options = (fn() => $this->assigneeOptions())->call(new FilterTasksWidget);
+
+    expect($options)->toBe([(string)$assigned->id => 'Has Tasks'])
+        ->and($options)->not->toHaveKey((string)$idle->id)
+        // One query, on the users, with the tasks as a subquery.
+        ->and($queries)->toHaveCount(1)
+        ->and($queries[0])->toContain('from "users"')
+        ->and($queries[0])->toContain('select "assignee_id"');
 });

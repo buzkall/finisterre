@@ -11,7 +11,6 @@ use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Commands\UpdateCommand;
 use Arzcode\Finisterre\Controllers\FilamentRouteController;
 use Arzcode\Finisterre\Controllers\ResendInboundController;
-use Arzcode\Finisterre\Filament\Livewire\FilterTasks;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Models\FinisterreTask;
@@ -692,7 +691,6 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
         if (class_exists(Livewire::class)) {
             Livewire::component('finisterre-comments', FinisterreCommentsComponent::class);
-            Livewire::component('filter-tasks', FilterTasks::class);
             Livewire::component('finisterre-subtasks', FinisterreSubtasksComponent::class);
         }
 

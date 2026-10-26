@@ -11,7 +11,6 @@ use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
@@ -19,9 +18,6 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 
 /**
  * The create form is laid out like the task page it leads to: the title as
@@ -63,18 +59,9 @@ class Form
                     ->required()
                     ->helperText(fn() => $userIsReporterOnly ? __('finisterre::finisterre.priority_help') : ''),
 
-                Select::make('assignee_id')
+                UserPicker::make('assignee_id', fn() => UserModel::assignableQuery(), icon: Heroicon::OutlinedUser)
                     ->label(__('finisterre::finisterre.assignee_id'))
-                    ->prefixIcon(Heroicon::OutlinedUser)
                     ->required()
-                    ->relationship(
-                        'assignee',
-                        FinisterrePlugin::get()->getAuthUser()?->getUserNameColumn(),
-                        fn(Builder $query) => UserModel::scopeAssignable($query)
-                    )
-                    ->getOptionLabelFromRecordUsing(fn(Model $record) => UserModel::displayName($record))
-                    ->searchable(Typed::strings(Arr::wrap(config('finisterre.authenticatable_attribute', 'name'))))
-                    ->preload()
                     ->default(config('finisterre.fallback_notifiable_id'))
                     // Reporters could never assign their own issues.
                     ->hidden($userIsReporterOnly),
@@ -89,8 +76,6 @@ class Form
 
                 // The creator and the assignee follow the task anyway.
                 FollowersSelect::make()
-                    ->multiple()
-                    ->prefixIcon(Heroicon::OutlinedUserPlus)
                     ->hintIcon(Heroicon::OutlinedInformationCircle, __('finisterre::finisterre.followers.help_create'))
                     ->dehydrated(false)
                     ->saveRelationshipsUsing(fn(FinisterreTask $record, $state) => FollowersSelect::persistOnCreate($record, Typed::array($state)))

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\HasMedia;
@@ -22,8 +21,6 @@ use Throwable;
 class TaskFollowers
 {
     /** How many people the selects offer before anything is typed. */
-    private const int OPTIONS_LIMIT = 50;
-
     private const string MEMO = 'finisterre.followers.memo';
 
     /** Only ever remembered as true: a table that is there stays there. */
@@ -258,27 +255,15 @@ class TaskFollowers
     }
 
     /**
-     * Options for a select of people to add, keyed by id.
+     * The people who can be added, these left out.
      *
      * @param  list<int>  $except
-     * @return array<int|string, string>
+     * @return Builder<Model>
      */
-    public static function options(?string $search = null, array $except = []): array
+    public static function candidatesExcept(array $except = []): Builder
     {
-        $columns = Typed::strings(Arr::wrap(config('finisterre.authenticatable_attribute', 'name') ?? 'name'));
-
         return self::candidatesQuery()
-            ->when(filled($search), fn(Builder $query) => $query->where(function(Builder $query) use ($columns, $search): void {
-                foreach ($columns as $column) {
-                    $query->orWhere($column, 'like', '%' . $search . '%');
-                }
-            }))
-            ->when($except !== [], fn(Builder $query) => $query->whereKeyNot($except))
-            ->orderBy($columns[0] ?? 'name')
-            ->limit(self::OPTIONS_LIMIT)
-            ->get()
-            ->mapWithKeys(fn(Model $user): array => [Typed::string($user->getKey()) => UserModel::displayName($user)])
-            ->all();
+            ->when($except !== [], fn(Builder $query) => $query->whereKeyNot($except));
     }
 
     /**
@@ -288,9 +273,7 @@ class TaskFollowers
      */
     public static function hasCandidates(array $except = []): bool
     {
-        return self::candidatesQuery()
-            ->when($except !== [], fn(Builder $query) => $query->whereKeyNot($except))
-            ->exists();
+        return self::candidatesExcept($except)->exists();
     }
 
     /**

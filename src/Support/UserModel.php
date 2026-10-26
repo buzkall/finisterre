@@ -7,6 +7,7 @@ use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 
 class UserModel
@@ -51,6 +52,50 @@ class UserModel
         }
 
         return $query;
+    }
+
+    /**
+     * The users in a query as options, keyed by id and sorted by name.
+     *
+     * @param  Builder<Model>  $query
+     * @return array<string, string>
+     */
+    public static function options(Builder $query): array
+    {
+        // Qualified: a host's scope may join a table that has a column of the same name.
+        return $query
+            ->orderBy($query->qualifyColumn(self::nameColumns()[0]))
+            ->get()
+            ->pipe(self::toOptions(...));
+    }
+
+    /**
+     * Users as select options: their key and their label.
+     *
+     * @param  iterable<int|string, Model>  $users
+     * @return array<string, string>
+     */
+    public static function toOptions(iterable $users): array
+    {
+        return collect($users)
+            ->mapWithKeys(fn(Model $user): array => [Typed::string($user->getKey()) => self::label($user)])
+            ->all();
+    }
+
+    /**
+     * The display name, or the first name column for a model without FinisterreUserTrait.
+     */
+    public static function label(Model $user): string
+    {
+        return self::displayName($user) ?: Typed::string($user->getAttribute(self::nameColumns()[0]));
+    }
+
+    /**
+     * @return non-empty-list<string>
+     */
+    protected static function nameColumns(): array
+    {
+        return Typed::strings(Arr::wrap(config('finisterre.authenticatable_attribute', 'name') ?? 'name')) ?: ['name'];
     }
 
     /**

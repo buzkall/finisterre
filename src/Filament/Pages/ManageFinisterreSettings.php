@@ -5,6 +5,7 @@ namespace Arzcode\Finisterre\Filament\Pages;
 use Arzcode\Finisterre\Controllers\ResendInboundController;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas\UserPicker;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\BoardSlug;
@@ -28,8 +29,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -187,12 +186,9 @@ class ManageFinisterreSettings extends Page
                             ->columns(2)
                             ->columnSpanFull(),
 
-                        Select::make('fallback_notifiable_id')
+                        UserPicker::make('fallback_notifiable_id', fn() => UserModel::class()::query(), icon: Heroicon::OutlinedUser)
                             ->label(__('finisterre::finisterre.settings.fallback_notifiable_id'))
                             ->helperText(__('finisterre::finisterre.settings.fallback_notifiable_id_help'))
-                            ->options(fn(): array => $this->authenticatableOptions())
-                            ->searchable()
-                            ->preload()
                             ->columnSpanFull(),
 
                         TextInput::make('auto_archive_after_days')
@@ -464,23 +460,6 @@ class ManageFinisterreSettings extends Page
             ->title(__('finisterre::finisterre.settings.saved'))
             ->success()
             ->send();
-    }
-
-    /**
-     * @return array<int|string, string>
-     */
-    protected function authenticatableOptions(): array
-    {
-        $column = Typed::strings(Arr::wrap(config('finisterre.authenticatable_attribute', 'name')))[0] ?? 'name';
-
-        return UserModel::class()::query()
-            ->get()
-            ->mapWithKeys(fn(Model $user): array => [
-                Typed::string($user->getKey()) => method_exists($user, 'getUserDisplayName')
-                    ? UserModel::displayName($user)
-                    : Typed::string($user->getAttribute($column)),
-            ])
-            ->all();
     }
 
     protected function secretPlaceholder(string $name): ?string

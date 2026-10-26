@@ -9,6 +9,7 @@ use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Support\TaskFollowers;
+use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Tests\Support\AvatarUser;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -374,9 +375,8 @@ describe('the followers of the task page', function() {
 
         FinisterrePlugin::get()->modifyFollowersQueryUsing(fn(Builder $query) => $query->whereKeyNot($outsider->id));
 
-        expect(TaskFollowers::options())->toHaveKey((string)$staff->id)->not->toHaveKey((string)$outsider->id)
-            ->and(TaskFollowers::options('otto'))->toBe([])
-            ->and(TaskFollowers::options('sam', [$staff->id]))->toBe([]);
+        expect(UserModel::options(TaskFollowers::candidatesExcept()))->toHaveKey($staff->id)->not->toHaveKey($outsider->id)
+            ->and(UserModel::options(TaskFollowers::candidatesExcept([$staff->id])))->not->toHaveKey($staff->id);
 
         Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
             ->callAction(

@@ -154,7 +154,6 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->schema([
                 FollowersSelect::make('people', fn(): array => $this->notifyExcept())
                     ->hiddenLabel()
-                    ->multiple()
                     ->required(),
             ])
             ->action(function(array $data): void {

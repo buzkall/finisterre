@@ -2,6 +2,9 @@
 
 use Arzcode\Finisterre\Filament\Pages\ManageFinisterreSettings;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
+use Filament\Forms\Components\Field;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -241,3 +244,24 @@ it('saves a public https sms url', function() {
         ->call('save')
         ->assertHasNoErrors();
 });
+
+it('offers the fallback user as buttons while there are few users, and as a select after', function(int $others, string $field) {
+    $ana = User::factory()->create(['name' => 'Ana Torres']);
+    User::factory()->count($others)->create();
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->assertFormFieldExists('fallback_notifiable_id', function(Field $component) use ($ana, $field): bool {
+            expect($component)->toBeInstanceOf($field)
+                ->and($component->getOptions())->toHaveKey($ana->id, 'Ana Torres');
+
+            return true;
+        })
+        ->set('data.fallback_notifiable_id', $ana->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(app(FinisterreSettings::class)->fallback_notifiable_id)->toBe($ana->id);
+})->with([
+    'buttons' => [0, ToggleButtons::class],
+    'select'  => [6, Select::class],
+]);

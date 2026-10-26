@@ -14,7 +14,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Widgets\Widget;
-use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Url;
 
 /**
@@ -106,15 +105,7 @@ class FilterTasksWidget extends Widget implements HasForms
 
                     Select::make('filter_assignee')
                         ->label(__('finisterre::finisterre.filter.assignee'))
-                        ->options(
-                            fn() => FinisterreTask::query()
-                                ->distinct('assignee_id')
-                                ->with('assignee')
-                                ->get()
-                                ->map(fn(FinisterreTask $task) => $task->assignee)
-                                ->filter()
-                                ->mapWithKeys(fn(Model $assignee) => [Typed::string($assignee->getKey()) => UserModel::displayName($assignee)])
-                        )
+                        ->options(fn(): array => $this->assigneeOptions())
                         ->live()
                         ->afterStateUpdated(fn() => $this->dispatchFilters())
                         ->columnSpan(1),
@@ -136,6 +127,24 @@ class FilterTasksWidget extends Widget implements HasForms
                 ->columns(5)
                 ->compact(),
         ]);
+    }
+
+    /**
+     * The users some task is assigned to, which the user may see: the users
+     * themselves are asked for, not every task to read its assignee from.
+     *
+     * @return array<string, string>
+     */
+    protected function assigneeOptions(): array
+    {
+        $users = UserModel::class()::query();
+
+        return UserModel::toOptions($users
+            ->whereIn(
+                $users->qualifyColumn($users->getModel()->getKeyName()),
+                FinisterreTask::query()->select('assignee_id')->whereNotNull('assignee_id')
+            )
+            ->get());
     }
 
     public function resetFilters(): void
