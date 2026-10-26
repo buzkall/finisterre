@@ -221,6 +221,14 @@ describe('what a follower who cannot see all tasks gets', function() {
         expect(FinisterreTask::query()->count())->toBe(1);
     });
 
+    it('leaves a request without a user unrestricted when users only get their own tasks too', function() {
+        followedTask();
+        restrictTasks(ownTasks: true);
+        auth()->logout();
+
+        expect(FinisterreTask::query()->count())->toBe(1);
+    });
+
     it('lets them read and comment on a followed task, but not edit it', function() {
         $task = followedTask();
         $task->follow($this->user);

@@ -12,6 +12,7 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\TaskAccess;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
@@ -294,7 +295,7 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
             ->whereKey($id)
             ->first();
 
-        $user = auth()->guard(Typed::nullableString(config('finisterre.guard')))->user();
+        $user = TaskAccess::user();
 
         return $comment && $user?->can('update', $comment) ? $comment : null;
     }

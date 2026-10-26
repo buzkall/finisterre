@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Support\InboundEmail;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Support\TaskAccess;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
@@ -97,17 +98,8 @@ class InboundMessageHandler
             return false;
         }
 
-        $guard = auth()->guard();
-        $previous = $guard->user();
-
-        $guard->setUser($sender);
-
-        try {
-            return Gate::forUser($sender)->allows('view', $task)
-                && Gate::forUser($sender)->allows('create', FinisterreTaskComment::class);
-        } finally {
-            $previous instanceof Authenticatable ? $guard->setUser($previous) : $guard->forgetUser();
-        }
+        return TaskAccess::actingAs($sender, fn(): bool => Gate::forUser($sender)->allows('view', $task)
+            && Gate::forUser($sender)->allows('create', FinisterreTaskComment::class));
     }
 
     private function sender(?string $email, FinisterreTask $task): ?Model

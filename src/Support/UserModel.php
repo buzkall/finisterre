@@ -70,9 +70,7 @@ class UserModel
      */
     public static function authId(): ?int
     {
-        $id = auth()->id();
-
-        return $id === null ? null : (int)$id;
+        return Typed::nullableInt(TaskAccess::user()?->getAuthIdentifier());
     }
 
     /**

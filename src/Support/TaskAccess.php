@@ -4,8 +4,10 @@ namespace Arzcode\Finisterre\Support;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 
 /**
@@ -26,9 +28,54 @@ use Throwable;
 class TaskAccess
 {
     /**
+     * The guard of the panel Finisterre lives in, which may not be the application's default.
+     */
+    public static function guardName(): ?string
+    {
+        return Typed::nullableString(config('finisterre.guard'));
+    }
+
+    /**
+     * The signed-in user, on the panel's guard.
+     */
+    public static function user(): ?Authenticatable
+    {
+        return auth()->guard(self::guardName())->user();
+    }
+
+    /**
+     * Run the callback as this user, for code that has nobody signed in (a reply by
+     * email) and asks the same questions the app would. The panel's guard is also made
+     * the default for the length of it, since the plugin's callbacks and the policies a
+     * host writes ask auth() without naming a guard.
+     *
+     * @template TResult
+     *
+     * @param  Closure(): TResult  $callback
+     * @return TResult
+     */
+    public static function actingAs(Authenticatable $user, Closure $callback): mixed
+    {
+        $previousDefault = Auth::getDefaultDriver();
+        $guard = auth()->guard(self::guardName());
+        $previous = $guard->user();
+
+        $guard->setUser($user);
+        Auth::shouldUse(self::guardName() ?? $previousDefault);
+
+        try {
+            return $callback();
+        } finally {
+            Auth::shouldUse($previousDefault);
+            $previous instanceof Authenticatable ? $guard->setUser($previous) : $guard->forgetUser();
+        }
+    }
+
+    /**
      * Whether the signed-in user only gets the tasks they follow (and created).
-     * A request without a user is not restricted: there is nobody to follow
-     * anything, and a reply by email has to find its task.
+     * Nobody signed in is not restricted: a job, a command or a reply by email has
+     * nobody to follow anything, and hiding every task from it would break what it
+     * is there for.
      */
     public static function isRestricted(): bool
     {
@@ -38,7 +85,7 @@ class TaskAccess
             return false;
         }
 
-        return self::safely(fn(): bool => $plugin->canViewOnlyTheirTasks() || (auth()->check() && ! $plugin->canViewAllTasks()));
+        return self::safely(fn(): bool => self::user() instanceof Authenticatable && ($plugin->canViewOnlyTheirTasks() || ! $plugin->canViewAllTasks()));
     }
 
     /**
@@ -60,7 +107,7 @@ class TaskAccess
             return;
         }
 
-        $userId = auth()->id();
+        $userId = self::user()?->getAuthIdentifier();
 
         $query->where(fn(Builder $query) => $query
             ->whereIn($query->qualifyColumn($query->getModel()->getKeyName()), TaskFollowers::taskIds($userId))

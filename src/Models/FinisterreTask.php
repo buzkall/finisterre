@@ -78,11 +78,11 @@ class FinisterreTask extends Model implements HasMedia
 
     protected static function booted(): void
     {
-        // Only apply in the Filament context, not in queue/console
-        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
-            return;
-        }
-
+        // Registered everywhere, console and queue included: the observer gives a task its
+        // status, creator, fallback assignee, followers and notifications, which a task
+        // created by a command or a job needs as much as one created in the panel. The
+        // scope does nothing without a signed-in user (see TaskAccess).
+        //
         // Users who cannot see all tasks get the ones they follow, and the ones
         // they created when they are limited to their own (see TaskAccess).
         static::addGlobalScope('canViewOnlyTheirTasks', function(Builder $query): void {

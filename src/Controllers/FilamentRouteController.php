@@ -155,15 +155,14 @@ class FilamentRouteController extends Controller
 
     protected function authenticate(): Authenticatable
     {
-        $guard = Typed::nullableString(config('finisterre.guard'));
-        $user = auth()->guard($guard)->user();
+        $user = TaskAccess::user();
 
-        abort_if($user === null, 403);
+        abort_if(! $user instanceof Authenticatable, 403);
 
         // These routes are not panel routes, but what decides access is written for
         // one: the plugin's callbacks and the policies call auth()->user() and look
         // the plugin up on the current panel.
-        Auth::shouldUse($guard);
+        Auth::shouldUse(TaskAccess::guardName() ?? Auth::getDefaultDriver());
         rescue(fn() => Filament::setCurrentPanel(Filament::getPanel(Typed::string(config('finisterre.panel_slug')))), report: false);
 
         return $user;

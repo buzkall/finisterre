@@ -4,7 +4,7 @@ namespace Arzcode\Finisterre\Filament\Actions;
 
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
-use Arzcode\Finisterre\Support\Typed;
+use Arzcode\Finisterre\Support\TaskAccess;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
@@ -37,7 +37,7 @@ class DeleteCommentAction extends Action
                     ->where('task_id', $livewire->record?->getKey())
                     ->first();
 
-                if (! $comment || ! auth()->guard(Typed::nullableString(config('finisterre.guard')))->user()?->can('delete', $comment)) {
+                if (! $comment || ! TaskAccess::user()?->can('delete', $comment)) {
                     return;
                 }
 

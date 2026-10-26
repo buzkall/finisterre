@@ -14,6 +14,7 @@ use Arzcode\Finisterre\Support\InboundEmail\ReplyParser;
 use Arzcode\Finisterre\Support\InboundEmail\ReplyToken;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
@@ -380,4 +381,30 @@ describe('resend webhook', function() {
 
         postResendEvent($this->event)->assertNotFound();
     });
+});
+
+it('checks the sender on the configured guard and leaves the default guard alone', function() {
+    config([
+        'auth.guards.other'   => ['driver' => 'session', 'provider' => 'users'],
+        'auth.defaults.guard' => 'other',
+        'finisterre.guard'    => 'web',
+    ]);
+
+    $seen = [];
+    FinisterrePlugin::get()->userCanViewAllTasks(function() use (&$seen): bool {
+        $seen[] = [auth()->guard('web')->id(), auth()->guard('other')->id(), auth()->id(), Auth::getDefaultDriver()];
+
+        return true;
+    });
+
+    $comment = app(InboundMessageHandler::class)->handle(replyTo($this->task));
+
+    expect($comment)->not->toBeNull()
+        ->and($seen)->not->toBe([])
+        // The sender is on the configured guard, which is the default while the rules ask.
+        ->and($seen[0])->toBe([$this->assignee->id, null, $this->assignee->id, 'web'])
+        // And afterwards nobody is signed in anywhere and the default is the application's.
+        ->and(Auth::getDefaultDriver())->toBe('other')
+        ->and(auth()->guard('web')->check())->toBeFalse()
+        ->and(auth()->guard('other')->check())->toBeFalse();
 });
