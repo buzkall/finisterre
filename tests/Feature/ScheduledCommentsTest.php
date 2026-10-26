@@ -1,12 +1,17 @@
 <?php
 
 use Arzcode\Finisterre\Commands\DispatchScheduledCommentsCommand;
+use Arzcode\Finisterre\FinisterreServiceProvider;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
 use Arzcode\Finisterre\Notifications\TaskCommentNotification;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -420,4 +425,137 @@ it('isPending() returns false when there is no scheduled_for', function() {
     ]);
 
     expect($immediate->isPending())->toBeFalse();
+});
+
+it('claim() is won by one caller only', function() {
+    [$task, $creator] = makeTaskWithUsers();
+
+    $comment = $task->comments()->create([
+        'comment'       => '<p>due</p>',
+        'creator_id'    => $creator->id,
+        'scheduled_for' => now()->subMinute(),
+    ]);
+
+    $first = FinisterreTaskComment::find($comment->id);
+    $second = FinisterreTaskComment::find($comment->id);
+
+    expect($first->claim())->toBeTrue()
+        ->and($second->claim())->toBeFalse()
+        ->and($first->sent_at)->not->toBeNull()
+        ->and($comment->fresh()->sent_at)->not->toBeNull();
+});
+
+it('deliver() notifies nobody for a comment another run has claimed', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    $comment = $task->comments()->create([
+        'comment'         => '<p>due</p>',
+        'creator_id'      => $creator->id,
+        'scheduled_for'   => now()->subMinute(),
+        'notify_user_ids' => [$assignee->id],
+    ]);
+
+    $stale = FinisterreTaskComment::find($comment->id);
+    $comment->claim();
+
+    expect($stale->deliver())->toBeNull();
+    Notification::assertNothingSent();
+});
+
+it('dispatch command delivers a comment once when the command overlaps itself', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    $task->comments()->create([
+        'comment'         => '<p>due</p>',
+        'creator_id'      => $creator->id,
+        'scheduled_for'   => now()->subMinute(),
+        'notify_user_ids' => [$assignee->id],
+    ]);
+
+    // A second server loads the same comment before the first one has claimed it.
+    $loadedByTheOther = FinisterreTaskComment::query()->whereNull('sent_at')->get();
+
+    $this->artisan(DispatchScheduledCommentsCommand::class)->assertSuccessful();
+
+    foreach ($loadedByTheOther as $comment) {
+        expect($comment->claim())->toBeFalse();
+        $comment->deliver();
+    }
+
+    Notification::assertSentToTimes($assignee, TaskCommentNotification::class, 1);
+});
+
+it('deliver() stamps the comment and notifies the rest when one recipient fails', function() {
+    Exceptions::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+    $extra = User::factory()->create();
+
+    $dispatcher = Mockery::mock(Dispatcher::class);
+    $sentTo = [];
+    $dispatcher->shouldReceive('send')->andReturnUsing(function($user, $notification) use ($assignee, &$sentTo) {
+        if ($notification instanceof TaskCommentNotification && $user->is($assignee)) {
+            throw new RuntimeException('mail is down');
+        }
+
+        $sentTo[] = $user->id;
+    });
+    app()->instance(Dispatcher::class, $dispatcher);
+
+    $comment = $task->comments()->create([
+        'comment'         => '<p>due</p>',
+        'creator_id'      => $creator->id,
+        'scheduled_for'   => now()->subMinute(),
+        'notify_user_ids' => [$assignee->id, $extra->id],
+    ]);
+
+    $notified = $comment->deliver();
+
+    expect($comment->fresh()->sent_at)->not->toBeNull()
+        ->and($notified->pluck('id')->all())->toBe([$extra->id])
+        ->and($sentTo)->toContain($extra->id, $creator->id);
+    Exceptions::assertReported(RuntimeException::class);
+
+});
+
+it('hands a scheduled comment back for the next run when it fails before anybody is notified', function() {
+    Notification::fake();
+
+    [$task, $creator, $assignee] = makeTaskWithUsers();
+
+    $comment = $task->comments()->create([
+        'comment'       => '<p>due</p>',
+        'creator_id'    => $creator->id,
+        'scheduled_for' => now()->subMinute(),
+    ]);
+
+    // Looking the recipients up fails, so nobody has been told yet.
+    config(['finisterre.authenticatable' => 'Missing\\User']);
+
+    expect(fn() => FinisterreTaskComment::find($comment->id)->deliver())->toThrow(InvalidArgumentException::class)
+        ->and($comment->fresh()->sent_at)->toBeNull();
+
+    config(['finisterre.authenticatable' => User::class]);
+    $task->follow($assignee);
+
+    $this->artisan(DispatchScheduledCommentsCommand::class)->assertSuccessful();
+
+    expect($comment->fresh()->sent_at)->not->toBeNull();
+    Notification::assertSentTo($assignee, TaskCommentNotification::class);
+});
+
+it('schedules the package commands to run on one server', function() {
+    $schedule = new Schedule;
+    config(['finisterre.mail.inbound.enabled' => true, 'finisterre.mail.inbound.driver' => 'imap']);
+
+    (fn() => $this->registerSchedule($schedule))->call(new FinisterreServiceProvider(app()));
+
+    $events = collect($schedule->events());
+
+    expect($events)->toHaveCount(3)
+        ->and($events->every(fn($event) => $event->onOneServer))->toBeTrue();
 });

@@ -639,13 +639,17 @@ class FinisterreServiceProvider extends PackageServiceProvider
 
     protected function registerSchedule(Schedule $schedule): void
     {
+        // onOneServer() takes a cache lock (the host's cache must be shared by its servers),
+        // and the claim on each comment settles whatever still gets past it.
         $schedule->command('finisterre:dispatch-scheduled-comments')
             ->everyMinute()
+            ->onOneServer()
             ->withoutOverlapping();
 
         if (config('finisterre.mail.inbound.enabled') && config('finisterre.mail.inbound.driver') === 'imap') {
             $schedule->command('finisterre:fetch-emails')
                 ->everyMinute()
+                ->onOneServer()
                 ->withoutOverlapping();
         }
 
@@ -654,6 +658,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // a long-lived process holding the schedule.
         $schedule->command('finisterre:archive-done-tasks')
             ->daily()
+            ->onOneServer()
             ->withoutOverlapping();
     }
 

@@ -255,7 +255,8 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         } else {
             $comment->setRelation('task', $task);
             $comment->notify_user_ids = $notifyIds;
-            $notified = $comment->deliver();
+            // A comment saved a moment ago has nobody else to deliver it.
+            $notified = $comment->deliver() ?? new EloquentCollection;
             $comment->update(['notify_user_ids' => null]);
 
             $names = $notified->map(UserModel::displayName(...));

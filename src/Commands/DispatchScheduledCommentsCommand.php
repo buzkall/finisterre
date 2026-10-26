@@ -4,6 +4,7 @@ namespace Arzcode\Finisterre\Commands;
 
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Illuminate\Console\Command;
+use Throwable;
 
 class DispatchScheduledCommentsCommand extends Command
 {
@@ -19,11 +20,23 @@ class DispatchScheduledCommentsCommand extends Command
             ->with('task')
             ->get();
 
+        $dispatched = 0;
+
         foreach ($pending as $comment) {
-            $comment->deliver();
+            // deliver() claims the comment: a run that lost it to another server or
+            // an overlapping run gets null and skips it. One that fails before anybody
+            // was notified gives the claim back, so the next run delivers it, and this
+            // one goes on with the other comments.
+            try {
+                if ($comment->deliver() !== null) {
+                    $dispatched++;
+                }
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
 
-        $this->info("Dispatched {$pending->count()} scheduled comment(s).");
+        $this->info("Dispatched {$dispatched} scheduled comment(s).");
 
         return self::SUCCESS;
     }

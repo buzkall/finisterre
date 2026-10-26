@@ -22,6 +22,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Throwable;
 
 /**
  * @property int $id
@@ -87,51 +88,102 @@ class FinisterreTaskComment extends Model implements HasMedia
     }
 
     /**
-     * Send notifications, create taskChanges and stamp sent_at.
-     *
-     * @return Collection<int, Model>
+     * Mark the comment as sent, unless it already is. One conditional UPDATE decides, so
+     * two workers (or two servers) racing for the same comment cannot both win it: the
+     * one that gets true delivers it, the other must not.
      */
-    public function deliver(): Collection
+    public function claim(): bool
     {
+        $sentAt = now();
+
+        $claimed = static::query()
+            ->whereKey($this->getKey())
+            ->whereNull('sent_at')
+            ->update(['sent_at' => $sentAt]) === 1;
+
+        if ($claimed) {
+            $this->forceFill(['sent_at' => $sentAt])->syncOriginalAttribute('sent_at');
+            $this->touchOwners();
+        }
+
+        return $claimed;
+    }
+
+    /**
+     * Hand the comment back unsent, for the next run to deliver: what claim() did,
+     * undone.
+     */
+    protected function release(): void
+    {
+        static::query()->whereKey($this->getKey())->update(['sent_at' => null]);
+
+        $this->forceFill(['sent_at' => null])->syncOriginalAttribute('sent_at');
+    }
+
+    /**
+     * Send notifications and create taskChanges, once: the caller that wins claim()
+     * delivers, and any other gets null back. Until somebody has been notified a
+     * failure hands the claim back, so the comment is delivered on the next run.
+     * After that a recipient whose notification fails is reported and skipped,
+     * since retrying would notify everybody else a second time.
+     *
+     * @return Collection<int, Model>|null The people notified, or null when another caller delivers it
+     */
+    public function deliver(): ?Collection
+    {
+        if (! $this->claim()) {
+            return null;
+        }
+
         $wasScheduled = $this->scheduled_for !== null;
 
-        // A comment that names nobody goes to the task's followers, never back to
-        // its own author. An empty list is somebody's choice to notify no one.
-        $userIds = $this->notify_user_ids
-            ?? array_diff(TaskFollowers::ids($this->task), [$this->creator_id]);
+        try {
+            // A comment that names nobody goes to the task's followers, never back to
+            // its own author. An empty list is somebody's choice to notify no one.
+            $users = UserModel::class()::findMany(
+                $this->notify_user_ids ?? array_diff(TaskFollowers::ids($this->task), [$this->creator_id])
+            );
+        } catch (Throwable $throwable) {
+            $this->release();
 
-        $users = UserModel::class()::findMany($userIds);
-        foreach ($users as $user) {
-            UserModel::notify($user, new TaskCommentNotification($this));
-
-            Notification::make()
-                ->title(__(
-                    'finisterre::finisterre.comment_notification.subject',
-                    ['title' => $this->task->title]
-                ))
-                ->body(new HtmlString($this->comment))
-                ->actions([
-                    Action::make('view')
-                        ->label(__('finisterre::finisterre.comment_notification.cta'))
-                        ->button()
-                        ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this->task)),
-                ])
-                ->sendToDatabase($user);
-
-            if ($user->getKey() !== $this->creator_id) {
-                $this->task->taskChanges()->firstOrCreate(['user_id' => $user->getKey()]);
-            }
+            throw $throwable;
         }
 
-        $this->forceFill(['sent_at' => now()])->save();
+        // One recipient whose notification fails is reported, and the rest still get theirs.
+        $notified = $users->filter(fn(Model $user): bool => rescue(function() use ($user): bool {
+            $this->notifyUser($user);
 
-        if ($wasScheduled) {
-            if ($this->creator) {
-                UserModel::notify($this->creator, new ScheduledCommentSentNotification($this));
-            }
+            return true;
+        }, false))->values();
+
+        if ($wasScheduled && $this->creator) {
+            rescue(fn() => UserModel::notify($this->creator, new ScheduledCommentSentNotification($this)));
         }
 
-        return $users;
+        return $notified;
+    }
+
+    protected function notifyUser(Model $user): void
+    {
+        UserModel::notify($user, new TaskCommentNotification($this));
+
+        Notification::make()
+            ->title(__(
+                'finisterre::finisterre.comment_notification.subject',
+                ['title' => $this->task->title]
+            ))
+            ->body(new HtmlString((string)$this->comment))
+            ->actions([
+                Action::make('view')
+                    ->label(__('finisterre::finisterre.comment_notification.cta'))
+                    ->button()
+                    ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this->task)),
+            ])
+            ->sendToDatabase($user);
+
+        if ($user->getKey() !== $this->creator_id) {
+            $this->task->taskChanges()->firstOrCreate(['user_id' => $user->getKey()]);
+        }
     }
 
     protected function casts(): array
