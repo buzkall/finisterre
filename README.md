@@ -557,7 +557,7 @@ composer test
 
 ### Pre-push hook
 
-`composer ci:check` runs everything CI runs: Pint in check mode, PHPStan and the test suite. A tracked
+`composer ci:check` runs everything CI runs: a Rector dry run, Pint in check mode, PHPStan and the test suite. A tracked
 `.githooks/pre-push` runs it before every push so a red build never leaves your machine, and `composer install`
 points this clone at it (`core.hooksPath` is per clone and cannot be committed, so it is set from
 `.githooks/install.php`).

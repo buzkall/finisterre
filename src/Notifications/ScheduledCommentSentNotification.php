@@ -5,7 +5,6 @@ namespace Arzcode\Finisterre\Notifications;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
-use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -38,7 +37,7 @@ class ScheduledCommentSentNotification extends Notification implements ShouldQue
             ->line(new HtmlString($this->embedImages($this->comment->comment)))
             ->action(
                 __('finisterre::finisterre.scheduled_comment_sent.cta'),
-                route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $task)
+                $task->viewUrl()
             )
             ->salutation(' ');
 

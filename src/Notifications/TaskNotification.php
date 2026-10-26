@@ -78,7 +78,7 @@ class TaskNotification extends Notification implements ShouldQueue
             ->when($history, fn(MailMessage $mail) => $mail->line($history))
             ->action(
                 __('finisterre::finisterre.notification.cta'),
-                route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this->task)
+                $this->task->viewUrl()
             )
             ->salutation(' ');
 

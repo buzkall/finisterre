@@ -4,7 +4,6 @@ namespace Arzcode\Finisterre\Notifications;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
-use Arzcode\Finisterre\Support\Typed;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -43,10 +42,7 @@ class SubtaskChangesNotification extends Notification implements ShouldQueue
                 ->implode('') . '</ul>'))
             ->action(
                 __('finisterre::finisterre.subtask_changes.cta'),
-                route(
-                    'filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view',
-                    $this->task
-                )
+                $this->task->viewUrl()
             )
             ->salutation(' ');
     }

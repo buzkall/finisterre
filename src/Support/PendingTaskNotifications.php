@@ -132,7 +132,7 @@ class PendingTaskNotifications
                 Action::make('view')
                     ->label(__('finisterre::finisterre.comment_notification.cta'))
                     ->button()
-                    ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $task)),
+                    ->url($task->viewUrl()),
             ])->sendToDatabase($user);
     }
 }

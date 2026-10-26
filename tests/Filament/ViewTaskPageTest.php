@@ -10,6 +10,9 @@ use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
 use Filament\Actions\Testing\TestAction;
+use Filament\Forms\Components\Field;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
@@ -119,16 +122,69 @@ it('changes the priority from the dropdown', function() {
     expect($task->refresh()->priority)->toBe(TaskPriorityEnum::Urgent);
 });
 
-it('reassigns the task from the dropdown', function() {
+it('reassigns the task from the modal', function() {
     $task = pageTask();
     $other = User::factory()->create();
 
     Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
-        ->callAction(quickAction('assignee_' . $other->getKey()))
+        ->mountAction(quickAction('quick_assignee'))
+        ->assertActionDataSet(['assignee_id' => $this->user->getKey()])
+        ->callMountedAction()
+        ->assertHasNoFormErrors();
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->callAction(quickAction('quick_assignee'), ['assignee_id' => $other->getKey()])
+        ->assertHasNoFormErrors()
         ->assertSee($other->getUserDisplayName());
 
     expect($task->refresh()->assignee_id)->toBe($other->getKey());
 });
+
+it('offers the assignees as buttons while there are few, and as a select after', function(int $others, string $field) {
+    $task = pageTask();
+    $ana = User::factory()->create(['name' => 'Ana Torres']);
+    User::factory()->count($others)->create();
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->mountAction(quickAction('quick_assignee'))
+        ->assertSchemaComponentExists('assignee_id', 'mountedActionSchema0', function(Field $component) use ($ana, $field): bool {
+            expect($component)->toBeInstanceOf($field)
+                ->and($component->getOptions())->toHaveKey($ana->id, 'Ana Torres');
+
+            return true;
+        });
+})->with([
+    'buttons' => [3, ToggleButtons::class],
+    'select'  => [4, Select::class],
+]);
+
+it('does not assign a user who cannot be assigned', function() {
+    $task = pageTask();
+    $inactive = User::factory()->create();
+    config(['finisterre.authenticatable_filter_column' => 'name', 'finisterre.authenticatable_filter_value' => 'nobody']);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->callAction(quickAction('quick_assignee'), ['assignee_id' => $inactive->getKey()])
+        // Told why, instead of the modal closing with nothing changed.
+        ->assertHasFormErrors(['assignee_id']);
+
+    expect($task->refresh()->assignee_id)->toBe($this->user->getKey());
+});
+
+it('keeps an assignee who can no longer be assigned when the field is saved unchanged', function(int $assignable) {
+    $task = pageTask();
+    config(['finisterre.authenticatable_filter_column' => 'name', 'finisterre.authenticatable_filter_value' => 'nobody']);
+    User::factory()->count($assignable)->create(['name' => 'nobody']);
+
+    Livewire::test(ViewFinisterreTask::class, ['record' => $task->getKey()])
+        ->callAction(quickAction('quick_assignee'), ['assignee_id' => $this->user->getKey()])
+        ->assertHasNoFormErrors();
+
+    expect($task->refresh()->assignee_id)->toBe($this->user->getKey());
+})->with([
+    'buttons' => [0],
+    'select'  => [6],
+]);
 
 it('sets the due date from the modal', function() {
     $task = pageTask();

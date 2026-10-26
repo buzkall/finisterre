@@ -155,10 +155,7 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
                 Action::make('view')
                     ->label(__('finisterre::finisterre.subtask_changes.cta'))
                     ->button()
-                    ->url(route(
-                        'filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view',
-                        $task
-                    )),
+                    ->url($task->viewUrl()),
             ])
             ->sendToDatabase($assignee);
 

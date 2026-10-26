@@ -5,6 +5,8 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 use Arzcode\Finisterre\Contracts\FinisterreReportable;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
+use Arzcode\Finisterre\Filament\Actions\QuickAssigneeAction;
+use Arzcode\Finisterre\Filament\Actions\QuickFollowersAction;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\ViewFinisterreTask;
 use Arzcode\Finisterre\FinisterrePlugin;
@@ -12,15 +14,12 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
-use Arzcode\Finisterre\Support\UserModel;
-use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Flex;
@@ -30,7 +29,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -157,8 +155,7 @@ class Infolist
             ->map(fn(TaskStatusEnum $status): Action => Action::make('status_' . $status->value)
                 ->label($status->getLabel())
                 ->icon(fn(FinisterreTask $record) => $record->status === $status ? Heroicon::Check : null)
-                ->action(fn(FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
-                    $livewire,
+                ->action(fn(FinisterreTask $record, ViewFinisterreTask $livewire) => $livewire->applyQuickUpdate(
                     fn() => $record->update(['status' => $status])
                 )))
             ->all();
@@ -168,20 +165,8 @@ class Infolist
                 ->label($priority->getLabel())
                 ->color($priority->getColor())
                 ->icon(fn(FinisterreTask $record) => $record->priority === $priority ? Heroicon::Check : null)
-                ->action(fn(FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
-                    $livewire,
+                ->action(fn(FinisterreTask $record, ViewFinisterreTask $livewire) => $livewire->applyQuickUpdate(
                     fn() => $record->update(['priority' => $priority])
-                )))
-            ->all();
-
-        $assigneeActions = UserModel::assignableQuery()
-            ->get()
-            ->map(fn(Model $user): Action => Action::make('assignee_' . Typed::string($user->getKey()))
-                ->label(UserModel::displayName($user))
-                ->icon(fn(FinisterreTask $record) => $record->assignee_id === $user->getKey() ? Heroicon::Check : null)
-                ->action(fn(FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
-                    $livewire,
-                    fn() => $record->update(['assignee_id' => $user->getKey()])
                 )))
             ->all();
 
@@ -206,15 +191,7 @@ class Infolist
                 ->tooltip(__('finisterre::finisterre.priority'))
                 ->dropdownPlacement('bottom-start'),
 
-            ActionGroup::make($assigneeActions)
-                ->record($bindRecord)
-                ->badge()
-                ->color('gray')
-                ->icon(Heroicon::OutlinedUser)
-                ->label(fn(FinisterreTask $record) => $record->assigneeName() ?? __('finisterre::finisterre.unassigned'))
-                ->tooltip(__('finisterre::finisterre.assignee_id'))
-                ->dropdownPlacement('bottom-start')
-                ->dropdownWidth(Width::ExtraSmall)
+            QuickAssigneeAction::make()
                 // Reporters could never reassign on the form either.
                 ->hidden($userIsReporterOnly),
 
@@ -226,7 +203,7 @@ class Infolist
                 ->label(fn(FinisterreTask $record) => __('finisterre::finisterre.created_by') . ': ' . $record->creatorName())
                 ->extraAttributes(['style' => 'pointer-events: none']),
 
-            self::followersAction(),
+            QuickFollowersAction::make(),
 
             Action::make('quick_due_at')
                 ->badge()
@@ -241,8 +218,7 @@ class Infolist
                     DatePicker::make('due_at')
                         ->label(__('finisterre::finisterre.due_at')),
                 ])
-                ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
-                    $livewire,
+                ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => $livewire->applyQuickUpdate(
                     fn() => $record->update(['due_at' => $data['due_at'] ?? null])
                 ))
                 ->hidden($userIsReporterOnly),
@@ -261,8 +237,7 @@ class Infolist
                 ->schema([
                     TagsSelect::make(),
                 ])
-                ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
-                    $livewire,
+                ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => $livewire->applyQuickUpdate(
                     fn() => TagsSelect::persist($record, Typed::ids($data['tags'] ?? []))
                 )),
 
@@ -292,7 +267,7 @@ class Infolist
                 // The upload field writes the media itself while the modal is
                 // submitted, so there is nothing left to persist here: this only
                 // reloads what the page shows.
-                ->action(fn(ViewFinisterreTask $livewire) => self::apply($livewire)),
+                ->action(fn(ViewFinisterreTask $livewire) => $livewire->applyQuickUpdate()),
 
             // The counter follows the checklist as it changes (see the view).
             Action::make('quick_subtasks')
@@ -312,36 +287,6 @@ class Infolist
     }
 
     /**
-     * The followers as a stack of avatars, next to the assignee. One modal for both
-     * directions: the field starts with the task's followers, and what it holds
-     * when saved is who follows from then on.
-     */
-    protected static function followersAction(): Action
-    {
-        return Action::make('quick_followers')
-            ->badge()
-            ->color('gray')
-            ->icon(Heroicon::OutlinedUserPlus)
-            ->label(fn(FinisterreTask $record): HtmlString => new HtmlString(
-                view('finisterre::tasks.followers', ['followers' => TaskFollowers::users($record)])->render()
-            ))
-            ->tooltip(__('finisterre::finisterre.followers.manage'))
-            ->visible(fn(): bool => TaskFollowers::available())
-            ->modalHeading(__('finisterre::finisterre.followers.label'))
-            ->modalDescription(__('finisterre::finisterre.followers.help'))
-            ->modalWidth(Width::Medium)
-            ->modalSubmitActionLabel(__('finisterre::finisterre.save'))
-            ->fillForm(fn(FinisterreTask $record) => ['followers' => TaskFollowers::ids($record)])
-            ->schema([
-                FollowersSelect::make()->multiple(),
-            ])
-            ->action(fn(array $data, FinisterreTask $record, ViewFinisterreTask $livewire) => self::apply(
-                $livewire,
-                fn() => FollowersSelect::persist($record, Typed::array($data['followers'] ?? []))
-            ));
-    }
-
-    /**
      * The editor leaves empty paragraphs behind when its text is deleted, so the
      * markup alone says nothing: there has to be text, or an image.
      */
@@ -351,21 +296,5 @@ class Infolist
 
         return str_contains($description, '<img')
             || trim(html_entity_decode(strip_tags($description)), " \t\n\r\0\x0B\u{A0}") !== '';
-    }
-
-    protected static function apply(ViewFinisterreTask $livewire, ?Closure $persist = null): void
-    {
-        // Actions whose field persists on its own (the attachments upload) pass
-        // nothing and only need the refresh below.
-        if ($persist instanceof Closure) {
-            $persist();
-        }
-
-        $livewire->refreshRecord();
-
-        Notification::make()
-            ->title(__('finisterre::finisterre.quick_update.saved'))
-            ->success()
-            ->send();
     }
 }

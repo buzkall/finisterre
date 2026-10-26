@@ -286,6 +286,14 @@ class FinisterreTask extends Model implements HasMedia
     }
 
     /**
+     * The task page in the plugin's panel, for links in emails and panel notifications.
+     */
+    public function viewUrl(): string
+    {
+        return route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this);
+    }
+
+    /**
      * What to render as the task's card image, or null when it has none.
      *
      * The thumbnail is sized for a 300px board card and a table cell. Anything wider,

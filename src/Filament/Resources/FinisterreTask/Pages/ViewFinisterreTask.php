@@ -8,6 +8,7 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
 use Arzcode\Finisterre\Support\UserModel;
+use Closure;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
@@ -92,14 +93,7 @@ class ViewFinisterreTask extends ViewRecord
             );
         }
 
-        $this->record->update(['cover_media_id' => $mediaId]);
-
-        $this->refreshRecord();
-
-        Notification::make()
-            ->title(__('finisterre::finisterre.quick_update.saved'))
-            ->success()
-            ->send();
+        $this->applyQuickUpdate(fn() => $this->record->update(['cover_media_id' => $mediaId]));
     }
 
     /**
@@ -138,14 +132,7 @@ class ViewFinisterreTask extends ViewRecord
             ->first(fn(Media $media): bool => $media->getCustomProperty(FinisterreTask::COVER_SOURCE_PROPERTY) === $file)
             ?? $this->copyEditorImage($task, $file);
 
-        $task->update(['cover_media_id' => $media->getKey()]);
-
-        $this->refreshRecord();
-
-        Notification::make()
-            ->title(__('finisterre::finisterre.quick_update.saved'))
-            ->success()
-            ->send();
+        $this->applyQuickUpdate(fn() => $task->update(['cover_media_id' => $media->getKey()]));
     }
 
     /**
@@ -165,6 +152,20 @@ class ViewFinisterreTask extends ViewRecord
         $media
             ->setCustomProperty(FinisterreTask::COVER_POSITION_PROPERTY, round(max(0, min(100, $position)), 2))
             ->save();
+
+        $this->applyQuickUpdate();
+    }
+
+    /**
+     * What every change made in place ends with: the record reloaded and a saved
+     * notification. Changes whose field persists on its own (the attachments upload)
+     * pass nothing and only need the refresh.
+     */
+    public function applyQuickUpdate(?Closure $persist = null): void
+    {
+        if ($persist instanceof Closure) {
+            $persist();
+        }
 
         $this->refreshRecord();
 

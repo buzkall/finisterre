@@ -177,7 +177,7 @@ class FinisterreTaskComment extends Model implements HasMedia
                 Action::make('view')
                     ->label(__('finisterre::finisterre.comment_notification.cta'))
                     ->button()
-                    ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $this->task)),
+                    ->url($this->task->viewUrl()),
             ])
             ->sendToDatabase($user);
 
