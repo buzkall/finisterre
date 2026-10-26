@@ -14,6 +14,7 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\PanelLabel;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use BackedEnum;
+use Closure;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -89,6 +90,37 @@ class FinisterreTaskResource extends Resource
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()->with('tags');
+    }
+
+    /**
+     * A segment that cannot be a key is a missing record, not a query. On PostgreSQL
+     * a non-numeric `/finisterre-tasks/settings` against a bigint key throws
+     * "invalid input syntax for type bigint" and answers 500 instead of 404
+     * (laravel/framework#42786), and so does a number past the integer range.
+     */
+    public static function resolveRecordRouteBinding(int|string $key, ?Closure $modifyQuery = null): ?Model
+    {
+        $class = static::getModel();
+        $model = new $class;
+
+        $bindsByKey = static::getRecordRouteKeyName() === null || static::getRecordRouteKeyName() === $model->getKeyName();
+
+        if ($bindsByKey && in_array($model->getKeyType(), ['int', 'integer'], true) && ! static::isIntegerKey($key)) {
+            return null;
+        }
+
+        return parent::resolveRecordRouteBinding($key, $modifyQuery);
+    }
+
+    protected static function isIntegerKey(int|string $key): bool
+    {
+        if (is_int($key)) {
+            return $key >= 0;
+        }
+
+        // Leading zeros are trimmed first: FILTER_VALIDATE_INT reads them as octal
+        // and refuses them. It refuses anything past PHP_INT_MAX too.
+        return ctype_digit($key) && filter_var(ltrim($key, '0') ?: '0', FILTER_VALIDATE_INT) !== false;
     }
 
     public static function getPages(): array
