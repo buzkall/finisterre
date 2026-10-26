@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Filament\Actions;
 
+use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
@@ -26,12 +27,16 @@ class EditCommentAction extends Action
             ->icon('heroicon-s-pencil')
             ->color('warning')
             ->modalHeading(__('finisterre::finisterre.comments.edit_heading'))
-            ->fillForm(function(array $arguments): array {
-                $comment = FinisterreTaskComment::whereKey($arguments['comment_id'])->first();
+            ->fillForm(function(array $arguments, FinisterreCommentsComponent $livewire): array {
+                $comment = $livewire->findEditableComment($arguments['comment_id'] ?? null);
+
+                if (! $comment instanceof FinisterreTaskComment) {
+                    return [];
+                }
 
                 return [
-                    'comment'       => $comment?->comment,
-                    'scheduled_for' => $comment?->scheduled_for,
+                    'comment' => $comment->comment,
+                    ...(FinisterrePlugin::get()->canScheduleComments() ? ['scheduled_for' => $comment->scheduled_for] : []),
                 ];
             })
             ->schema([
@@ -51,16 +56,18 @@ class EditCommentAction extends Action
                     ->seconds(false)
                     ->minDate(today()),
             ])
-            ->action(function(array $arguments, array $data) {
-                $comment = FinisterreTaskComment::whereKey($arguments['comment_id'])->first();
+            ->action(function(array $arguments, array $data, FinisterreCommentsComponent $livewire) {
+                $comment = $livewire->findEditableComment($arguments['comment_id'] ?? null);
 
-                if (! $comment || ! auth()->user()?->can('update', $comment)) {
+                if (! $comment instanceof FinisterreTaskComment) {
                     return;
                 }
 
+                // The schedule field is left out of the form when the user cannot schedule
+                // comments, and then the comment keeps the schedule it has.
                 $comment->update([
-                    'comment'       => $data['comment'],
-                    'scheduled_for' => $data['scheduled_for'],
+                    'comment' => $data['comment'],
+                    ...(array_key_exists('scheduled_for', $data) ? ['scheduled_for' => $data['scheduled_for']] : []),
                 ]);
 
                 Notification::make()

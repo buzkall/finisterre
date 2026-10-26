@@ -279,6 +279,26 @@ class FinisterreCommentsComponent extends Component implements HasActions, HasFo
         }
     }
 
+    /**
+     * A comment of the task on screen that the user can see and the policy lets them
+     * update. The id comes from the browser: any other id finds nothing.
+     */
+    public function findEditableComment(mixed $id): ?FinisterreTaskComment
+    {
+        if (! $this->record instanceof FinisterreTask || ! is_int($id) && ! is_string($id)) {
+            return null;
+        }
+
+        $comment = $this->record->comments()
+            ->visibleTo(UserModel::authId())
+            ->whereKey($id)
+            ->first();
+
+        $user = auth()->guard(Typed::nullableString(config('finisterre.guard')))->user();
+
+        return $comment && $user?->can('update', $comment) ? $comment : null;
+    }
+
     public function postponeCommentAction(): Action
     {
         return PostponeCommentAction::make();
