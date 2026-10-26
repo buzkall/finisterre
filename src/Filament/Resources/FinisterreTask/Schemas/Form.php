@@ -7,6 +7,7 @@ use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\AttachmentsDisk;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Filament\Forms\Components\RichEditor;
@@ -24,7 +25,7 @@ use Illuminate\Support\Arr;
 
 /**
  * The create form is laid out like the task page it leads to: the title as
- * heading, a row of coloured selectors for priority, assignee and tags
+ * heading, coloured selectors for priority, assignee, tags and followers
  * where the page shows its badges, then the description and attachments.
  *
  * On edit only the long-form fields (title, description, attachments) remain:
@@ -36,6 +37,11 @@ class Form
     public static function configure(Schema $schema): Schema
     {
         $userIsReporterOnly = FinisterrePlugin::get()->canViewOnlyTheirTasks();
+        $hasFollowers = TaskFollowers::available();
+
+        // Four selectors make two rows of two: a row of four leaves the priority
+        // buttons no room. Three or fewer share one row.
+        $selectors = 2 + ($userIsReporterOnly ? 0 : 1) + ($hasFollowers ? 1 : 0);
 
         return $schema->components([
             TextInput::make('title')
@@ -80,9 +86,17 @@ class Form
                     ->saveRelationshipsUsing(function(FinisterreTask $record, $state): void {
                         $record->tags()->sync(Typed::array($state));
                     }),
+
+                // The creator and the assignee follow the task anyway.
+                FollowersSelect::make()
+                    ->multiple()
+                    ->prefixIcon(Heroicon::OutlinedUserPlus)
+                    ->hintIcon(Heroicon::OutlinedInformationCircle, __('finisterre::finisterre.followers.help_create'))
+                    ->dehydrated(false)
+                    ->saveRelationshipsUsing(fn(FinisterreTask $record, $state) => FollowersSelect::persistOnCreate($record, Typed::array($state)))
+                    ->visible($hasFollowers),
             ])
-                // Two columns for a reporter, whose row has no assignee in it.
-                ->columns($userIsReporterOnly ? 2 : 3)
+                ->columns($selectors === 4 ? 2 : $selectors)
                 ->columnSpanFull()
                 ->hiddenOn('edit'),
 

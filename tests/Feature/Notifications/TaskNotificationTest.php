@@ -4,6 +4,7 @@ use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\TaskNotification;
+use Arzcode\Finisterre\Notifications\TaskSmsNotification;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -197,16 +198,14 @@ it('can build mail message for updated task', function() {
 });
 
 it('does not send sms notification when disabled', function() {
+    Http::fake();
     config(['finisterre.sms_notification.enabled' => false]);
 
-    $task = FinisterreTask::factory()->create();
-    $notification = new TaskNotification($task);
-    $user = User::factory()->create();
+    $task = FinisterreTask::factory()->create(['priority' => TaskPriorityEnum::Urgent]);
 
-    // This should not throw an exception
-    $notification->toSms($user);
+    (new TaskSmsNotification($task))->toSms(User::factory()->create());
 
-    expect(true)->toBeTrue();
+    Http::assertNothingSent();
 });
 
 it('does not send sms notification for non-urgent tasks', function() {
@@ -215,17 +214,15 @@ it('does not send sms notification for non-urgent tasks', function() {
         'finisterre.sms_notification.notify_priorities' => [TaskPriorityEnum::Urgent],
     ]);
 
+    Http::fake();
+
     $task = FinisterreTask::factory()->create([
         'priority' => TaskPriorityEnum::Low,
     ]);
-    $task->wasRecentlyCreated = true;
-    $notification = new TaskNotification($task);
-    $user = User::factory()->create();
 
-    // This should not send SMS
-    $notification->toSms($user);
+    (new TaskSmsNotification($task))->toSms(User::factory()->create());
 
-    expect(true)->toBeTrue();
+    Http::assertNothingSent();
 });
 
 it('includes the task creator in the sms text', function() {
@@ -243,9 +240,8 @@ it('includes the task creator in the sms text', function() {
         'priority'   => TaskPriorityEnum::Urgent,
         'creator_id' => $creator->id,
     ]);
-    $task->wasRecentlyCreated = true;
 
-    (new TaskNotification($task))->toSms(User::factory()->create());
+    (new TaskSmsNotification($task))->toSms(User::factory()->create());
 
     Http::assertSent(function(Request $request) use ($task) {
         return str_contains($request->url(), 'api.smsarena.es')
@@ -264,9 +260,8 @@ it('sends the sms only once when the request succeeds', function() {
     ]);
 
     $task = FinisterreTask::factory()->create(['priority' => TaskPriorityEnum::Urgent]);
-    $task->wasRecentlyCreated = true;
 
-    (new TaskNotification($task))->toSms(User::factory()->create());
+    (new TaskSmsNotification($task))->toSms(User::factory()->create());
 
     Http::assertSentCount(1);
 });

@@ -3,7 +3,7 @@
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
-use Arzcode\Finisterre\Notifications\TaskNotification;
+use Arzcode\Finisterre\Notifications\TaskSmsNotification;
 use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\SafeUrl;
 use Arzcode\Finisterre\Support\SettingsConfig;
@@ -93,10 +93,7 @@ it('does not send the gateway key to an address that is not a public https one',
         'finisterre.sms_notification.auth_key'          => 'top-secret',
     ]);
 
-    $task = smsTask();
-    $task->wasRecentlyCreated = true;
-
-    (new TaskNotification($task))->toSms(User::factory()->create());
+    (new TaskSmsNotification(smsTask()))->toSms(User::factory()->create());
 
     Http::assertNothingSent();
     Exceptions::assertReported(RuntimeException::class);
@@ -111,10 +108,7 @@ function sendSmsTo(string $url): void
         'finisterre.sms_notification.auth_key'          => 'top-secret',
     ]);
 
-    $task = smsTask();
-    $task->wasRecentlyCreated = true;
-
-    (new TaskNotification($task))->toSms(User::factory()->create());
+    (new TaskSmsNotification(smsTask()))->toSms(User::factory()->create());
 }
 
 it('does not follow a redirect from the sms gateway', function() {

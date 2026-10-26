@@ -3,6 +3,7 @@
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Schemas;
 
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\PendingTaskNotifications;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
@@ -50,6 +51,22 @@ class FollowersSelect
 
         $record->unfollow(array_diff($current, $wanted));
         $record->follow(TaskFollowers::onlyCandidates(array_values(array_diff($wanted, $current))));
+    }
+
+    /**
+     * The followers picked while creating a task. The creator and the assignee follow
+     * it already; anybody else picked hears about the new task with its assignee, in
+     * the notification sent after the response, so the attachments saved after this
+     * field are listed in the email.
+     *
+     * @param  array<mixed>  $ids
+     */
+    public static function persistOnCreate(FinisterreTask $record, array $ids): void
+    {
+        $added = TaskFollowers::onlyCandidates(TaskFollowers::normalize($ids));
+        $record->follow($added);
+
+        PendingTaskNotifications::current()->addRecipients($record, $added);
     }
 
     /**

@@ -4,12 +4,10 @@ namespace Arzcode\Finisterre\Observers;
 
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
-use Arzcode\Finisterre\Notifications\TaskNotification;
 use Arzcode\Finisterre\Support\EditorFiles;
+use Arzcode\Finisterre\Support\PendingTaskNotifications;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 
 class FinisterreTaskObserver
@@ -98,30 +96,9 @@ class FinisterreTaskObserver
             return;
         }
 
-        defer(function() use ($task) {
-            $assignee = $task->assignee;
-
-            // don't notify myself, and don't notify when task is moved to done
-            if ($assignee && $assignee->getKey() !== auth()->id() && $task->status !== TaskStatusEnum::Done) {
-                $taskChanges = $task->getChanges();
-                UserModel::notify($assignee, new TaskNotification($task, $taskChanges));
-
-                Notification::make()
-                    ->title(__(
-                        'finisterre::finisterre.notification.subject',
-                        ['priority' => $task->priority->getLabel(), 'title' => $task->title]
-                    ))
-                    ->body(empty($taskChanges) ?
-                        __('finisterre::finisterre.notification.greeting_new', ['title' => $task->title]) :
-                        __('finisterre::finisterre.notification.greeting_changes', ['title' => $task->title]))
-                    ->actions([
-                        Action::make('view')
-                            ->label(__('finisterre::finisterre.comment_notification.cta'))
-                            ->button()
-                            ->url(route('filament.' . Typed::string(config('finisterre.panel_slug')) . '.resources.finisterre-tasks.view', $task)),
-                    ])->sendToDatabase($assignee);
-            }
-        });
+        // The changes are read now, not when the notification is sent after the
+        // response: a second save in the same request would otherwise replace them.
+        PendingTaskNotifications::current()->add($task, $task->getChanges());
     }
 
     /**

@@ -115,12 +115,13 @@ return [
         'reset'            => 'Resetear filtros'
     ],
     'followers' => [
-        'label'  => 'Seguidores',
-        'one'    => 'Seguidor',
-        'empty'  => 'Sin seguidores',
-        'manage' => 'Añadir o quitar seguidores',
-        'add'    => 'Busca una persona…',
-        'help'   => 'Los seguidores reciben una notificación de los comentarios nuevos. Un seguidor que no puede ver todas las tareas puede abrir esta para leerla y comentar, pero no editarla.',
+        'label'       => 'Seguidores',
+        'one'         => 'Seguidor',
+        'empty'       => 'Sin seguidores',
+        'manage'      => 'Añadir o quitar seguidores',
+        'add'         => 'Busca una persona…',
+        'help'        => 'Los seguidores reciben una notificación de los comentarios nuevos. Un seguidor que no puede ver todas las tareas puede abrir esta para leerla y comentar, pero no editarla.',
+        'help_create' => 'Los seguidores reciben un aviso de cada comentario nuevo, y quien añadas aquí también de esta tarea nueva. Tú y el asignado ya la seguís.',
     ],
     'subtasks' => [
         'label'       => 'Subtareas',

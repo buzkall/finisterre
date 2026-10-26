@@ -6,7 +6,6 @@ use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Notifications\Concerns\EmbedsPrivateImages;
 use Arzcode\Finisterre\Notifications\Concerns\RendersTaskHistory;
 use Arzcode\Finisterre\Notifications\Concerns\UsesFinisterreMailLayout;
-use Arzcode\Finisterre\Support\SmsGateway;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use DateTimeInterface;
@@ -22,18 +21,15 @@ class TaskNotification extends Notification implements ShouldQueue
 {
     use EmbedsPrivateImages, Queueable, RendersTaskHistory, UsesFinisterreMailLayout;
 
-    protected bool $wasRecentlyCreated = false;
-
-    /** @param  array<string, mixed>  $taskChanges */
-    public function __construct(public FinisterreTask $task, public array $taskChanges = [])
-    {
-        $this->wasRecentlyCreated = $task->wasRecentlyCreated;
-    }
+    /**
+     * @param  array<string, mixed>  $taskChanges
+     */
+    public function __construct(public FinisterreTask $task, public array $taskChanges = []) {}
 
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['mail', SMSChannel::class];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -162,31 +158,5 @@ class TaskNotification extends Notification implements ShouldQueue
         $user = UserModel::class()::query()->whereKey($id)->first();
 
         return $user ? UserModel::displayName($user) : 'N/A';
-    }
-
-    public function toSms(object $notifiable): void
-    {
-        if (config('finisterre.sms_notification.enabled') === false) {
-            return;
-        }
-
-        if (! in_array($this->task->priority, Typed::array(config('finisterre.sms_notification.notify_priorities')))) {
-            return;
-        }
-
-        // only notify on creation
-        // using a queue, can't use $this->task->wasRecentlyCreated because will always be false
-        if (! $this->wasRecentlyCreated) {
-            return;
-        }
-
-        SmsGateway::send(
-            $this->task->id . '_' . now()->timestamp,
-            __('finisterre::finisterre.notification.sms', [
-                'priority' => $this->task->priority->getLabel(),
-                'title'    => $this->task->title,
-                'creator'  => $this->task->creatorName(),
-            ])
-        );
     }
 }

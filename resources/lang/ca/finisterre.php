@@ -115,12 +115,13 @@ return [
         'reset'            => 'Restablir filtres'
     ],
     'followers' => [
-        'label'  => 'Seguidors',
-        'one'    => 'Seguidor',
-        'empty'  => 'Sense seguidors',
-        'manage' => 'Afegeix o treu seguidors',
-        'add'    => 'Cerca una persona…',
-        'help'   => 'Els seguidors reben una notificació dels comentaris nous. Un seguidor que no pot veure totes les tasques pot obrir aquesta per llegir-la i comentar, però no editar-la.',
+        'label'       => 'Seguidors',
+        'one'         => 'Seguidor',
+        'empty'       => 'Sense seguidors',
+        'manage'      => 'Afegeix o treu seguidors',
+        'add'         => 'Cerca una persona…',
+        'help'        => 'Els seguidors reben una notificació dels comentaris nous. Un seguidor que no pot veure totes les tasques pot obrir aquesta per llegir-la i comentar, però no editar-la.',
+        'help_create' => 'Els seguidors reben un avís de cada comentari nou, i qui afegeixis aquí també d\'aquesta tasca nova. Tu i l\'assignat ja la seguiu.',
     ],
     'subtasks' => [
         'label'       => 'Subtasques',
