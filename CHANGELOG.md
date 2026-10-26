@@ -2,10 +2,62 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
-## 4.13.1 - 2026-10-14
+## 4.14.0 - 2026-10-26
+
+- **Requires Laravel 12.8 or newer.** Tasks no longer load their tags with every query: the board, the task page and
+  the emails load them where they are shown, and in a list of tasks a relation read from one of them (the tags in your
+  own table or export) is loaded for the whole list in one query, which needs Laravel 12.8's relation autoloading.
+- Followers can now be picked while creating a task, next to the priority, assignee and tags. Everyone picked gets
+  the same "new task" email and panel notification as the assignee, except you and the assignee, who follow the task
+  anyway. The text message for urgent tasks is still sent once, with the assignee's notification. The host's
+  `modifyFollowersQueryUsing()` limits who can be picked here too.
+- **BREAKING:** the settings page is closed to everybody until you allow someone. `userCanConfigureFinisterre()` used
+  to default to open for every user of the panel, and the page holds the SMS gateway key and the mailbox credentials.
+  Allow your administrators in your panel provider: `FinisterrePlugin::make()->userCanConfigureFinisterre(fn() => auth()->user()?->hasRole('admin'))`.
+- **Run `php artisan migrate`.** The SMS gateway key is now stored encrypted like the other secrets; the migration
+  encrypts the one already stored (it is also done the first time the settings load, if the migration is not run yet).
+  Another migration sanitizes the descriptions and comments already stored (see below).
+- The SMS API URL must be an https address on the public internet. One pointing at this server, a private network or
+  the cloud metadata service is refused on the settings page, and no text message (and no key) is sent to it. The
+  request goes to the addresses that were checked and does not follow redirects: a gateway that answers with one is
+  reported, so update the URL to where it now points.
+- Descriptions and comments are sanitized when they are saved, whatever saves them (the editor, an email reply, a
+  command), so a script or an event handler in one no longer runs in the panel, in an email or in a panel notification.
+  The migration cleans the ones saved before. The text typed into *Report an issue* is escaped, with its line breaks kept.
+- Editing a comment only works on a comment of the task on screen that the user can see and may update, and no longer
+  fails when the user cannot schedule comments.
+- A task page address that is not a number, such as `/finisterre-tasks/settings`, answers 404 instead of a 500 on PostgreSQL.
+- Tasks created from a command, a job or the scheduler now get their status, creator, fallback assignee, followers,
+  notifications and `completed_at` like the ones created in the panel.
+- Scheduled comments are delivered once even with several servers or an overlapping run (the schedules use
+  `onOneServer()`, so the host's cache must be shared), and one recipient whose notification fails is reported without
+  everybody being notified again every minute. A comment whose delivery fails before anybody was notified is tried
+  again on the next run instead of being marked as sent.
+- Saving a task several times in a request sends one email to the assignee listing the changes of all the saves.
+- The people pickers (the assignee and the followers on the create form and the task page, the people a comment
+  notifies and the fallback user on the settings page) show everybody as buttons while there are fewer than 6 people
+  to pick from, and a select you can type in to filter after. The task page's assignee badge opens one of these
+  instead of a dropdown with one entry per user. The assignee filter on the board lists the users with tasks without
+  loading every task. Picking somebody who can no longer be assigned shows an error instead of closing the field
+  without a change. **Removed:** the unused `filter-tasks` Livewire component.
+- The checks for columns a host may not have yet (such as `active` on the users) are asked once per request instead
+  of on every query and render, and asked again after `php artisan migrate`.
+- A reply by email is checked on the guard in `finisterre.guard`, not on the application's default one.
+- `composer serve` works: the workbench panel registers the plugin and `testbench.yaml` is committed.
+- The text message about a new task is its own queued notification, `TaskSmsNotification`, sent with the assignee's
+  `TaskNotification`, which only sends the email now.
+- The task page's assignee and followers badges are now the `QuickAssigneeAction` and `QuickFollowersAction` classes
+  in `Filament\Actions`, next to the other actions of the package. Their names (`quick_assignee`, `quick_followers`)
+  are unchanged.
+
+## 4.13.2 - 2026-10-14
 
 - The "Notify" and "Schedule for" labels under the comment box stay on one line again. Their explanations, which
   squeezed each label down to one word per line at any screen width, now sit below the label.
+
+## 4.13.1 - 2026-10-14
+
+- Same code as 4.13.0.
 
 ## 4.13.0 - 2026-10-14
 
