@@ -288,7 +288,8 @@ class TasksKanbanBoard extends BoardPage
                     $position = ($index + 1) * 10;
 
                     if (Typed::string($item->getKey()) === Typed::string($card->getKey())) {
-                        $card->fill([$columnField => $columnValue, $positionField => $position]);
+                        $card->setAttribute($columnField, $columnValue);
+                        $card->setAttribute($positionField, $position);
 
                         // Only a real column change is worth a new updated_at; a drag inside
                         // the same column moves nothing but the position.

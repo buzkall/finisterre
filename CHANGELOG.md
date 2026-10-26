@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.14.1 - 2026-10-26
+
+- Internal: the kanban board sets a moved card's column and position one attribute at a time, so static analysis
+  passes with Laravel 13.38 and Larastan 3.13.2. No change in behaviour.
+
 ## 4.14.0 - 2026-10-26
 
 - **Requires Laravel 12.8 or newer.** Tasks no longer load their tags with every query: the board, the task page and
