@@ -11,6 +11,7 @@ use Arzcode\Finisterre\Settings\FinisterreSettings;
 use Arzcode\Finisterre\Support\BoardSlug;
 use Arzcode\Finisterre\Support\PendingUpgrade;
 use Arzcode\Finisterre\Support\SafeUrl;
+use Arzcode\Finisterre\Support\SettingsConfig;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Traits\HasIconOptions;
@@ -403,6 +404,8 @@ class ManageFinisterreSettings extends Page
     public function save(): void
     {
         $data = $this->form->getState();
+
+        SettingsConfig::seedAdded();
 
         $settings = app(FinisterreSettings::class);
         $stored = $settings->toArray();

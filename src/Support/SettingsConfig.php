@@ -194,6 +194,25 @@ class SettingsConfig
     }
 
     /**
+     * Seed the settings a newer version added, when some are stored already.
+     *
+     * The boot only heals settings that fail to load, and one declared with a
+     * default (`= null`) loads without its row: spatie then refuses to save it.
+     *
+     * @return int number of rows created
+     */
+    public static function seedAdded(): int
+    {
+        $missing = self::missing();
+
+        if ($missing === [] || count($missing) === count(self::defaults())) {
+            return 0;
+        }
+
+        return self::seedMissing();
+    }
+
+    /**
      * Seed the settings a newer version added and load them again. False when
      * there is nothing to build on: no settings table, or none of Finisterre's
      * rows in it.

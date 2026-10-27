@@ -42,7 +42,8 @@ An upgrade has to work after `composer update` and a plain `php artisan migrate`
 - Code must tolerate its migration not having run yet (see `TaskFollowers::available()`): a deploy runs the new code
   before `migrate`.
 - A new setting needs a property in `FinisterreSettings`, a default in `SettingsConfig::defaults()` and its line in
-  `applyStored()`. `SettingsConfig::apply()` seeds the missing row on boot.
+  `applyStored()`. `SettingsConfig::apply()` seeds the missing row on boot, but only when loading fails: a property
+  declared with a default (`= null`) loads without its row, and the settings page seeds it on save (`seedAdded()`).
 
 ## Translations
 

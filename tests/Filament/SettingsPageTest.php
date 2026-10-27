@@ -7,6 +7,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
@@ -223,6 +224,21 @@ it('saves the days before done tasks are archived, and an empty field as never',
         ->assertHasNoErrors();
 
     expect(app(FinisterreSettings::class)->auto_archive_after_days)->toBeNull();
+});
+
+it('saves after an upgrade added a setting that has a default and no stored row', function() {
+    // An installed host whose stored settings predate auto_archive_after_days.
+    (include __DIR__ . '/../../database/settings/2026_06_09_000000_create_finisterre_settings.php')->up();
+    DB::table('settings')->where('group', 'finisterre')->where('name', 'auto_archive_after_days')->delete();
+    app()->forgetInstance(FinisterreSettings::class);
+
+    Livewire::test(ManageFinisterreSettings::class)
+        ->set('data.sms_sender', 'ACME')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(app(FinisterreSettings::class)->sms_sender)->toBe('ACME')
+        ->and(DB::table('settings')->where('group', 'finisterre')->where('name', 'auto_archive_after_days')->exists())->toBeTrue();
 });
 
 it('refuses an sms url that is not a public https address', function(string $url) {

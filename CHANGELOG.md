@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.14.2 - 2026-10-27
+
+- Fixed: saving the settings page failed with a server error after upgrading from a version without the "archive done
+  tasks after" setting (`MissingSettings … auto_archive_after_days`). Saving now creates the stored row of any setting
+  a newer version added, with its default.
+
 ## 4.14.1 - 2026-10-26
 
 - Internal: the kanban board sets a moved card's column and position one attribute at a time, so static analysis
