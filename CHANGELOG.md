@@ -2,6 +2,14 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.15.0 - 2026-11-02
+
+- The text message is now also sent when an existing task is raised to one of the priorities selected in the SMS
+  settings (a low task bumped to urgent, for example), not only when the task is created with it. It goes to the
+  configured number whoever raised the task, the assignee included, and also for a task without an assignee. It
+  reads "[Urgent] task … Priority changed from Low", so it is not taken for a new task. Moving a task between two
+  selected priorities, or lowering it, sends nothing.
+
 ## 4.14.2 - 2026-10-27
 
 - Fixed: saving the settings page failed with a server error after upgrading from a version without the "archive done

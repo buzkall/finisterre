@@ -102,13 +102,17 @@ it('leaves the followers out until their table is migrated', function() {
 
 it('makes the people picked followers of the new task and tells them about it', function() {
     $this->withoutDefer();
+    config([
+        'finisterre.sms_notification.enabled'           => true,
+        'finisterre.sms_notification.notify_priorities' => [TaskPriorityEnum::Urgent]
+    ]);
     $assignee = User::factory()->create();
     $follower = User::factory()->create();
 
     Livewire::test(CreateFinisterreTask::class)
         ->fillForm([
             'title'       => 'Paint the hall',
-            'priority'    => TaskPriorityEnum::Low->value,
+            'priority'    => TaskPriorityEnum::Urgent->value,
             'assignee_id' => $assignee->getKey(),
             'followers'   => [$follower->getKey(), $assignee->getKey(), $this->user->getKey()],
         ])

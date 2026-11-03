@@ -2,14 +2,17 @@
 
 namespace Arzcode\Finisterre\Support;
 
+use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Notifications\SMSChannel;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Arzcode\Finisterre\Notifications\TaskSmsNotification;
 use Arzcode\Finisterre\Support\Concerns\ScopedPerRequest;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\AnonymousNotifiable;
 
 /**
  * Who hears about each task saved during the request, and what changed, until the one
@@ -28,7 +31,7 @@ class PendingTaskNotifications
 {
     use ScopedPerRequest;
 
-    /** @var array<string, array{task: FinisterreTask, changes: array<string, mixed>, isNew: bool, assignee: bool, recipients: list<int>}> */
+    /** @var array<string, array{task: FinisterreTask, changes: array<string, mixed>, isNew: bool, assignee: bool, recipients: list<int>, priorityBefore: ?TaskPriorityEnum}> */
     protected array $entries = [];
 
     /**
@@ -61,13 +64,17 @@ class PendingTaskNotifications
     {
         $key = Typed::string($task->getKey());
         $previous = $this->entries[$key] ?? null;
+        // Read in the saved event, before the model syncs its original attributes: the
+        // priority the task had when the request first saved it.
+        $original = $task->getOriginal('priority');
 
         $this->entries[$key] = [
-            'task'       => $task,
-            'changes'    => [...($previous['changes'] ?? []), ...$changes],
-            'isNew'      => ($previous['isNew'] ?? false) || ($task->wasRecentlyCreated && $changes === []),
-            'assignee'   => ($previous['assignee'] ?? false) || $assignee,
-            'recipients' => TaskFollowers::normalize([...($previous['recipients'] ?? []), ...$recipients]),
+            'task'           => $task,
+            'changes'        => [...($previous['changes'] ?? []), ...$changes],
+            'isNew'          => ($previous['isNew'] ?? false) || ($task->wasRecentlyCreated && $changes === []),
+            'assignee'       => ($previous['assignee'] ?? false) || $assignee,
+            'recipients'     => TaskFollowers::normalize([...($previous['recipients'] ?? []), ...$recipients]),
+            'priorityBefore' => $previous === null ? ($original instanceof TaskPriorityEnum ? $original : null) : $previous['priorityBefore'],
         ];
 
         // Named, so one runs per task, with whatever was added by then.
@@ -98,9 +105,16 @@ class PendingTaskNotifications
             $this->notify($task, $assignee, $changes);
 
             // It texts one fixed number, so it goes once, with the assignee's notification.
-            if ($entry['isNew']) {
+            if ($entry['isNew'] && TaskSmsNotification::texts($task->priority)) {
                 UserModel::notify($assignee, new TaskSmsNotification($task));
             }
+        }
+
+        if ($this->raisedToTextingPriority($entry)) {
+            // Whoever raised it, and whether the task has an assignee or not.
+            (new AnonymousNotifiable)
+                ->route(SMSChannel::class, config('finisterre.sms_notification.notify_to'))
+                ->notify(new TaskSmsNotification($task, $entry['priorityBefore']));
         }
 
         $others = array_values(array_diff($entry['recipients'], [$me, $task->creator_id, $task->assignee_id]));
@@ -109,6 +123,21 @@ class PendingTaskNotifications
             $task->taskChanges()->firstOrCreate(['user_id' => $user->getKey()]);
             $this->notify($task, $user, $changes);
         }
+    }
+
+    /**
+     * Whether an existing task moved into a priority that texts from one that does not
+     * (low to urgent, say). Compared with the priority it had before the request, so
+     * saving it as low and back as urgent, or moving it between two priorities that
+     * both text, sends nothing.
+     *
+     * @param  array{task: FinisterreTask, isNew: bool, priorityBefore: ?TaskPriorityEnum}  $entry
+     */
+    protected function raisedToTextingPriority(array $entry): bool
+    {
+        return ! $entry['isNew']
+            && TaskSmsNotification::texts($entry['task']->priority)
+            && ! TaskSmsNotification::texts($entry['priorityBefore']);
     }
 
     /**
