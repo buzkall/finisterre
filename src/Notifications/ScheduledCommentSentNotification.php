@@ -25,7 +25,7 @@ class ScheduledCommentSentNotification extends Notification implements ShouldQue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $task = $this->comment->task;
+        $task = $this->comment->unscopedTask();
 
         $mail = $this->newMailMessage($task)
             ->subject(__(

@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.16.1 - 2026-11-06
+
+- The email of a new comment, and the one telling the author a scheduled comment was sent, no longer fail in the
+  queue when an earlier job left a user signed in in the worker (a Filament export does) and that user only sees the
+  tasks they follow. The task is now loaded whoever is signed in.
+
 ## 4.16.0 - 2026-11-06
 
 - The settings page has an "Export tasks" button that downloads every task as a CSV file: id, title, status,

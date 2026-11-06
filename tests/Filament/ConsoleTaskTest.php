@@ -4,6 +4,9 @@ use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Models\FinisterreTaskComment;
+use Arzcode\Finisterre\Notifications\ScheduledCommentSentNotification;
+use Arzcode\Finisterre\Notifications\TaskCommentNotification;
 use Arzcode\Finisterre\Support\TaskFollowers;
 use Workbench\App\Models\User;
 
@@ -63,3 +66,21 @@ it('still limits the tasks of a signed-in user', function() {
 
     expect(FinisterreTask::count())->toBe(0);
 });
+
+it('mails a comment on a task that the user a previous job left signed in does not follow', function(string $notificationClass) {
+    FinisterrePlugin::get()->userCanViewOnlyTheirTasks(fn() => true);
+    $other = User::factory()->create();
+    $task = FinisterreTask::factory()->create(['creator_id' => $other->id, 'assignee_id' => $other->id]);
+    $commentId = FinisterreTaskComment::factory()->create(['task_id' => $task->id, 'creator_id' => $other->id])->id;
+
+    $this->actingAs(User::factory()->create());
+    runAsConsoleOutsideTests();
+    $comment = FinisterreTaskComment::findOrFail($commentId);
+
+    $mail = (new $notificationClass($comment))->toMail($other);
+
+    expect($mail->actionUrl)->toBe($task->viewUrl());
+})->with([
+    TaskCommentNotification::class,
+    ScheduledCommentSentNotification::class,
+]);

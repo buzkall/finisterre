@@ -63,6 +63,20 @@ class FinisterreTaskComment extends Model implements HasMedia
         return $this->belongsTo(FinisterreTask::class);
     }
 
+    /**
+     * The comment's task, whoever is signed in. A queued notification runs in a worker
+     * where an earlier job (a Filament export, for one) may have left a user signed in,
+     * and the tasks that user does not follow would come back as null.
+     */
+    public function unscopedTask(): FinisterreTask
+    {
+        $task = FinisterreTask::withoutGlobalScopes()->findOrFail($this->task_id);
+
+        $this->setRelation('task', $task);
+
+        return $task;
+    }
+
     /** @return BelongsTo<Model, $this> */
     public function creator(): BelongsTo
     {
