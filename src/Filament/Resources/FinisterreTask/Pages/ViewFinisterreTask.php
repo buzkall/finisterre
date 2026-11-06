@@ -64,6 +64,8 @@ class ViewFinisterreTask extends ViewRecord
                 ->icon(Heroicon::OutlinedPencilSquare)
                 ->color('gray'),
 
+            $this->getCopyMarkdownAction(),
+
             ...$this->getArchiveActions(),
 
             $this->getDeleteAction(),

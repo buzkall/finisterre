@@ -519,7 +519,7 @@ class FinisterreServiceProvider extends PackageServiceProvider
             return;
         }
 
-        warning('Finisterre\'s views are compiled by your panel\'s Filament theme — without one the task board renders unstyled.');
+        warning("Finisterre's views are compiled by your panel's Filament theme — without one the task board renders unstyled.");
 
         foreach ($panels as $panelId => $path) {
             $confirmed = confirm(

@@ -12,6 +12,7 @@ use Arzcode\Finisterre\Support\BoardSlug;
 use Arzcode\Finisterre\Support\PendingUpgrade;
 use Arzcode\Finisterre\Support\SafeUrl;
 use Arzcode\Finisterre\Support\SettingsConfig;
+use Arzcode\Finisterre\Support\TaskExport;
 use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Arzcode\Finisterre\Traits\HasIconOptions;
@@ -70,6 +71,14 @@ class ManageFinisterreSettings extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('exportTasks')
+                ->label(__('finisterre::finisterre.settings.export_tasks'))
+                ->tooltip(__('finisterre::finisterre.settings.export_tasks_help'))
+                ->icon(Heroicon::ArrowDownTray)
+                ->color('gray')
+                ->authorize(fn(): bool => FinisterrePlugin::get()->canConfigure())
+                ->action(fn() => (new TaskExport)->download()),
+
             Action::make('applyUpgrade')
                 ->label(__('finisterre::finisterre.settings.upgrade_apply'))
                 ->icon(Heroicon::ArrowPath)

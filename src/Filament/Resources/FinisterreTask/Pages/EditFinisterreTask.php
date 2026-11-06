@@ -35,6 +35,8 @@ class EditFinisterreTask extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            $this->getCopyMarkdownAction(),
+
             $this->getDeleteAction(),
         ];
     }

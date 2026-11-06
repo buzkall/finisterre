@@ -2,6 +2,17 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.16.0 - 2026-11-06
+
+- The settings page has an "Export tasks" button that downloads every task as a CSV file: id, title, status,
+  priority, archived, assignee, created, completed and due dates, number of comments and tags. It includes the tasks
+  the person downloading it does not see on the board, and it is only there for those who can configure Finisterre.
+  It is meant for reports about the project made outside the panel.
+- The task page has a "Copy as markdown" button, for those who can configure Finisterre, that copies the task to the
+  clipboard as markdown: its link, status, priority, assignee, tags and dates, the description, the subtasks as a
+  checklist, the names of the attachments and the comments with their author and date. It is meant to be pasted into
+  a coding assistant such as Claude Code, to work on the task. Adds the `league/html-to-markdown` dependency.
+
 ## 4.15.0 - 2026-11-02
 
 - The text message is now also sent when an existing task is raised to one of the priorities selected in the SMS

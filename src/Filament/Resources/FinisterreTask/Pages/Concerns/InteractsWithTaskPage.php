@@ -4,9 +4,11 @@ namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns;
 
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
+use Arzcode\Finisterre\Support\TaskMarkdown;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Js;
 
 /**
  * Behaviour shared by the task view and edit pages.
@@ -51,6 +53,40 @@ trait InteractsWithTaskPage
                 ->action(fn() => $this->record->update(['archived' => false]))
                 ->visible(fn() => $this->canArchive() && $this->record->archived),
         ];
+    }
+
+    /**
+     * Copies the task, its description and its comments as markdown, to hand it to a
+     * coding assistant. The markdown is only built when the button is clicked. The
+     * click hands the clipboard a pending item that the server's answer fills in:
+     * Safari refuses a plain clipboard write made after a round trip to the server.
+     */
+    protected function getCopyMarkdownAction(): Action
+    {
+        $copied = Js::from(__('finisterre::finisterre.copy_markdown.copied'));
+
+        return Action::make('copyMarkdown')
+            ->label(__('finisterre::finisterre.copy_markdown.label'))
+            ->icon(Heroicon::OutlinedClipboardDocument)
+            ->color('gray')
+            ->visible(fn(): bool => FinisterrePlugin::get()->canConfigure())
+            ->alpineClickHandler(<<<JS
+                window.navigator.clipboard.write([new ClipboardItem({
+                    'text/plain': \$wire.taskMarkdown().then((text) => new Blob([text], { type: 'text/plain' })),
+                })]).then(() => new FilamentNotification().title({$copied}).success().send())
+                JS);
+    }
+
+    /**
+     * The markdown the copy button puts on the clipboard. Called from the browser,
+     * so it checks the permission again.
+     */
+    public function taskMarkdown(): string
+    {
+        abort_unless(FinisterrePlugin::get()->canConfigure(), 403);
+
+        // Read fresh: subtasks and tags may have changed since the page loaded.
+        return (new TaskMarkdown($this->record->fresh() ?? abort(404)))->toMarkdown();
     }
 
     /**

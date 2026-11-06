@@ -551,7 +551,7 @@ class UpdateCommand extends Command
     protected function refreshAssets(): void
     {
         if (! confirm(label: 'Re-publish the Filament assets (`php artisan filament:assets`)?', default: true)) {
-            note('Skipped — run `php artisan filament:assets` to pick up this version\'s assets.');
+            note("Skipped — run `php artisan filament:assets` to pick up this version's assets.");
 
             return;
         }
