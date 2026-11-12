@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.16.2 - 2026-11-12
+
+- The tasks item in the navigation now stays highlighted while viewing, editing or creating a task, not only on the
+  board.
+
 ## 4.16.1 - 2026-11-06
 
 - The email of a new comment, and the one telling the author a scheduled comment was sent, no longer fail in the

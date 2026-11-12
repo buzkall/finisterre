@@ -75,6 +75,18 @@ class TasksKanbanBoard extends BoardPage
         return self::canAccess();
     }
 
+    /**
+     * The task pages (view, edit, create) belong to the task resource, which has
+     * no navigation item of its own for those who see the board, so the board's
+     * item stays highlighted on them.
+     *
+     * @return array<string>
+     */
+    public static function getNavigationItemActiveRoutePattern(): array
+    {
+        return [static::getRouteName(), FinisterreTaskResource::getRouteBaseName() . '.*'];
+    }
+
     public static function canAccess(): bool
     {
         // Route::has() guards against the board's slug colliding with an existing
