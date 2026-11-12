@@ -11,6 +11,7 @@ use Arzcode\Finisterre\Commands\UninstallCommand;
 use Arzcode\Finisterre\Commands\UpdateCommand;
 use Arzcode\Finisterre\Controllers\FilamentRouteController;
 use Arzcode\Finisterre\Controllers\ResendInboundController;
+use Arzcode\Finisterre\Controllers\SharedFileController;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreCommentsComponent;
 use Arzcode\Finisterre\Filament\Livewire\FinisterreSubtasksComponent;
 use Arzcode\Finisterre\Models\FinisterreTask;
@@ -708,6 +709,9 @@ class FinisterreServiceProvider extends PackageServiceProvider
         // Always there, so a cached route list keeps it when reply by email is
         // turned on later; the controller refuses while the Resend driver is off.
         ResendInboundController::register();
+
+        // The signed links to a task's files that "Copy as markdown" hands out.
+        SharedFileController::register();
 
         $this->observeMedia();
         $this->registerBoardCardView();

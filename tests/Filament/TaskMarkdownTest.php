@@ -1,5 +1,6 @@
 <?php
 
+use Arzcode\Finisterre\Controllers\SharedFileController;
 use Arzcode\Finisterre\Enums\TaskPriorityEnum;
 use Arzcode\Finisterre\Enums\TaskStatusEnum;
 use Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\EditFinisterreTask;
@@ -12,6 +13,7 @@ use Arzcode\Finisterre\Models\FinisterreTaskComment;
 use Arzcode\Finisterre\Support\TaskMarkdown;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Workbench\App\Models\User;
 
@@ -94,12 +96,94 @@ it('leaves out the scheduled comments not sent yet, unless the user wrote them',
         ->not->toContain('Somebody else, scheduled');
 });
 
-it('lists the names of the attachments', function() {
+/**
+ * The first signed link to a shared file in the markdown.
+ */
+function sharedLink(string $markdown): string
+{
+    preg_match('~https?://[^)\s]*/' . SharedFileController::PATH . '/[^)\s]+~', $markdown, $match);
+
+    return $match[0] ?? '';
+}
+
+it('links the attachments through a signed url that opens them for ten minutes without a login', function() {
     Storage::fake('public');
     $task = markdownTask();
     $task->addMediaFromString('log line')->usingFileName('error.log')->toMediaCollection('tasks', 'public');
 
-    expect((new TaskMarkdown($task->fresh()))->toMarkdown())->toContain("## Adjuntos\n\n- error.log");
+    $markdown = (new TaskMarkdown($task->fresh()))->toMarkdown();
+    $link = sharedLink($markdown);
+
+    expect($markdown)->toContain("## Adjuntos\n\n- [error.log](" . $link . ')');
+
+    app('auth')->forgetGuards();
+    auth()->logout();
+
+    expect($this->get($link)->assertOk()->baseResponse->getFile()->getContent())->toBe('log line');
+
+    // Tampered or expired, the link opens nothing.
+    $this->get(str_replace('signature=', 'signature=0', $link))->assertForbidden();
+    $this->travel(SharedFileController::MINUTES + 1)->minutes();
+    $this->get($link)->assertForbidden();
+});
+
+it('points the images on the public disk at a signed url', function() {
+    Storage::fake('public');
+    Storage::disk('public')->put('shot.png', 'image');
+    $task = markdownTask(['description' => '<p>Look</p><p><img src="https://app.test/storage/shot.png" alt="shot"></p>']);
+
+    $markdown = (new TaskMarkdown($task))->toMarkdown();
+
+    expect($markdown)->toContain('![shot](' . sharedLink($markdown) . ')')
+        ->not->toContain('/storage/shot.png');
+
+    $this->get(sharedLink($markdown))->assertOk();
+});
+
+it('leaves an image from elsewhere as it is', function() {
+    $task = markdownTask(['description' => '<p><img src="https://example.test/logo.png" alt="logo"></p>']);
+
+    expect((new TaskMarkdown($task))->toMarkdown())
+        ->toContain('![logo](https://example.test/logo.png)')
+        ->not->toContain(SharedFileController::PATH);
+});
+
+it('signs only the images of the task itself on a private disk', function() {
+    config()->set('filesystems.disks.finisterre', ['driver' => 'local', 'root' => storage_path('app/finisterre-files')]);
+    config()->set('finisterre.attachments_disk', 'finisterre');
+    Storage::fake('finisterre');
+    Storage::disk('finisterre')->put('own.png', 'own image');
+    Storage::disk('finisterre')->put('other.png', 'other image');
+
+    $task = markdownTask(['description' => '<p><img src="/storage/finisterre-files/own.png" alt="own"><img src="/storage/finisterre-files/other.png" alt="other"></p>']);
+    $task->forceFill(['editor_files' => ['own.png']])->saveQuietly();
+
+    FinisterreTaskComment::factory()->create([
+        'task_id'    => $task->id,
+        'comment'    => '<p><img src="/storage/finisterre-files/own.png" alt="again"></p>',
+        'creator_id' => $this->user->id,
+    ]);
+
+    $markdown = (new TaskMarkdown($task->fresh()))->toMarkdown();
+    $link = sharedLink($markdown);
+
+    expect($markdown)
+        ->toContain('![own](' . $link . ')')
+        ->toContain('![again](' . $link . ')')
+        // Loaded by the description but owned by another task: no link unlocks it.
+        ->toContain('![other](/storage/finisterre-files/other.png)');
+
+    app('auth')->forgetGuards();
+    auth()->logout();
+
+    expect($this->get($link)->assertOk()->baseResponse->getFile()->getContent())->toBe('own image');
+});
+
+it('opens nothing for a signed link to a disk that does not exist or a missing file', function() {
+    $this->get(URL::temporarySignedRoute('finisterre.shared-file', now()->addMinute(), ['disk' => 'nope', 'path' => 'a.png']))->assertNotFound();
+
+    Storage::fake('public');
+    $this->get(SharedFileController::url('public', 'missing.png'))->assertNotFound();
 });
 
 it('leaves out the sections a task does not have', function() {
@@ -117,6 +201,7 @@ it('copies the task as markdown from the task and edit pages for whoever configu
     $component = Livewire::test($page, ['record' => $task->getKey()])
         ->assertActionVisible('copyMarkdown')
         ->assertSeeHtml('$wire.taskMarkdown()')
+        ->assertSeeHtml('se abren durante ' . SharedFileController::MINUTES . ' minutos')
         // Built on click only: the page does not carry the description.
         ->assertDontSeeHtml('## ');
 

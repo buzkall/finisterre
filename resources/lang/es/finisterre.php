@@ -160,6 +160,7 @@ return [
     'copy_markdown' => [
         'label'       => 'Copiar como markdown',
         'copied'      => 'Tarea copiada como markdown',
+        'copied_body' => 'Los enlaces a las imágenes y los adjuntos se abren durante :minutes minutos',
         'url'         => 'Enlace',
         'status'      => 'Estado',
         'priority'    => 'Prioridad',

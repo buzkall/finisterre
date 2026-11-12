@@ -160,6 +160,7 @@ return [
     'copy_markdown' => [
         'label'       => 'Copiar com a markdown',
         'copied'      => 'Tasca copiada com a markdown',
+        'copied_body' => "Els enllaços a les imatges i als adjunts s'obren durant :minutes minuts",
         'url'         => 'Enllaç',
         'status'      => 'Estat',
         'priority'    => 'Prioritat',

@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Support;
 
+use Arzcode\Finisterre\Controllers\SharedFileController;
 use Arzcode\Finisterre\Models\FinisterreSubtask;
 use Arzcode\Finisterre\Models\FinisterreTag;
 use Arzcode\Finisterre\Models\FinisterreTask;
@@ -12,8 +13,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * A task as markdown, to paste into a coding assistant or an issue: its details,
- * description, subtasks, attachment names and comments, oldest first. Scheduled
+ * description, subtasks, attachments and comments, oldest first. Scheduled
  * comments not sent yet are left out, unless the user who copies wrote them.
+ *
+ * The images in the description and comments, and the attachments, link to the
+ * file through a signed URL that opens it without a login for a few minutes
+ * (see SharedFileController): the assistant has no session in the panel.
  */
 class TaskMarkdown
 {
@@ -31,7 +36,7 @@ class TaskMarkdown
                 ->map(fn(FinisterreSubtask $subtask): string => '- [' . ($subtask->completed ? 'x' : ' ') . '] ' . $subtask->title)
                 ->implode("\n")),
             $this->section('attachments', $task->getMedia('tasks')
-                ->map(fn(Media $media): string => '- ' . $media->file_name)
+                ->map(fn(Media $media): string => '- [' . $media->file_name . '](' . SharedFileController::url($media->disk, $media->getPathRelativeToRoot()) . ')')
                 ->implode("\n")),
             $this->section('comments', $this->comments()),
         ];
@@ -93,7 +98,40 @@ class TaskMarkdown
             'hard_break'   => true,
         ]);
 
-        return trim($converter->convert($html));
+        return trim($converter->convert($this->shareImages($html)));
+    }
+
+    /**
+     * Points each image of the task's own on the attachments disk at a signed link.
+     * Any other image keeps its URL.
+     */
+    protected function shareImages(string $html): string
+    {
+        return (string)preg_replace_callback('~(<img\b[^>]*?\bsrc=)(["\'])(.*?)\2~i', function(array $match): string {
+            $file = $this->imageOnDisk($match[3]);
+
+            return $file === null
+                ? $match[0]
+                : $match[1] . $match[2] . e(SharedFileController::url(AttachmentsDisk::name(), $file)) . $match[2];
+        }, $html);
+    }
+
+    /**
+     * The image's path on the attachments disk. On a private disk only an image that
+     * belongs to this task, the same rule FilamentRouteController follows: a
+     * description can load any file's URL, and its link must not unlock it.
+     */
+    protected function imageOnDisk(string $src): ?string
+    {
+        if (AttachmentsDisk::isPublic()) {
+            return preg_match(AttachmentsDisk::PUBLIC_IMAGE, 'src="' . $src . '"', $match) ? $match[2] : null;
+        }
+
+        if (! preg_match(EditorFiles::PATTERN, $src . '"', $match) || ! EditorFiles::columnExists()) {
+            return null;
+        }
+
+        return EditorFiles::belongsTo($this->task, $match[1]) ? $match[1] : null;
     }
 
     protected function label(string $key): string

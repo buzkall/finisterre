@@ -2,6 +2,7 @@
 
 namespace Arzcode\Finisterre\Filament\Resources\FinisterreTask\Pages\Concerns;
 
+use Arzcode\Finisterre\Controllers\SharedFileController;
 use Arzcode\Finisterre\FinisterrePlugin;
 use Arzcode\Finisterre\Models\FinisterreTask;
 use Arzcode\Finisterre\Support\TaskMarkdown;
@@ -64,6 +65,7 @@ trait InteractsWithTaskPage
     protected function getCopyMarkdownAction(): Action
     {
         $copied = Js::from(__('finisterre::finisterre.copy_markdown.copied'));
+        $copiedBody = Js::from(__('finisterre::finisterre.copy_markdown.copied_body', ['minutes' => SharedFileController::MINUTES]));
 
         return Action::make('copyMarkdown')
             ->label(__('finisterre::finisterre.copy_markdown.label'))
@@ -73,7 +75,7 @@ trait InteractsWithTaskPage
             ->alpineClickHandler(<<<JS
                 window.navigator.clipboard.write([new ClipboardItem({
                     'text/plain': \$wire.taskMarkdown().then((text) => new Blob([text], { type: 'text/plain' })),
-                })]).then(() => new FilamentNotification().title({$copied}).success().send())
+                })]).then(() => new FilamentNotification().title({$copied}).body({$copiedBody}).success().send())
                 JS);
     }
 

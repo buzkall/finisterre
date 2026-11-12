@@ -160,6 +160,7 @@ return [
     'copy_markdown' => [
         'label'       => 'Copy as markdown',
         'copied'      => 'Task copied as markdown',
+        'copied_body' => 'The links to images and attachments open for :minutes minutes',
         'url'         => 'Link',
         'status'      => 'Status',
         'priority'    => 'Priority',

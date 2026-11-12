@@ -2,6 +2,13 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.17.0 - 2026-11-12
+
+- "Copy as markdown" now links the images in the description and comments, and the attachments, through signed URLs
+  that open the file without logging in for 10 minutes. A coding assistant the task is pasted into can now see the
+  screenshots, which it could not reach behind the panel's login. Only the task's own files get a link, and an image
+  from another site keeps its URL. The "copied" message says how long the links last.
+
 ## 4.16.2 - 2026-11-12
 
 - The tasks item in the navigation now stays highlighted while viewing, editing or creating a task, not only on the
