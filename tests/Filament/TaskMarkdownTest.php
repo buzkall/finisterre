@@ -149,6 +149,8 @@ it('leaves an image from elsewhere as it is', function() {
 });
 
 it('signs only the images of the task itself on a private disk', function() {
+    // Both links must expire in the same second to compare equal.
+    $this->freezeTime();
     config()->set('filesystems.disks.finisterre', ['driver' => 'local', 'root' => storage_path('app/finisterre-files')]);
     config()->set('finisterre.attachments_disk', 'finisterre');
     Storage::fake('finisterre');
