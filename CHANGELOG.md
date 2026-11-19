@@ -2,6 +2,12 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.18.0 - 2026-11-19
+
+- The task history in notification emails now folds: the latest entry is shown in full and the older ones collapse
+  into a line with their author, date and first words, which opens on click. Email clients that don't support it
+  (Gmail, Outlook) keep showing every entry expanded.
+
 ## 4.17.0 - 2026-11-12
 
 - "Copy as markdown" now links the images in the description and comments, and the attachments, through signed URLs

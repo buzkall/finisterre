@@ -8,6 +8,7 @@ use Arzcode\Finisterre\Support\Typed;
 use Arzcode\Finisterre\Support\UserModel;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 /**
  * Renders a task's history (its description and visible comments) for the
@@ -45,7 +46,11 @@ trait RendersTaskHistory
         $entries = $entries
             ->sortByDesc(fn(array $entry) => $entry['date'] ?? Carbon::createFromTimestamp(0))
             ->take(Typed::nullableInt($limit) ?? $entries->count())
-            ->map(fn(array $entry) => [...$entry, 'body' => $this->embedImages((string)$entry['body'])])
+            ->map(fn(array $entry) => [
+                ...$entry,
+                'excerpt' => Str::limit(Str::squish(html_entity_decode(strip_tags((string)$entry['body']))), 80),
+                'body'    => $this->embedImages((string)$entry['body'])
+            ])
             ->values();
 
         if ($entries->isEmpty()) {

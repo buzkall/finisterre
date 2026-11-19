@@ -127,3 +127,22 @@ it('threads every email about a task under the same root', function() {
     expect($taskHeaders)->toBe([$threadId, $threadId])
         ->and($commentHeaders)->toBe([$threadId, $threadId]);
 });
+
+it('keeps only the newest history entry open and folds the older ones into an excerpt', function() {
+    $body = mailBody((new TaskNotification($this->task->fresh(), ['status' => 'doing']))->toMail($this->replier));
+
+    expect(substr_count($body, '<details'))->toBe(3)
+        ->and(substr_count($body, '<details open'))->toBe(1)
+        ->and(strpos($body, '<details open'))->toBeLessThan(strpos($body, 'Second comment'))
+        ->and($body)->toContain('&mdash; <span style="color:#9ca3af;">First comment</span>')
+        ->not->toContain('&mdash; <span style="color:#9ca3af;">Second comment</span>');
+});
+
+it('cuts a long history entry to a short plain text excerpt', function() {
+    $this->first->update(['comment' => '<p>' . str_repeat('Lorem &amp; ipsum ', 20) . '</p>']);
+
+    $body = mailBody((new TaskNotification($this->task->fresh(), ['status' => 'doing']))->toMail($this->replier));
+
+    expect($body)->toContain('#9ca3af;">Lorem &amp; ipsum')
+        ->toMatch('/#9ca3af;">[^<]+\.\.\.<\/span>/');
+});
