@@ -26,6 +26,20 @@
     flex-basis: 100%;
 }
 
+/* Long words or paths in a notification body (a comment) wrap instead of pushing the close button out of view */
+.fi-no-notification-main.fi-no-notification-main,
+.fi-no-notification-text.fi-no-notification-text {
+    min-width: 0;
+}
+
+.fi-no-notification-body {
+    overflow-wrap: anywhere;
+}
+
+.fi-no-notification-body pre {
+    white-space: pre-wrap;
+}
+
 .fi-no-notification-actions.fi-no-notification-actions {
     justify-self: end;
 }

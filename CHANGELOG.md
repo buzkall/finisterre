@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.19.1 - 2026-11-25
+
+- A panel notification for a comment with a long word or path no longer pushes its close button out of view: the
+  text now wraps. Run `php artisan filament:assets` to publish the updated styles.
+
 ## 4.19.0 - 2026-11-25
 
 - The panel notification about subtask changes now lists them one per line, each cut to a single line, and shows
