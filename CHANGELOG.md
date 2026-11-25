@@ -2,6 +2,11 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.19.2 - 2026-11-25
+
+- A long subtask title now wraps onto further lines instead of being cut off at the edge of its field. Line breaks
+  pasted into a title are joined into a single line when it is saved.
+
 ## 4.19.1 - 2026-11-25
 
 - A panel notification for a comment with a long word or path no longer pushes its close button out of view: the

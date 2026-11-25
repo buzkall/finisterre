@@ -137,6 +137,15 @@ it('persists a rename immediately', function() {
     expect($subtask->refresh()->title)->toBe('New');
 });
 
+it('joins the lines of a pasted multiline title', function() {
+    $task = FinisterreTask::factory()->create();
+    $subtask = $task->subtasks()->create(['title' => 'Old', 'order_column' => 10]);
+
+    subtasksComponent($task)->updatedSubtasks("First line\r\n  second line\n", FinisterreSubtasksComponent::rowKey($subtask->id) . '.title');
+
+    expect($subtask->refresh()->title)->toBe('First line second line');
+});
+
 it('restores the stored title when it is emptied', function() {
     $task = FinisterreTask::factory()->create();
     $subtask = $task->subtasks()->create(['title' => 'Keep me', 'order_column' => 10]);

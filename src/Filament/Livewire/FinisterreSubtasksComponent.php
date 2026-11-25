@@ -117,7 +117,8 @@ class FinisterreSubtasksComponent extends Component
             return;
         }
 
-        $title = trim(Typed::string($value));
+        // The title field is a textarea, so a pasted line break must not reach the stored title.
+        $title = trim((string)preg_replace('/\s+/u', ' ', Typed::string($value)));
 
         // An emptied title is a slip, not a delete — put the stored one back.
         if ($title === '' || mb_strlen($title) > 255) {

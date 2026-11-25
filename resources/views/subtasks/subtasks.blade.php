@@ -43,18 +43,24 @@
                         :disabled="! $canManage"
                     />
 
-                    <x-filament::input.wrapper class="flex-grow">
-                        <x-filament::input
-                            type="text"
+                    {{-- A one-row textarea that grows with its text, so long titles wrap instead of being cut off. --}}
+                    <x-filament::input.wrapper class="fi-fo-textarea fi-autosizable flex-grow">
+                        <textarea
+                            rows="1"
+                            x-data="{ resize() { $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px' } }"
+                            x-init="$nextTick(() => resize())"
+                            x-on:input="resize()"
+                            x-on:resize.window="resize()"
                             wire:model.blur="subtasks.{{ $rowKey }}.title"
-                            {{-- Enter must not submit the surrounding task form. --}}
+                            {{-- Enter must not add a line break or submit the surrounding task form. --}}
                             x-on:keydown.enter.prevent="$el.blur()"
                             maxlength="255"
-                            :disabled="! $canManage"
+                            @disabled(! $canManage)
                             @style([
+                                'overflow: hidden;',
                                 'text-decoration: line-through; opacity: 0.6;' => $subtask['completed'],
                             ])
-                        />
+                        ></textarea>
                     </x-filament::input.wrapper>
 
                     @if ($canManage)
