@@ -86,7 +86,7 @@ class FinisterreSubtaskObserver
             $subtask->task_id,
             $rewind($this->checklist($subtask->task_id))
         )
-            ->delay(Typed::int(config('finisterre.subtasks.notification_delay_minutes', 5)) * 60)
+            ->delay(Typed::int(config('finisterre.subtasks.notification_delay_minutes', 30)) * 60)
             ->afterCommit();
     }
 

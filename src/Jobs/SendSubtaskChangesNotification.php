@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use stdClass;
 
 /**
@@ -36,6 +38,9 @@ use stdClass;
 class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
+
+    /** How many changes the panel notification lists before it only counts the rest */
+    protected const int PANEL_ENTRIES = 5;
 
     /**
      * The task id rather than the model: the task may be deleted during the
@@ -58,7 +63,7 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
      */
     public function uniqueFor(): int
     {
-        return Typed::int(config('finisterre.subtasks.notification_delay_minutes', 5)) * 60 + 1800;
+        return Typed::int(config('finisterre.subtasks.notification_delay_minutes', 30)) * 60 + 1800;
     }
 
     public function handle(): void
@@ -150,7 +155,7 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
 
         Notification::make()
             ->title(__('finisterre::finisterre.subtask_changes.subject', ['title' => $task->title]))
-            ->body(implode(' · ', $entries))
+            ->body($this->panelBody($entries))
             ->actions([
                 Action::make('view')
                     ->label(__('finisterre::finisterre.subtask_changes.cta'))
@@ -160,5 +165,29 @@ class SendSubtaskChangesNotification implements ShouldBeUniqueUntilProcessing, S
             ->sendToDatabase($assignee);
 
         $task->taskChanges()->firstOrCreate(['user_id' => $assignee->getKey()]);
+    }
+
+    /**
+     * The panel notification is a narrow card, so it gets a short list: the
+     * first few changes cut to one line each, and a count of the rest, which
+     * the email lists in full. Inline styles, because Tailwind's preflight
+     * strips the list bullets and the host's build doesn't scan this file.
+     *
+     * @param  list<string>  $entries
+     */
+    protected function panelBody(array $entries): HtmlString
+    {
+        $shown = array_slice($entries, 0, self::PANEL_ENTRIES);
+        $hidden = count($entries) - count($shown);
+
+        $items = collect($shown)
+            ->map(fn(string $entry) => '<li>' . e(Str::limit($entry, 60)) . '</li>')
+            ->implode('');
+
+        $more = $hidden > 0
+            ? '<p style="margin-top:0.25rem;">' . e(trans_choice('finisterre::finisterre.subtask_changes.more', $hidden, ['count' => $hidden])) . '</p>'
+            : '';
+
+        return new HtmlString('<ul style="list-style:disc;padding-inline-start:1rem;">' . $items . '</ul>' . $more);
     }
 }

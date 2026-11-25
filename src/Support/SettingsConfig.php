@@ -35,7 +35,7 @@ class SettingsConfig
             'finisterre.authenticatable_filter_value'        => config('finisterre.authenticatable_filter_value', ''),
             'finisterre.exclude_from_global_search'          => (bool)config('finisterre.exclude_from_global_search', true),
             'finisterre.subtasks_notify'                     => (bool)config('finisterre.subtasks.notify', true),
-            'finisterre.subtasks_notification_delay_minutes' => Typed::int(config('finisterre.subtasks.notification_delay_minutes', 5)),
+            'finisterre.subtasks_notification_delay_minutes' => Typed::int(config('finisterre.subtasks.notification_delay_minutes', 30)),
             'finisterre.mail_history_entries'                => config('finisterre.mail.history_entries'),
             'finisterre.comments_display_avatars'            => (bool)config('finisterre.comments.display_avatars', true),
             'finisterre.comments_icon_action'                => config('finisterre.comments.icons.action', 'heroicon-o-chat-bubble-left-right'),

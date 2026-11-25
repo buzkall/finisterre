@@ -138,6 +138,7 @@ return [
         'greeting' => 'La lista de subtareas de ":title" ha cambiado:',
         'done'     => ':title (hecha)',
         'cta'      => 'Ver tarea',
+        'more'     => '{1} y 1 cambio más|[2,*] y :count cambios más',
         'actions'  => [
             'added'       => 'Añadida: :title',
             'renamed'     => 'Renombrada: :original_title → :title',

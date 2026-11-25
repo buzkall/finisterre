@@ -22,5 +22,5 @@ it('runs the finisterre settings migration and seeds the config defaults', funct
         ->and($settings->comments_display_avatars)->toBeTrue()
         ->and($settings->sms_notify_priorities)->toBe(['urgent'])
         ->and($settings->subtasks_notify)->toBeTrue()
-        ->and($settings->subtasks_notification_delay_minutes)->toBe(5);
+        ->and($settings->subtasks_notification_delay_minutes)->toBe(30);
 });

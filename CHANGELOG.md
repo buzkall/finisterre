@@ -2,6 +2,15 @@
 
 All notable changes to `finisterre` will be documented in this file.
 
+## 4.19.0 - 2026-11-25
+
+- The panel notification about subtask changes now lists them one per line, each cut to a single line, and shows
+  only the first five with a count of the rest. The email still lists every change.
+- Subtask changes are now grouped over 30 minutes by default instead of 5, so a checklist filled in one sitting
+  sends a single notification. Existing installations keep their stored value: change it in the settings page.
+- The task history in notification emails no longer shows empty entries (a description or comment saved from an
+  empty editor) as a box with only the author and date.
+
 ## 4.18.0 - 2026-11-19
 
 - The task history in notification emails now folds: the latest entry is shown in full and the older ones collapse

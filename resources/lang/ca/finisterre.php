@@ -138,6 +138,7 @@ return [
         'greeting' => 'La llista de subtasques de ":title" ha canviat:',
         'done'     => ':title (feta)',
         'cta'      => 'Veure tasca',
+        'more'     => '{1} i 1 canvi més|[2,*] i :count canvis més',
         'actions'  => [
             'added'       => 'Afegida: :title',
             'renamed'     => 'Reanomenada: :original_title → :title',

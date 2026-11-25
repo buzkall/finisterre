@@ -146,3 +146,30 @@ it('cuts a long history entry to a short plain text excerpt', function() {
     expect($body)->toContain('#9ca3af;">Lorem &amp; ipsum')
         ->toMatch('/#9ca3af;">[^<]+\.\.\.<\/span>/');
 });
+
+it('leaves out of the history the entries an empty editor saved with no text', function(string $empty) {
+    $this->task->update(['description' => $empty]);
+    $this->first->update(['comment' => $empty]);
+
+    $body = mailBody((new TaskNotification($this->task->fresh(), ['status' => 'doing']))->toMail($this->replier));
+
+    expect(substr_count($body, '<details'))->toBe(1)
+        ->and($body)->toContain('Second comment');
+})->with(['<p></p>', '<p>&nbsp;</p>', "<p><br></p>\n<p> </p>"]);
+
+it('keeps a history entry that only holds an image', function() {
+    $this->first->update(['comment' => '<p><img src="https://example.com/a.png"></p>']);
+
+    $body = mailBody((new TaskNotification($this->task->fresh(), ['status' => 'doing']))->toMail($this->replier));
+
+    expect(substr_count($body, '<details'))->toBe(3);
+});
+
+it('shows no history when the only entry is an empty description', function() {
+    $this->task->comments()->delete();
+    $this->task->update(['description' => '<p></p>']);
+
+    $body = mailBody((new TaskNotification($this->task->fresh(), ['status' => 'doing']))->toMail($this->replier));
+
+    expect($body)->not->toContain('<details');
+});

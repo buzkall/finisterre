@@ -44,6 +44,7 @@ trait RendersTaskHistory
         $limit = config('finisterre.mail.history_entries');
 
         $entries = $entries
+            ->filter(fn(array $entry) => $this->hasVisibleContent($entry['body']))
             ->sortByDesc(fn(array $entry) => $entry['date'] ?? Carbon::createFromTimestamp(0))
             ->take(Typed::nullableInt($limit) ?? $entries->count())
             ->map(fn(array $entry) => [
@@ -58,6 +59,16 @@ trait RendersTaskHistory
         }
 
         return new HtmlString(view('finisterre::emails.task-history', ['entries' => $entries])->render());
+    }
+
+    /**
+     * An empty rich editor still saves markup such as `<p></p>` or `<p>&nbsp;</p>`,
+     * which would show as an entry with only its author and date
+     */
+    protected function hasVisibleContent(?string $html): bool
+    {
+        return filled(Str::squish(html_entity_decode(strip_tags((string)$html), ENT_QUOTES | ENT_HTML5)))
+            || preg_match('/<img\b/i', (string)$html) === 1;
     }
 
     protected function commentAuthor(FinisterreTaskComment $comment): string

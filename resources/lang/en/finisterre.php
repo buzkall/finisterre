@@ -138,6 +138,7 @@ return [
         'greeting' => 'The checklist of ":title" has changed:',
         'done'     => ':title (done)',
         'cta'      => 'View task',
+        'more'     => '{1} and 1 more change|[2,*] and :count more changes',
         'actions'  => [
             'added'       => 'Added: :title',
             'renamed'     => 'Renamed: :original_title → :title',

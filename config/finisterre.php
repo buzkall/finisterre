@@ -129,7 +129,7 @@ return [
         // QUEUE_CONNECTION=sync the delay is ignored and every change sends its
         // own email; see the README.
         'notify'                     => true,
-        'notification_delay_minutes' => 5,
+        'notification_delay_minutes' => 30,
     ],
 
     'comments' => [

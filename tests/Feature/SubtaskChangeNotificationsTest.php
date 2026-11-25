@@ -8,6 +8,7 @@ use Arzcode\Finisterre\Notifications\SubtaskChangesNotification;
 use Arzcode\Finisterre\Notifications\TaskNotification;
 use Arzcode\Finisterre\Observers\FinisterreTaskObserver;
 use Arzcode\Finisterre\Policies\FinisterreTaskPolicy;
+use Filament\Notifications\DatabaseNotification;
 use Illuminate\Bus\UniqueLock;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Gate;
@@ -488,4 +489,67 @@ it('does not fire a task notification when a subtask changes', function() {
     addSubtask(subtaskChecklist($this->task), 'Just a subtask');
 
     Notification::assertNotSentTo($this->assignee, TaskNotification::class);
+});
+
+// ---------------------------------------------------------------- panel notification
+
+/** The body of the notification the digest leaves in the assignee's panel */
+function panelNotificationBody(FinisterreTask $task): string
+{
+    $body = '';
+
+    Notification::fake();
+    queuedDigest()->handle();
+
+    Notification::assertSentTo(
+        $task->assignee,
+        DatabaseNotification::class,
+        function(DatabaseNotification $notification) use (&$body) {
+            $body = (string)$notification->data['body'];
+
+            return true;
+        }
+    );
+
+    return $body;
+}
+
+it('lists the changes in the panel notification, one short line each', function() {
+    $checklist = subtaskChecklist($this->task);
+    addSubtask($checklist, 'Check <the> covers');
+    addSubtask($checklist, 'A long subtask title that keeps going well past what fits on one line');
+
+    $body = panelNotificationBody($this->task);
+
+    expect($body)
+        ->toStartWith('<ul')
+        ->toContain('<li>Added: Check &lt;the&gt; covers</li>')
+        ->toContain('<li>Added: A long subtask title that keeps going well past what...</li>')
+        ->and(substr_count($body, '<li>'))->toBe(2)
+        ->and($body)->not->toContain('more change');
+});
+
+it('counts the changes past the first five in the panel notification instead of listing them', function() {
+    $checklist = subtaskChecklist($this->task);
+
+    foreach (range(1, 7) as $n) {
+        addSubtask($checklist, "Subtask {$n}");
+    }
+
+    $body = panelNotificationBody($this->task);
+
+    expect(substr_count($body, '<li>'))->toBe(5)
+        ->and($body)->toContain('Subtask 5')
+        ->not->toContain('Subtask 6')
+        ->toContain('and 2 more changes');
+});
+
+it('says one more change in the singular', function() {
+    $checklist = subtaskChecklist($this->task);
+
+    foreach (range(1, 6) as $n) {
+        addSubtask($checklist, "Subtask {$n}");
+    }
+
+    expect(panelNotificationBody($this->task))->toContain('and 1 more change<');
 });
